@@ -1,0 +1,4 @@
+bpy==4.5.4
+szio==1.4.0.dev2
+pillow>=10.4
+gradio_client>=1.3

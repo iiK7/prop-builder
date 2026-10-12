@@ -1,0 +1,181 @@
+name: Prop builder
+
+# Image or GLB in -> FiveM prop resource out (.ydr + .ytyp + fxmanifest), see tools/prop_builder.
+on:
+  issues:
+    types: [opened, edited]
+  push:
+    paths:
+      - 'prop_requests/**.png'
+      - 'prop_requests/**.jpg'
+      - 'prop_requests/**.jpeg'
+      - 'prop_requests/**.webp'
+      - 'prop_requests/**.glb'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Prop name (a-z 0-9 _)'
+        required: true
+      file_url:
+        description: 'Link to an image (png/jpg) or a .glb model'
+        required: true
+      height:
+        description: 'Height in metres (0 keeps the model size)'
+        default: '0'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: prop-builder
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # issues: only the repository owner can start a build (protects the free minutes)
+    if: >-
+      github.event_name != 'issues' ||
+      (startsWith(github.event.issue.title, '[prop]') && github.event.issue.user.login == github.repository_owner)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      SOLLUMZ_REF: 75d323e90f2c5f4ee0be20a991599fac3e951e82
+      CODEWALKER_REF: 485d56bec00262ed7fa472261cce7bbc6202b96e
+      DEPS: ${{ github.workspace }}/.deps
+      TOOL: ${{ github.workspace }}/tools/prop_builder
+      OUT: ${{ github.workspace }}/out
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/prop_builder
+            prop_requests
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: tools/prop_builder/requirements.txt
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore tools cache
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: prop-deps-${{ env.SOLLUMZ_REF }}-${{ env.CODEWALKER_REF }}-${{ hashFiles('tools/prop_builder/cwconv/**') }}
+
+      - name: Install Python packages (Blender, Sollumz IO, Pillow, Gradio client)
+        run: |
+          pkgs="libgl1 libglx0 libsm6 libice6 libxi6 libxrender1 libxfixes3 libxkbcommon0 libxext6"
+          sudo apt-get install -y -qq $pkgs > /dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq $pkgs > /dev/null; }
+          pip install -r "$TOOL/requirements.txt"
+
+      - name: Fetch Sollumz and build the CodeWalker converter
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$DEPS"
+          fetch() { git init -q "$2" && git -C "$2" fetch -q --depth 1 "$1" "$3" && git -C "$2" checkout -q FETCH_HEAD; }
+          fetch https://github.com/Sollumz/Sollumz.git "$DEPS/Sollumz" "$SOLLUMZ_REF"
+          fetch https://github.com/dexyfex/CodeWalker.git "$RUNNER_TEMP/CodeWalker" "$CODEWALKER_REF"
+          dotnet publish "$TOOL/cwconv/cwconv.csproj" -c Release -o "$DEPS/cwconv" -p:CodeWalkerDir="$RUNNER_TEMP/CodeWalker"
+
+      - name: Read the request
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          IN_NAME: ${{ inputs.name }}
+          IN_URL: ${{ inputs.file_url }}
+          IN_HEIGHT: ${{ inputs.height }}
+        run: |
+          mkdir -p "$OUT/in"
+          case "$GITHUB_EVENT_NAME" in
+            issues)
+              python "$TOOL/parse_issue.py" >> "$GITHUB_ENV" ;;
+            workflow_dispatch)
+              { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV" ;;
+            push)
+              f=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
+              [ -n "$f" ] || { echo "no new image/model in prop_requests"; exit 1; }
+              base=$(basename "$f"); stem="${base%.*}"
+              name="${stem%@*}"; height=0; [[ "$stem" == *@* ]] && height="${stem##*@}"
+              name=$(echo "$name" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_\n' '_')
+              cp "$f" "$OUT/in/$base"
+              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
+          esac
+
+      - name: Download the file
+        if: env.LOCAL_FILE == ''
+        run: |
+          dest="$OUT/in/source"
+          # private-repo attachments need the token; public links work without it
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o "$dest" "$FILE_URL" || curl -fsSL -o "$dest" "$FILE_URL"
+          type=$(file -b --mime-type "$dest")
+          echo "downloaded: $type"
+          case "$type" in
+            image/png) ext=png ;; image/jpeg) ext=jpg ;; image/webp) ext=webp ;;
+            model/gltf-binary|application/octet-stream) ext=glb ;;
+            *) echo "::error::The link did not return an image or .glb ($type). If GitHub blocked the attachment, upload the file to the prop_requests folder instead."; exit 1 ;;
+          esac
+          mv "$dest" "$dest.$ext"
+          echo "LOCAL_FILE=$dest.$ext" >> "$GITHUB_ENV"
+
+      - name: Image to 3D (TRELLIS on Hugging Face)
+        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -u "$TOOL/image_to_glb.py" "$LOCAL_FILE" "$OUT/in/model.glb"
+          echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
+
+      - name: Build the prop
+        run: PY=python bash "$TOOL/build_prop.sh" "$LOCAL_FILE" "$NAME" "$OUT" "$HEIGHT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: |
+            out/${{ env.NAME }}.zip
+            out/preview.png
+
+      - name: Copy to the prop-builds branch
+        run: |
+          repo="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          dir="$RUNNER_TEMP/builds"
+          git clone -q --depth 1 --branch prop-builds "$repo" "$dir" 2>/dev/null || {
+            git init -q "$dir" && git -C "$dir" checkout -q --orphan prop-builds && git -C "$dir" remote add origin "$repo"; }
+          mkdir -p "$dir/builds/$NAME"
+          cp "$OUT/$NAME.zip" "$dir/builds/$NAME/"
+          [ -f "$OUT/preview.png" ] && cp "$OUT/preview.png" "$dir/builds/$NAME/"
+          cd "$dir"
+          git config user.name "prop-builder"
+          git config user.email "prop-builder@users.noreply.github.com"
+          git add -A && git commit -qm "Build prop $NAME" && git push -q origin prop-builds
+
+      - name: Reply on the issue
+        if: github.event_name == 'issues'
+        run: |
+          base="https://github.com/${GITHUB_REPOSITORY}/blob/prop-builds/builds/${NAME}"
+          run="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          size=$(grep -h '^size:' "$OUT/.work/blender.log" | head -1 | sed 's/size: //')
+          gh issue comment "${{ github.event.issue.number }}" --body "$(cat <<MSG
+          ✅ **${NAME}** جاهز (${size})
+
+          ![preview](${base}/preview.png?raw=true)
+
+          - تنزيل البروب: [${NAME}.zip](${base}/${NAME}.zip)
+          - التشغيل: [سجل البناء](${run})
+
+          حط المجلد في resources، وبعدها \`ensure ${NAME}\`، وجربه باللعبة بـ \`/spawnprop ${NAME}\`
+          MSG
+          )"
+
+      - name: Report a failure on the issue
+        if: failure() && github.event_name == 'issues'
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" --body "❌ ما قدرت أبني البروب. السجل: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

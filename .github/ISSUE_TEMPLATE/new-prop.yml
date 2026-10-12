@@ -1,0 +1,25 @@
+name: بروب جديد
+description: ارفع صورة أو موديل GLB ويطلع لك بروب FiveM جاهز
+title: "[prop] "
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Prop name
+      description: اسم البروب بالإنجليزي (حروف صغيرة وأرقام و _) مثل estate_sofa_01
+      placeholder: estate_sofa_01
+    validations:
+      required: true
+  - type: input
+    id: height
+    attributes:
+      label: Height (metres)
+      description: ارتفاع البروب الحقيقي بالمتر (مثلاً كنب 0.9). اتركه 0 لو تبي نفس مقاس الموديل
+      value: "0"
+  - type: textarea
+    id: file
+    attributes:
+      label: Image or 3D model
+      description: اسحب الصورة هنا (PNG/JPG بخلفية بسيطة) أو ملف .glb
+    validations:
+      required: true

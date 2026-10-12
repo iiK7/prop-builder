@@ -1,0 +1,25 @@
+"""Read a 'New prop' issue form body and print shell assignments:
+NAME=..., HEIGHT=..., FILE_URL=...
+"""
+import os
+import re
+import sys
+
+body = os.environ.get("ISSUE_BODY", "")
+
+
+def field(title):
+    m = re.search(r"###\s*" + re.escape(title) + r"\s*\n+(.*?)(?=\n###|\Z)", body, re.S)
+    v = (m.group(1).strip() if m else "")
+    return "" if v == "_No response_" else v
+
+
+name = re.sub(r"[^a-z0-9_]", "_", field("Prop name").lower()).strip("_")[:40]
+height = re.sub(r"[^0-9.]", "", field("Height (metres)")) or "0"
+file_block = field("Image or 3D model")
+urls = re.findall(r"https://[^\s)\"'>\]]+", file_block)
+if not name or not urls:
+    sys.exit("missing prop name or file")
+print(f"NAME={name}")
+print(f"HEIGHT={height}")
+print(f"FILE_URL={urls[0]}")
