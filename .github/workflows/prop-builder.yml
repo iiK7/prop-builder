@@ -156,7 +156,12 @@ jobs:
           for crop in "$OUT"/room_in/obj*.png; do
             [ -e "$crop" ] || { echo "::error::No furniture found in the photo"; exit 1; }
             id=$(basename "$crop" .png)
-            python -u "$TOOL/image_to_glb.py" "$crop" "$OUT/room_glb/$id.glb" || echo "::warning::$id could not be turned into 3D"
+            h=$(python -c "import json,sys;print(next(o['height'] for o in json.load(open(sys.argv[1]))['objects'] if o['id']==sys.argv[2]))" "$OUT/room_in/objects.json" "$id")
+            if ! python -u "$TOOL/image_to_glb.py" "$crop" "$OUT/room_glb/$id.glb"; then
+              # no GPU quota left (or the Space failed): stand-in box wearing the cut-out photo
+              echo "::warning::$id: 3D failed, using a photo box instead"
+              python -u "$TOOL/flat_to_glb.py" "$crop" "$OUT/room_glb/$id.glb" box "$h"
+            fi
           done
           python -u "$TOOL/room_build.py" "$OUT/room_in/objects.json" "$OUT/room_glb" "$OUT/room" "$RW" "$RD"
           PY=python python -u "$TOOL/room_package.py" "$OUT/room" "$NAME" "$OUT"

@@ -56,4 +56,7 @@ for space in SPACES:
         except Exception:
             pass
 
+if "quota" in str(last_error).lower():
+    print("::error title=Daily image-to-3D limit reached::The free Hugging Face GPU quota is used up for today. "
+          "Try again later, or use a flat product type (bag, box, board, can), which does not need it.")
 sys.exit(f"image to 3D failed on every Space: {last_error}")
