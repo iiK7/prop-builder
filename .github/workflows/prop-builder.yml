@@ -23,7 +23,7 @@ on:
         description: 'Height in metres (0 keeps the model size)'
         default: '0'
       mode:
-        description: 'ai (3D from photo) or a flat product shape: bag, box, board, can'
+        description: 'ai (3D from photo), a flat product shape (bag, box, board, can) or room'
         default: 'ai'
 
 permissions:
@@ -114,6 +114,12 @@ jobs:
               { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
           esac
 
+      - name: Install room tools (YOLO, CPU)
+        if: env.MODE == 'room'
+        run: |
+          pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -q ultralytics
+
       - name: Download the file
         if: env.LOCAL_FILE == ''
         run: |
@@ -136,8 +142,27 @@ jobs:
           python -u "$TOOL/flat_to_glb.py" "$LOCAL_FILE" "$OUT/in/model.glb" "$MODE" "$HEIGHT"
           echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
 
+      - name: Room (find the furniture, 3D each piece, assemble)
+        if: env.MODE == 'room'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          size="$HEIGHT"; RW=4; RD=4
+          if [[ "$size" =~ ^([0-9.]+)x([0-9.]+)$ ]]; then RW="${BASH_REMATCH[1]}"; RD="${BASH_REMATCH[2]}"; fi
+          python -u "$TOOL/room_detect.py" "$LOCAL_FILE" "$OUT/room_in" 6
+          mkdir -p "$OUT/room_glb"
+          for crop in "$OUT"/room_in/obj*.png; do
+            [ -e "$crop" ] || { echo "::error::No furniture found in the photo"; exit 1; }
+            id=$(basename "$crop" .png)
+            python -u "$TOOL/image_to_glb.py" "$crop" "$OUT/room_glb/$id.glb" || echo "::warning::$id could not be turned into 3D"
+          done
+          python -u "$TOOL/room_build.py" "$OUT/room_in/objects.json" "$OUT/room_glb" "$OUT/room" "$RW" "$RD"
+          PY=python python -u "$TOOL/room_package.py" "$OUT/room" "$NAME" "$OUT"
+          python -u "$TOOL/render_preview.py" "$OUT/room/room.glb" "$OUT/preview.png" | grep "^preview" || true
+          echo "LOCAL_FILE=$OUT/room/room.glb" >> "$GITHUB_ENV"
+
       - name: Image to 3D (TRELLIS on Hugging Face)
-        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') && !contains(fromJSON('["bag","box","board","can"]'), env.MODE) }}
+        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') && !contains(fromJSON('["bag","box","board","can","room"]'), env.MODE) }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -145,6 +170,7 @@ jobs:
           echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
 
       - name: Build the prop
+        if: env.MODE != 'room'
         run: PY=python bash "$TOOL/build_prop.sh" "$LOCAL_FILE" "$NAME" "$OUT" "$HEIGHT"
 
       - uses: actions/upload-artifact@v4

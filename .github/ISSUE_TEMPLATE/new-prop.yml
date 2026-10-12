@@ -21,12 +21,13 @@ body:
         - Box (carton)
         - Board (sign, poster, painting)
         - Can (drink can, jar)
+        - Room (photo of a whole room)
       default: 0
   - type: input
     id: height
     attributes:
       label: Height (metres)
-      description: ارتفاع البروب الحقيقي بالمتر (مثلاً كنب 0.9). اتركه 0 لو تبي نفس مقاس الموديل
+      description: ارتفاع البروب الحقيقي بالمتر (مثلاً كنب 0.9). للغرفة اكتب المقاس مثل 4x4
       value: "0"
   - type: textarea
     id: file

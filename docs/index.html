@@ -56,7 +56,8 @@ model-viewer{width:100%;height:340px;background:radial-gradient(circle at 50% 40
 .g img{width:100%;aspect-ratio:1;object-fit:cover;max-width:100%;display:block}
 .g span{font-family:var(--f-mono);font-size:12px;padding:6px 8px;overflow-wrap:anywhere;direction:ltr;text-align:left}
 .err{color:var(--bad);font-size:14px}
-.types{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+select{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%}
 .types button{font:600 12px var(--f-body);background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:8px 2px;cursor:pointer;line-height:1.3}
 .types button span{display:block;font-size:20px}
 .types button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
@@ -96,6 +97,7 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
       <button data-mode="box"><span>📦</span>علبة</button>
       <button data-mode="board"><span>🖼️</span>لوحة</button>
       <button data-mode="can"><span>🥫</span>علبة مشروب</button>
+      <button data-mode="room"><span>🏠</span>غرفة كاملة</button>
     </div>
     <p class="note" id="typeNote">غرض 3D: الذكاء الاصطناعي يسوي المجسم من الصورة. يناسب الأثاث والأغراض اللي ما عليها كتابة.</p>
     <div class="drop" id="drop">
@@ -106,8 +108,13 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
       <label>اسم البروب
         <input id="name" class="mono" type="text" placeholder="estate_sofa_01" autocapitalize="off" spellcheck="false">
       </label>
-      <label>الارتفاع (متر)
+      <label id="heightBox">الارتفاع (متر)
         <input id="height" class="mono" type="number" min="0" step="0.05" value="0">
+      </label>
+      <label id="roomBox" hidden>مقاس الغرفة (متر)
+        <select id="roomSize">
+          <option>3x3</option><option selected>4x4</option><option>5x4</option><option>6x4</option><option>6x6</option><option>8x6</option>
+        </select>
       </label>
     </div>
     <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ .</p>
@@ -149,6 +156,9 @@ const STEP_LABELS = [
   [/Install Python/, 'تجهيز Blender'],
   [/Fetch Sollumz/, 'تجهيز CodeWalker'],
   [/Read the request/, 'قراءة الطلب'],
+  [/Install room/, 'تجهيز أداة الغرف'],
+  [/Room/, 'تحليل الغرفة وتحويل كل غرض لـ3D'],
+  [/Flat product/, 'لصق الصورة على المنتج'],
   [/Image to 3D/, 'تحويل الصورة إلى 3D'],
   [/Build the prop/, 'تحويل الموديل لبروب GTA'],
   [/prop-builds/, 'حفظ النتيجة'],
@@ -190,6 +200,7 @@ const TYPES = {
   box:   { h: 0.25, note: 'علبة: صورة الوجه الأمامي تنلصق على وجهين العلبة.' },
   board: { h: 1.0,  note: 'لوحة: لافتة أو بوستر أو لوحة فنية، الصورة على الوجه الأمامي.' },
   can:   { h: 0.12, note: 'علبة مشروب: صورة الملصق كامل (مفرود) تلتف حول العلبة.' },
+  room:  { h: 0,    note: 'غرفة: صوّر الغرفة كاملة. الأداة تلقى الأثاث (لين 6 أغراض)، تسوي كل غرض 3D، وتركّب الغرفة بجدرانها وأرضيتها. ياخذ 3 إلى 6 دقايق.' },
 };
 let mode = 'ai';
 $('types').addEventListener('click', e => {
@@ -198,6 +209,8 @@ $('types').addEventListener('click', e => {
   [...$('types').children].forEach(x => x.classList.toggle('on', x === b));
   $('typeNote').textContent = TYPES[mode].note;
   $('height').value = TYPES[mode].h;
+  $('heightBox').hidden = mode === 'room';
+  $('roomBox').hidden = mode !== 'room';
 });
 function validate() {
   const ok = file && NAME_RE.test($('name').value) && token();
@@ -307,7 +320,8 @@ $('build').onclick = async () => {
   try {
     const { blob, ext } = await prepareImage(file);
     const flat = ext !== 'glb' && mode !== 'ai';
-    const path = `prop_requests/${name}@${height}${flat ? '@' + mode : ''}.${ext}`;
+    const size = mode === 'room' ? $('roomSize').value : height;
+    const path = `prop_requests/${name}@${size}${flat ? '@' + mode : ''}.${ext}`;
     let sha;
     try { sha = (await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`)).sha; } catch (e) { if (e.status !== 404) throw e; }
     const put = await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`, {
