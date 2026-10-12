@@ -2,6 +2,7 @@
 # to3d.sh <image> <out.glb>
 # Image to 3D with fallbacks: TRELLIS on Hugging Face (best), then TripoSR on this machine's CPU
 # (free, no quota, lower quality). Exits non-zero only when both fail.
+# Writes the engine that made the model ("trellis" or "triposr") next to it, in <out>.engine.
 #   Env: PY (bpy python), HF_TOKEN, TRIPOSR_HOME (cache dir for TripoSR's venv and checkout)
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -10,7 +11,10 @@ IMG="$1"; OUT="$2"
 TRIPOSR_REF=107cefdc244c39106fa830359024f6a2f1c78871
 HOME_DIR="${TRIPOSR_HOME:-$HOME/.cache/triposr}"
 
+ENGINE="${OUT%.glb}.engine"
+
 if "$PY" -u "$HERE/image_to_glb.py" "$IMG" "$OUT"; then
+    echo trellis > "$ENGINE"
     exit 0
 fi
 
@@ -28,4 +32,4 @@ fi
 RAW="${OUT%.glb}.raw.glb"
 TRIPOSR_DIR="$SRC" "$VENV/bin/python" -u "$HERE/triposr_cpu.py" "$IMG" "$RAW" || exit 1
 "$PY" -u "$HERE/vc_bake.py" "$RAW" "$OUT" | grep -E "^baked|rror" || true
-[ -s "$OUT" ]
+[ -s "$OUT" ] && echo triposr > "$ENGINE"

@@ -1,4 +1,4 @@
--- /spawnroom __NAME__          places the room in front of you, open side facing you
+-- /spawnroom __NAME__          places the room in front of you, door facing you
 -- /spawnroom __NAME__ delete   removes it
 local ROOM = {
     shell = `__NAME___shell`,

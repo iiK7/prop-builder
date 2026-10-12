@@ -124,6 +124,18 @@ jobs:
               { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
           esac
 
+      - name: Pick a free name
+        run: |
+          # a build with this name already exists: add _2, _3, ... so nothing gets overwritten
+          taken=$(git fetch -q --depth 1 origin prop-builds 2>/dev/null \
+                  && git ls-tree --name-only FETCH_HEAD builds/ | sed 's|^builds/||' || true)
+          name="$NAME"; n=1
+          while grep -qx "$name" <<< "$taken"; do n=$((n + 1)); name="${NAME:0:37}_$n"; done
+          if [ "$name" != "$NAME" ]; then
+            echo "::notice::$NAME is taken, building as $name"
+            echo "NAME=$name" >> "$GITHUB_ENV"
+          fi
+
       - name: Install room tools (YOLO, CPU)
         if: env.MODE == 'room'
         run: |
@@ -153,6 +165,7 @@ jobs:
         run: |
           python -u "$TOOL/flat_to_glb.py" "$LOCAL_FILE" "$OUT/in/model.glb" "$MODE" "$HEIGHT"
           echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
+          echo flat > "$OUT/engines.txt"
 
       - name: Room (find the furniture, 3D each piece, assemble)
         if: env.MODE == 'room'
@@ -161,16 +174,19 @@ jobs:
         run: |
           size="$HEIGHT"; RW=4; RD=4
           if [[ "$size" =~ ^([0-9.]+)x([0-9.]+)$ ]]; then RW="${BASH_REMATCH[1]}"; RD="${BASH_REMATCH[2]}"; fi
-          "$RUNNER_TEMP/yolo/bin/python" -u "$TOOL/room_detect.py" "$LOCAL_FILE" "$OUT/room_in" 6
+          "$RUNNER_TEMP/yolo/bin/python" -u "$TOOL/room_detect.py" "$LOCAL_FILE" "$OUT/room_in" 10
           mkdir -p "$OUT/room_glb"
           for crop in "$OUT"/room_in/obj*.png; do
             [ -e "$crop" ] || { echo "::error::No furniture found in the photo"; exit 1; }
             id=$(basename "$crop" .png)
             h=$(python -c "import json,sys;print(next(o['height'] for o in json.load(open(sys.argv[1]))['objects'] if o['id']==sys.argv[2]))" "$OUT/room_in/objects.json" "$id")
-            if ! PY=python bash "$TOOL/to3d.sh" "$crop" "$OUT/room_glb/$id.glb"; then
+            if PY=python bash "$TOOL/to3d.sh" "$crop" "$OUT/room_glb/$id.glb"; then
+              cat "$OUT/room_glb/$id.engine" >> "$OUT/engines.txt"
+            else
               # TRELLIS and TripoSR both failed: stand-in box wearing the cut-out photo
               echo "::warning::$id: 3D failed, using a photo box instead"
               python -u "$TOOL/flat_to_glb.py" "$crop" "$OUT/room_glb/$id.glb" box "$h"
+              echo box >> "$OUT/engines.txt"
             fi
           done
           python -u "$TOOL/room_build.py" "$OUT/room_in/objects.json" "$OUT/room_glb" "$OUT/room" "$RW" "$RD"
@@ -185,6 +201,7 @@ jobs:
         run: |
           PY=python bash "$TOOL/to3d.sh" "$LOCAL_FILE" "$OUT/in/model.glb"
           echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
+          cp "$OUT/in/model.engine" "$OUT/engines.txt"
 
       - name: Check TripoSR cache
         # only once TripoSR has actually been set up and run, so a TRELLIS-only run can't pin an empty cache
@@ -226,10 +243,31 @@ jobs:
           cp "$OUT/$NAME.zip" "$dir/builds/$NAME/"
           [ -f "$OUT/preview.png" ] && cp "$OUT/preview.png" "$dir/builds/$NAME/"
           cp "$LOCAL_FILE" "$dir/builds/$NAME/model.glb"
+          # what made it (shown on the site) and which request it answers
+          python - "$dir/builds/$NAME/info.json" <<'PY'
+          import collections, datetime, glob, json, os, re, sys
+          engines = open(f"{os.environ['OUT']}/engines.txt").read().split() if os.path.exists(f"{os.environ['OUT']}/engines.txt") else ["upload"]
+          size = ""
+          for log in glob.glob(f"{os.environ['OUT']}/.work/blender.log"):
+              m = re.search(r"^size: (.+)$", open(log).read(), re.M)
+              size = m.group(1) if m else ""
+          info = {"name": os.environ["NAME"], "mode": os.environ["MODE"], "engines": dict(collections.Counter(engines)),
+                  "size": os.environ["HEIGHT"] if os.environ["MODE"] == "room" else size,
+                  "request": os.environ["GITHUB_SHA"], "built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
+          json.dump(info, open(sys.argv[1], "w"), ensure_ascii=False)
+          print(info)
+          PY
           cd "$dir"
           git config user.name "prop-builder"
           git config user.email "prop-builder@users.noreply.github.com"
-          git add -A && git commit -qm "Build prop $NAME" && git push -q origin prop-builds
+          git add -A && git commit -qm "Build prop $NAME"
+          # another build may have pushed meanwhile: each build has its own folder, so rebase and retry
+          for try in 1 2 3 4 5 6; do
+            git push -q origin prop-builds && exit 0
+            sleep $((try * 3))
+            git pull -q --rebase origin prop-builds || { git rebase --abort; echo "::error::could not merge with another build of $NAME"; exit 1; }
+          done
+          echo "::error::could not save the build after 6 tries"; exit 1
 
       - name: Reply on the issue
         if: github.event_name == 'issues'

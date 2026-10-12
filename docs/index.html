@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&family=JetBrains+Mono:wght@400;600&display=swap">
 <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* Layout: single mobile column — header, upload card, live build log, result viewer, past builds. */
 :root{
@@ -19,6 +20,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 .wrap{max-width:560px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
@@ -52,9 +54,16 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(-
 model-viewer{width:100%;height:340px;background:radial-gradient(circle at 50% 40%,#25303a,#12181d);border-radius:10px;--poster-color:transparent}
 .cmd{font-family:var(--f-mono);direction:ltr;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;overflow-x:auto;white-space:nowrap}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.g{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;color:inherit;text-align:start;padding:0;font:inherit}
+.g{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;position:relative;min-width:0}
+.g.picked{border-color:var(--accent)}
+.g button{display:flex;flex-direction:column;width:100%;cursor:pointer;color:inherit;text-align:start;padding:0;font:inherit;background:none;border:0}
 .g img{width:100%;aspect-ratio:1;object-fit:cover;max-width:100%;display:block}
-.g span{font-family:var(--f-mono);font-size:12px;padding:6px 8px;overflow-wrap:anywhere;direction:ltr;text-align:left}
+.g .gname{font-family:var(--f-mono);font-size:12px;padding:6px 8px 2px;overflow-wrap:anywhere;direction:ltr;text-align:left}
+.g .badge{margin:0 8px 8px}
+.g label{position:absolute;top:6px;inset-inline-start:6px;background:rgba(15,20,24,.8);border-radius:6px;padding:4px;display:flex;cursor:pointer}
+.g label input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.badge{font-size:11px;font-weight:600;border-radius:6px;padding:1px 6px;align-self:flex-start;border:1px solid currentColor}
+.badge.hi{color:var(--ok)} .badge.mid{color:var(--accent)} .badge.lo{color:var(--mute)}
 .err{color:var(--bad);font-size:14px}
 .types{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 select{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%}
@@ -130,6 +139,7 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
 
   <section class="card" id="result" hidden>
     <div class="row"><h2 id="resName"></h2><span class="sub" id="resInfo"></span></div>
+    <span class="badge" id="resBadge" hidden></span>
     <model-viewer id="viewer" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" alt="معاينة 3D"></model-viewer>
     <a class="btn primary" id="download" download>تنزيل البروب (zip)</a>
     <div class="sub">بالسيرفر: حط المجلد في resources وبعدين</div>
@@ -139,6 +149,9 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
   <section class="card">
     <div class="row"><h2>البروبز السابقة</h2><button class="btn small" id="refresh">تحديث</button></div>
     <div class="gallery" id="gallery"><span class="sub">جاري التحميل…</span></div>
+    <button class="btn" id="pack">📦 صدّر الكل كباك واحد</button>
+    <p class="note">الباك: ريسورس واحد فيه كل البروبز المختارة. علّم على البروبز اللي تبيها، أو خلها فاضية عشان ياخذ الكل. لا تشغّله مع ريسورسات البروبز الفردية بنفس الوقت.</p>
+    <div class="sub" id="packState" aria-live="polite"></div>
   </section>
 </div>
 
@@ -165,6 +178,32 @@ const STEP_LABELS = [
 ];
 
 let file = null;
+
+// what made a build (info.json, written by the workflow; older builds have none)
+async function fetchInfo(name, viaApi) {
+  if (viaApi) {
+    const r = await gh(`/contents/builds/${name}/info.json?ref=prop-builds`);
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(r.content.replace(/\n/g, '')), c => c.charCodeAt(0))));
+  }
+  const r = await fetch(RAW(`builds/${name}/info.json`));
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+const ENGINE = { trellis: ['عالية', 'hi'], triposr: ['عادية', 'mid'], box: ['صندوق', 'lo'] };
+function badge(info) {
+  if (!info) return null;
+  const e = info.engines || {};
+  if (info.mode === 'room') {
+    const parts = Object.entries(e).map(([k, n]) => `${n} ${(ENGINE[k] || [k])[0]}`);
+    const worst = e.box ? 'lo' : e.triposr ? 'mid' : 'hi';
+    return { text: `غرفة · ${parts.join(' · ')}`, cls: worst };
+  }
+  if (e.trellis) return { text: 'جودة عالية', cls: 'hi' };
+  if (e.triposr) return { text: 'جودة عادية', cls: 'mid' };
+  if (e.flat) return { text: 'صورة ملصوقة', cls: 'hi' };
+  if (e.upload) return { text: 'موديل مرفوع', cls: 'hi' };
+  return null;
+}
 
 function token() { return store.get('pb_token'); }
 function headers(json) {
@@ -200,7 +239,7 @@ const TYPES = {
   box:   { h: 0.25, note: 'علبة: صورة الوجه الأمامي تنلصق على وجهين العلبة.' },
   board: { h: 1.0,  note: 'لوحة: لافتة أو بوستر أو لوحة فنية، الصورة على الوجه الأمامي.' },
   can:   { h: 0.12, note: 'علبة مشروب: صورة الملصق كامل (مفرود) تلتف حول العلبة.' },
-  room:  { h: 0,    note: 'غرفة: صوّر الغرفة كاملة. الأداة تلقى الأثاث (لين 6 أغراض)، تسوي كل غرض 3D، وتركّب الغرفة بجدرانها وأرضيتها. ياخذ 3 إلى 6 دقايق.' },
+  room:  { h: 0,    note: 'غرفة: صوّر الغرفة كاملة. الأداة تلقى الأثاث (لين 10 أغراض)، تسوي كل غرض 3D، وتركّب الغرفة: أرضية، 4 جدران، باب، شباك، وسقف. ياخذ 3 إلى 10 دقايق.' },
 };
 let mode = 'ai';
 $('types').addEventListener('click', e => {
@@ -301,23 +340,50 @@ async function waitForRun(sha) {
   }
 }
 
-function showResult(name, version) {
+function showResult(name, version, info) {
   $('result').hidden = false;
   $('resName').textContent = name;
+  const b = badge(info);
+  $('resBadge').hidden = !b;
+  if (b) { $('resBadge').textContent = b.text; $('resBadge').className = 'badge ' + b.cls; }
+  $('resInfo').textContent = info && info.size ? info.size : '';
   $('viewer').src = RAW(`builds/${name}/model.glb`, version);
   $('viewer').poster = RAW(`builds/${name}/preview.png`, version);
   $('download').href = RAW(`builds/${name}/${name}.zip`, version);
   $('download').setAttribute('download', `${name}.zip`);
-  $('cmds').textContent = `ensure ${name}   ·   /spawnprop ${name}`;
+  $('cmds').textContent = `ensure ${name}   ·   /${info && info.mode === 'room' ? 'spawnroom' : 'spawnprop'} ${name}`;
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// never overwrite someone's prop: a taken name gets _2, _3, ...
+async function freeName(name) {
+  let taken = new Set();
+  try { taken = new Set((await gh('/contents/builds?ref=prop-builds')).map(i => i.name)); } catch (e) { if (e.status !== 404) throw e; }
+  let out = name, n = 1;
+  while (taken.has(out)) { n += 1; out = `${name.slice(0, 37)}_${n}`; }
+  return out;
+}
+// the workflow also renames on a clash (two people, same name, same minute): find the build of this request
+async function findBuild(name, sha) {
+  for (const n of [name, ...Array.from({ length: 8 }, (_, i) => `${name.slice(0, 37)}_${i + 2}`)]) {
+    try { const info = await fetchInfo(n, true); if (info.request === sha) return { name: n, info }; } catch {}
+  }
+  return { name, info: null };
+}
+
 $('build').onclick = async () => {
-  const name = $('name').value, height = Math.max(0, parseFloat($('height').value) || 0);
+  let name = $('name').value;
+  const height = Math.max(0, parseFloat($('height').value) || 0);
   $('formErr').hidden = true; $('build').disabled = true;
   $('progress').hidden = false; $('result').hidden = true; $('runLink').hidden = true;
   $('progTitle').textContent = 'جاري الرفع'; $('steps').innerHTML = ''; startTimer();
   try {
+    const free = await freeName(name);
+    if (free !== name) {
+      $('formErr').hidden = false;
+      $('formErr').textContent = `الاسم ${name} مستخدم، بيتسمى ${free}`;
+      $('name').value = name = free;
+    }
     const { blob, ext } = await prepareImage(file);
     const flat = ext !== 'glb' && mode !== 'ai';
     const size = mode === 'room' ? $('roomSize').value : height;
@@ -333,7 +399,8 @@ $('build').onclick = async () => {
     clearInterval(timerId);
     if (run.conclusion === 'success') {
       $('progTitle').innerHTML = '<span class="ok">خلص ✓</span>';
-      showResult(name, put.commit.sha.slice(0, 7));
+      const got = await findBuild(name, put.commit.sha);
+      showResult(got.name, put.commit.sha.slice(0, 7), got.info);
       loadGallery();
     } else {
       $('progTitle').innerHTML = '<span class="err">فشل البناء</span>';
@@ -350,25 +417,100 @@ $('build').onclick = async () => {
   }
 };
 
+const picked = new Set();
+const infos = {};
 async function loadGallery() {
   const g = $('gallery');
   try {
     const items = await gh('/contents/builds?ref=prop-builds');
     const dirs = items.filter(i => i.type === 'dir').reverse();
+    for (const n of [...picked]) if (!dirs.some(d => d.name === n)) picked.delete(n);
     g.innerHTML = dirs.length ? dirs.map(d => `
-      <button class="g" data-name="${d.name}">
-        <img loading="lazy" src="${RAW(`builds/${d.name}/preview.png`)}" alt="${d.name}">
-        <span>${d.name}</span>
-      </button>`).join('') : '<span class="sub">ما فيه بروبز للحين.</span>';
+      <div class="g${picked.has(d.name) ? ' picked' : ''}" data-name="${d.name}">
+        <button type="button">
+          <img loading="lazy" src="${RAW(`builds/${d.name}/preview.png`)}" alt="${d.name}">
+          <span class="gname">${d.name}</span>
+          <span class="badge" hidden></span>
+        </button>
+        <label><input type="checkbox" aria-label="اختر ${d.name} للباك"${picked.has(d.name) ? ' checked' : ''}></label>
+      </div>`).join('') : '<span class="sub">ما فيه بروبز للحين.</span>';
+    updatePack();
+    dirs.forEach(async d => {
+      try { infos[d.name] = await fetchInfo(d.name); } catch { return; }
+      const b = badge(infos[d.name]), el = g.querySelector(`.g[data-name="${d.name}"] .badge`);
+      if (b && el) { el.textContent = b.text; el.className = 'badge ' + b.cls; el.hidden = false; }
+    });
   } catch (e) {
     g.innerHTML = `<span class="sub">ما قدرت أجيب القائمة (${e.message}).</span>`;
   }
 }
 $('gallery').addEventListener('click', e => {
-  const b = e.target.closest('.g');
-  if (b) showResult(b.dataset.name);
+  const tile = e.target.closest('.g'); if (!tile) return;
+  const name = tile.dataset.name;
+  if (e.target.matches('input[type=checkbox]')) {
+    e.target.checked ? picked.add(name) : picked.delete(name);
+    tile.classList.toggle('picked', e.target.checked);
+    updatePack();
+  } else if (e.target.closest('button')) {
+    showResult(name, null, infos[name]);
+  }
 });
 $('refresh').onclick = loadGallery;
+
+// one resource from many builds: every stream file, one manifest, one client for /spawnprop and /spawnroom
+const PACK = 'props_pack';
+function updatePack() {
+  $('pack').textContent = picked.size ? `📦 صدّر المختار (${picked.size}) كباك واحد` : '📦 صدّر الكل كباك واحد';
+}
+function luaRoom(name, lua) {
+  const num = re => parseFloat((lua.match(re) || [])[1]);
+  const shell = (lua.match(/shell = `(\w+)`/) || [])[1];
+  const objs = [...lua.matchAll(/model = `(\w+)`, x = (-?[\d.e-]+), y = (-?[\d.e-]+) }/g)];
+  if (!shell) throw new Error(`${name}: ما لقيت بيانات الغرفة`);
+  return `    ['${name}'] = { shell = \`${shell}\`, depth = ${num(/depth = (-?[\d.]+)/)}, floor = ${num(/floor = (-?[\d.]+)/)}, objects = {\n` +
+    objs.map(m => `        { model = \`${m[1]}\`, x = ${m[2]}, y = ${m[3]} },`).join('\n') + '\n    } },';
+}
+$('pack').onclick = async () => {
+  const btn = $('pack'), state = $('packState');
+  const names = picked.size ? [...picked] : [...$('gallery').querySelectorAll('.g')].map(t => t.dataset.name);
+  if (!names.length) return;
+  if (!window.JSZip) { state.textContent = 'أداة الضغط ما تحملت، حدّث الصفحة.'; return; }
+  btn.disabled = true;
+  try {
+    const pack = new JSZip(), root = pack.folder(PACK);
+    const props = [], rooms = [], ytyps = [];
+    for (const [i, n] of names.entries()) {
+      state.textContent = `(${i + 1}/${names.length}) ${n}`;
+      const r = await fetch(RAW(`builds/${n}/${n}.zip`));
+      if (!r.ok) throw new Error(`${n}: ${r.status}`);
+      const zip = await JSZip.loadAsync(await r.arrayBuffer());
+      for (const [path, f] of Object.entries(zip.files)) {
+        const m = !f.dir && path.match(/^[^/]+\/stream\/([^/]+)$/);
+        if (!m) continue;
+        root.file(`stream/${m[1]}`, await f.async('uint8array'));
+        if (/\.ytyp$/i.test(m[1])) ytyps.push(m[1]);
+      }
+      const client = zip.file(/^[^/]+\/client\.lua$/)[0];
+      const lua = client ? await client.async('string') : '';
+      if (lua.includes("RegisterCommand('spawnroom'")) rooms.push(luaRoom(n, lua));
+      else props.push(`    ['${n}'] = \`${n}\`,`);
+    }
+    state.textContent = 'جاري التجميع…';
+    const tpl = await (await fetch('pack_client.lua', { cache: 'no-cache' })).text();
+    root.file('client.lua', tpl.replaceAll('__PACK__', PACK).replace('__PROPS__', props.join('\n')).replace('__ROOMS__', rooms.join('\n')));
+    root.file('fxmanifest.lua', `fx_version 'cerulean'\ngame 'gta5'\nlua54 'yes'\n\ndescription '${names.length} props from the prop site'\n\n` +
+      ytyps.sort().map(y => `data_file 'DLC_ITYP_REQUEST' 'stream/${y}'`).join('\n') + `\n\nclient_script 'client.lua'\n`);
+    const blob = await pack.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `${PACK}.zip` });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    state.textContent = `✓ ${PACK}.zip: ${props.length} بروب و ${rooms.length} غرفة. بالسيرفر: ensure ${PACK}`;
+  } catch (e) {
+    state.textContent = 'ما قدرت أسوي الباك: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+};
 
 refreshTokenState();
 loadGallery();
