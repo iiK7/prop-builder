@@ -11,6 +11,7 @@ from gradio_client import Client, handle_file
 image, out = sys.argv[1:3]
 SPACES = [s for s in os.environ.get("TRELLIS_SPACES", "trellis-community/TRELLIS,JeffreyXiang/TRELLIS").split(",") if s]
 token = os.environ.get("HF_TOKEN") or None
+print("HF_TOKEN:", "set" if token else "NOT SET (anonymous quota)")
 
 last_error = None
 for space in SPACES:
