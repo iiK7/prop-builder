@@ -100,7 +100,7 @@ jobs:
             workflow_dispatch)
               { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV" ;;
             push)
-              f=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
+              f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
               [ -n "$f" ] || { echo "no new image/model in prop_requests"; exit 1; }
               base=$(basename "$f"); stem="${base%.*}"
               name="${stem%@*}"; height=0; [[ "$stem" == *@* ]] && height="${stem##*@}"
@@ -152,6 +152,7 @@ jobs:
           mkdir -p "$dir/builds/$NAME"
           cp "$OUT/$NAME.zip" "$dir/builds/$NAME/"
           [ -f "$OUT/preview.png" ] && cp "$OUT/preview.png" "$dir/builds/$NAME/"
+          cp "$LOCAL_FILE" "$dir/builds/$NAME/model.glb"
           cd "$dir"
           git config user.name "prop-builder"
           git config user.email "prop-builder@users.noreply.github.com"
