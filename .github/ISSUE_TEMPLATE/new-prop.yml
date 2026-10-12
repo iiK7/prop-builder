@@ -10,6 +10,18 @@ body:
       placeholder: estate_sofa_01
     validations:
       required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      description: غرض 3D بالذكاء الاصطناعي، أو منتج مسطح تنلصق صورته عليه (الشعار يطلع واضح)
+      options:
+        - 3D object (AI)
+        - Bag (chips, popcorn)
+        - Box (carton)
+        - Board (sign, poster, painting)
+        - Can (drink can, jar)
+      default: 0
   - type: input
     id: height
     attributes:

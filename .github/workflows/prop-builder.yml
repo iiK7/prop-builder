@@ -22,6 +22,9 @@ on:
       height:
         description: 'Height in metres (0 keeps the model size)'
         default: '0'
+      mode:
+        description: 'ai (3D from photo) or a flat product shape: bag, box, board, can'
+        default: 'ai'
 
 permissions:
   contents: write
@@ -92,21 +95,23 @@ jobs:
           IN_NAME: ${{ inputs.name }}
           IN_URL: ${{ inputs.file_url }}
           IN_HEIGHT: ${{ inputs.height }}
+          IN_MODE: ${{ inputs.mode }}
         run: |
           mkdir -p "$OUT/in"
           case "$GITHUB_EVENT_NAME" in
             issues)
               python "$TOOL/parse_issue.py" >> "$GITHUB_ENV" ;;
             workflow_dispatch)
-              { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV" ;;
+              { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "MODE=${IN_MODE:-ai}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV" ;;
             push)
               f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
               [ -n "$f" ] || { echo "no new image/model in prop_requests"; exit 1; }
               base=$(basename "$f"); stem="${base%.*}"
-              name="${stem%@*}"; height=0; [[ "$stem" == *@* ]] && height="${stem##*@}"
+              # file name: <name>[@<height>][@<mode>].<ext>
+              IFS='@' read -r name height mode <<< "$stem"; height="${height:-0}"; mode="${mode:-ai}"
               name=$(echo "$name" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_\n' '_')
               cp "$f" "$OUT/in/$base"
-              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
+              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
           esac
 
       - name: Download the file
@@ -125,8 +130,14 @@ jobs:
           mv "$dest" "$dest.$ext"
           echo "LOCAL_FILE=$dest.$ext" >> "$GITHUB_ENV"
 
+      - name: Flat product (photo as the label)
+        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') && contains(fromJSON('["bag","box","board","can"]'), env.MODE) }}
+        run: |
+          python -u "$TOOL/flat_to_glb.py" "$LOCAL_FILE" "$OUT/in/model.glb" "$MODE" "$HEIGHT"
+          echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
+
       - name: Image to 3D (TRELLIS on Hugging Face)
-        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') }}
+        if: ${{ !endsWith(env.LOCAL_FILE, '.glb') && !contains(fromJSON('["bag","box","board","can"]'), env.MODE) }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |

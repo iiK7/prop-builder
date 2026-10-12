@@ -56,6 +56,10 @@ model-viewer{width:100%;height:340px;background:radial-gradient(circle at 50% 40
 .g img{width:100%;aspect-ratio:1;object-fit:cover;max-width:100%;display:block}
 .g span{font-family:var(--f-mono);font-size:12px;padding:6px 8px;overflow-wrap:anywhere;direction:ltr;text-align:left}
 .err{color:var(--bad);font-size:14px}
+.types{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.types button{font:600 12px var(--f-body);background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:8px 2px;cursor:pointer;line-height:1.3}
+.types button span{display:block;font-size:20px}
+.types button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
 .ok{color:var(--ok)}
 details summary{cursor:pointer;color:var(--mute);font-size:14px}
 details[open] summary{margin-bottom:10px}
@@ -86,6 +90,14 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
 
   <section class="card">
     <h2>بروب جديد</h2>
+    <div class="types" id="types" role="group" aria-label="نوع البروب">
+      <button data-mode="ai" class="on"><span>🪑</span>غرض 3D</button>
+      <button data-mode="bag"><span>🛍️</span>كيس</button>
+      <button data-mode="box"><span>📦</span>علبة</button>
+      <button data-mode="board"><span>🖼️</span>لوحة</button>
+      <button data-mode="can"><span>🥫</span>علبة مشروب</button>
+    </div>
+    <p class="note" id="typeNote">غرض 3D: الذكاء الاصطناعي يسوي المجسم من الصورة. يناسب الأثاث والأغراض اللي ما عليها كتابة.</p>
     <div class="drop" id="drop">
       <input id="file" type="file" accept="image/*,.glb" aria-label="اختر صورة أو موديل GLB">
       <div id="dropHint">اضغط واختر صورة<br><span class="sub">غرض واحد، خلفية بسيطة · أو ملف .glb</span></div>
@@ -98,7 +110,7 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
         <input id="height" class="mono" type="number" min="0" step="0.05" value="0">
       </label>
     </div>
-    <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ . الارتفاع 0 يعني نفس مقاس الموديل.</p>
+    <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ .</p>
     <button class="btn primary" id="build" disabled>ابنِ البروب</button>
     <div id="formErr" class="err" hidden></div>
   </section>
@@ -172,6 +184,21 @@ $('saveToken').onclick = () => { store.set('pb_token', $('token').value.trim());
 $('clearToken').onclick = () => { store.set('pb_token', ''); refreshTokenState(); };
 
 const NAME_RE = /^[a-z0-9_]{3,40}$/;
+const TYPES = {
+  ai:    { h: 0,    note: 'غرض 3D: الذكاء الاصطناعي يسوي المجسم من الصورة. يناسب الأثاث والأغراض اللي ما عليها كتابة.' },
+  bag:   { h: 0.3,  note: 'كيس: صورة وجه الكيس تنلصق عليه كما هي، فالشعار والكتابة يطلعون واضحين.' },
+  box:   { h: 0.25, note: 'علبة: صورة الوجه الأمامي تنلصق على وجهين العلبة.' },
+  board: { h: 1.0,  note: 'لوحة: لافتة أو بوستر أو لوحة فنية، الصورة على الوجه الأمامي.' },
+  can:   { h: 0.12, note: 'علبة مشروب: صورة الملصق كامل (مفرود) تلتف حول العلبة.' },
+};
+let mode = 'ai';
+$('types').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.mode;
+  [...$('types').children].forEach(x => x.classList.toggle('on', x === b));
+  $('typeNote').textContent = TYPES[mode].note;
+  $('height').value = TYPES[mode].h;
+});
 function validate() {
   const ok = file && NAME_RE.test($('name').value) && token();
   $('build').disabled = !ok;
@@ -279,7 +306,8 @@ $('build').onclick = async () => {
   $('progTitle').textContent = 'جاري الرفع'; $('steps').innerHTML = ''; startTimer();
   try {
     const { blob, ext } = await prepareImage(file);
-    const path = `prop_requests/${name}${height ? '@' + height : ''}.${ext}`;
+    const flat = ext !== 'glb' && mode !== 'ai';
+    const path = `prop_requests/${name}@${height}${flat ? '@' + mode : ''}.${ext}`;
     let sha;
     try { sha = (await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`)).sha; } catch (e) { if (e.status !== 404) throw e; }
     const put = await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`, {
