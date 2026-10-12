@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>قطع البناء Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+/* Layout: one mobile column — house stepped through 5 stages, then a piece browser with its own stage steps. */
+:root{
+  --bg:#0f1418; --panel:#171e24; --line:#2a353f; --fg:#e8edf1; --mute:#93a2af; --accent:#f2a93b;
+  --f-display:"Lalezar","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:400;font-size:32px;margin:0}
+h1 span{color:var(--accent)}
+h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+a{color:var(--accent)}
+.sub{color:var(--mute);font-size:13px;margin:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+model-viewer{width:100%;height:360px;background:radial-gradient(circle at 50% 35%,#2c3843,#12181d);border-radius:10px}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.steps button,.chips button{font:600 13px var(--f-body);background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:8px 4px;cursor:pointer}
+.steps button.on,.chips button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
+.steps button b{display:block;font-family:var(--f-mono);font-size:11px;opacity:.7}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{padding:7px 12px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.play{font:600 14px var(--f-body);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+.desc{font-size:14px;margin:0;min-height:2.6em}
+.spec{font-family:var(--f-mono);direction:ltr;text-align:left;font-size:12px;color:var(--mute)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>قطع البناء <span>Estate</span></h1><p class="sub">35 قطعة · 7 أنواع × 5 مراحل · شبكة 4 متر</p></div>
+    <a href="../" class="sub">← مصنع البروبز</a>
+  </header>
+
+  <section class="card">
+    <div class="row"><h2>بيت 8×8 متر</h2><button class="play" id="housePlay">▶ شوف البناء</button></div>
+    <model-viewer id="houseView" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" camera-orbit="35deg 65deg auto" alt="بيت من قطع البناء"></model-viewer>
+    <div class="steps" id="houseSteps"></div>
+    <p class="desc" id="houseDesc"></p>
+  </section>
+
+  <section class="card">
+    <h2>القطع</h2>
+    <div class="chips" id="pieces"></div>
+    <model-viewer id="pieceView" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" alt="قطعة بناء"></model-viewer>
+    <div class="steps" id="pieceSteps"></div>
+    <div class="row"><span class="spec" id="spec"></span></div>
+  </section>
+</div>
+
+<script>
+const STAGES = [
+  { code: '1b', name: 'الأساس', desc: 'قاعدة خرسانة وحديد تسليح طالع منها.' },
+  { code: '2f', name: 'الهيكل', desc: 'أعمدة وجسور خرسانة، والسقف جسور بس.' },
+  { code: '3b', name: 'الطوب', desc: 'جدران طوب أحمر مع فتحات الشبابيك والأبواب.' },
+  { code: '4p', name: 'اللياسة', desc: 'جدران ملسة ومدهونة، وأرضية بلاط.' },
+  { code: '5f', name: 'التشطيب', desc: 'شبابيك بزجاج، باب خشب، حواف، وأرضية خشب.' },
+];
+const PIECES = [
+  { id: 'wall', name: 'جدار', size: '4.0 x 0.25 x 3.0 m' },
+  { id: 'wall_window', name: 'جدار بشباك', size: '4.0 x 0.25 x 3.0 m' },
+  { id: 'wall_door', name: 'جدار بباب', size: '4.0 x 0.25 x 3.0 m' },
+  { id: 'floor', name: 'أرضية', size: '4.0 x 4.0 x 0.22 m' },
+  { id: 'roof_flat', name: 'سقف مسطح', size: '4.0 x 4.0 x 0.55 m' },
+  { id: 'roof_slope', name: 'سقف مايل', size: '4.0 x 4.0 x 1.5 m' },
+  { id: 'pillar', name: 'عمود', size: '0.6 x 0.6 x 3.0 m' },
+];
+const $ = id => document.getElementById(id);
+
+function stepButtons(el, onPick) {
+  el.innerHTML = STAGES.map((s, i) => `<button data-i="${i}"><b>${i + 1}</b>${s.name}</button>`).join('');
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (b) onPick(+b.dataset.i); });
+}
+function mark(el, i) { [...el.children].forEach((b, j) => b.classList.toggle('on', j === i)); }
+
+// house
+let houseStage = 4, playing = 0;
+function setHouse(i) {
+  houseStage = i;
+  $('houseView').src = `house/house_${i + 1}.glb`;
+  $('houseDesc').textContent = `المرحلة ${i + 1}: ${STAGES[i].desc}`;
+  mark($('houseSteps'), i);
+}
+stepButtons($('houseSteps'), i => { stopPlay(); setHouse(i); });
+function stopPlay() { clearInterval(playing); playing = 0; $('housePlay').textContent = '▶ شوف البناء'; }
+$('housePlay').onclick = () => {
+  if (playing) return stopPlay();
+  let i = 0; setHouse(i);
+  $('housePlay').textContent = '■ إيقاف';
+  playing = setInterval(() => { i += 1; if (i >= STAGES.length) return stopPlay(); setHouse(i); }, 2200);
+};
+
+// pieces
+let piece = 0, pieceStage = 4;
+function setPiece() {
+  const p = PIECES[piece], s = STAGES[pieceStage];
+  $('pieceView').src = `glb/estate_${p.id}_${s.code}.glb`;
+  $('spec').textContent = `estate_${p.id}_${s.code}  ·  ${p.size}`;
+  [...$('pieces').children].forEach((b, j) => b.classList.toggle('on', j === piece));
+  mark($('pieceSteps'), pieceStage);
+}
+$('pieces').innerHTML = PIECES.map((p, i) => `<button data-i="${i}">${p.name}</button>`).join('');
+$('pieces').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { piece = +b.dataset.i; setPiece(); } });
+stepButtons($('pieceSteps'), i => { pieceStage = i; setPiece(); });
+
+setHouse(4); setPiece();
+</script>
+</body>
+</html>
