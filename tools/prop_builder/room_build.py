@@ -53,13 +53,18 @@ def bounds(o):
 
 
 def colour_material(name, rgb):
+    lum = 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
+    if lum < 0.25:  # photos are often darker than the real room; keep surfaces readable
+        rgb = [min(1.0, c * 0.25 / max(lum, 0.02)) for c in rgb]
     img = bpy.data.images.new(name, 8, 8)
     px = np.tile(list(rgb) + [1.0], 64).astype(np.float32)
     px[:-4] *= np.repeat(np.random.default_rng(1).uniform(0.97, 1.03, 64), 4)[:-4]
     img.pixels.foreach_set(np.clip(px, 0, 1)); img.pack()
     m = bpy.data.materials.new(name); m.use_nodes = True
     t = m.node_tree.nodes.new("ShaderNodeTexImage"); t.image = img
-    m.node_tree.links.new(t.outputs["Color"], m.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
+    bsdf = m.node_tree.nodes["Principled BSDF"]
+    m.node_tree.links.new(t.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = 0.9
     return m
 
 

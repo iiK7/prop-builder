@@ -117,8 +117,10 @@ jobs:
       - name: Install room tools (YOLO, CPU)
         if: env.MODE == 'room'
         run: |
-          pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install -q ultralytics
+          # separate venv: ultralytics wants NumPy 2, Blender's bpy needs NumPy 1
+          python -m venv "$RUNNER_TEMP/yolo"
+          "$RUNNER_TEMP/yolo/bin/pip" install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          "$RUNNER_TEMP/yolo/bin/pip" install -q ultralytics pillow
 
       - name: Download the file
         if: env.LOCAL_FILE == ''
@@ -149,7 +151,7 @@ jobs:
         run: |
           size="$HEIGHT"; RW=4; RD=4
           if [[ "$size" =~ ^([0-9.]+)x([0-9.]+)$ ]]; then RW="${BASH_REMATCH[1]}"; RD="${BASH_REMATCH[2]}"; fi
-          python -u "$TOOL/room_detect.py" "$LOCAL_FILE" "$OUT/room_in" 6
+          "$RUNNER_TEMP/yolo/bin/python" -u "$TOOL/room_detect.py" "$LOCAL_FILE" "$OUT/room_in" 6
           mkdir -p "$OUT/room_glb"
           for crop in "$OUT"/room_in/obj*.png; do
             [ -e "$crop" ] || { echo "::error::No furniture found in the photo"; exit 1; }
