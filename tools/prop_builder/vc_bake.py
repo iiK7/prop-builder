@@ -10,8 +10,13 @@ src, out = sys.argv[1], sys.argv[2]
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=src)
 obj = next(o for o in bpy.context.scene.objects if o.type == "MESH")
+# trimesh exports the mesh under an empty "world" node: bake works on the mesh alone
+bpy.ops.object.select_all(action="DESELECT")
 bpy.context.view_layer.objects.active = obj
 obj.select_set(True)
+bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
+for o in [o for o in bpy.context.scene.objects if o.type != "MESH"]:
+    bpy.data.objects.remove(o, do_unlink=True)
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 me = obj.data
 if not me.color_attributes:
