@@ -148,8 +148,14 @@ jobs:
         if: env.LOCAL_FILE == ''
         run: |
           dest="$OUT/in/source"
-          # private-repo attachments need the token; public links work without it
-          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o "$dest" "$FILE_URL" || curl -fsSL -o "$dest" "$FILE_URL"
+          # private-repo attachments need the token; it is only ever sent to GitHub itself
+          host=$(python -c "import sys,urllib.parse as u;print(u.urlparse(sys.argv[1]).hostname or '')" "$FILE_URL")
+          case "$host" in
+            github.com|*.github.com|*.githubusercontent.com)
+              curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o "$dest" "$FILE_URL" || curl -fsSL -o "$dest" "$FILE_URL" ;;
+            *)
+              curl -fsSL -A "prop-builder/1.0 (https://github.com/$GITHUB_REPOSITORY)" -o "$dest" "$FILE_URL" ;;
+          esac
           type=$(file -b --mime-type "$dest")
           echo "downloaded: $type"
           case "$type" in
