@@ -12,6 +12,9 @@ glb, out = sys.argv[1:3]
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=glb)
 sc = bpy.context.scene
+# a model's own collision is not drawn in the game: not in the picture either
+for o in [o for o in sc.objects if o.type == "MESH" and ("collision" in o.name.lower() or "collision" in o.data.name.lower())]:
+    bpy.data.objects.remove(o, do_unlink=True)
 meshes = [o for o in sc.objects if o.type == "MESH"]
 pts = [o.matrix_world @ mathutils.Vector(c) for o in meshes for c in o.bound_box]
 mn = mathutils.Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
