@@ -13,7 +13,8 @@ import mathutils
 glb, outdir, name, addon_parent = sys.argv[1:5]
 height = float(sys.argv[5]) if len(sys.argv) > 5 and float(sys.argv[5]) > 0 else 0.0
 max_tris = int(sys.argv[6]) if len(sys.argv) > 6 else 20000
-COLLISION_TRIS = 400
+COLLISION_TRIS = 400          # collision made from the visual mesh
+OWN_COLLISION_TRIS = 6000     # a collision mesh that comes with the model (walls of a building)
 
 sys.path.insert(0, addon_parent)
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -49,15 +50,29 @@ bpy.ops.import_scene.gltf(filepath=glb)
 meshes = [o for o in sc.objects if o.type == "MESH"]
 if not meshes:
     sys.exit("no mesh in the model")
-bpy.ops.object.select_all(action="DESELECT")
-for o in meshes:
-    o.select_set(True)
-bpy.context.view_layer.objects.active = meshes[0]
-bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
-bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-if len(meshes) > 1:
-    bpy.ops.object.join()
-obj = bpy.context.view_layer.objects.active
+# meshes named "collision..." are the prop's own collision (a building's walls, exact), not drawn
+def is_collision(o):
+    return "collision" in o.name.lower() or "collision" in o.data.name.lower()
+
+
+def merged(objs):
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    if len(objs) > 1:
+        bpy.ops.object.join()
+    return bpy.context.view_layer.objects.active
+
+
+col_meshes = [o for o in meshes if is_collision(o)]
+meshes = [o for o in meshes if not is_collision(o)]
+if not meshes:
+    sys.exit("no mesh in the model (only collision)")
+own_col = merged(col_meshes) if col_meshes else None
+obj = merged(meshes)
 for o in [o for o in sc.objects if o.type != "MESH"]:
     bpy.data.objects.remove(o, do_unlink=True)
 obj.name = name
@@ -75,11 +90,16 @@ mn, mx = bounds(obj)
 if height > 0 and mx.z - mn.z > 1e-6:
     s = height / (mx.z - mn.z)
     obj.data.transform(mathutils.Matrix.Scale(s, 4))
+    if own_col:
+        own_col.data.transform(mathutils.Matrix.Scale(s, 4))
     mn, mx = bounds(obj)
 # origin at the base centre so the prop sits on the ground when spawned
 base = mathutils.Vector(((mn.x + mx.x) / 2, (mn.y + mx.y) / 2, mn.z))
 obj.data.transform(mathutils.Matrix.Translation(-base))
 obj.location = (0, 0, 0)
+if own_col:
+    own_col.data.transform(mathutils.Matrix.Translation(-base))
+    own_col.location = (0, 0, 0)
 mn, mx = bounds(obj)
 
 decimate_to(obj, max_tris)
@@ -116,12 +136,18 @@ ca = me.color_attributes.new(get_color_attr_name(0), "BYTE_COLOR", "CORNER")
 for d in ca.data:
     d.color = (1, 1, 1, 1)
 
-# --- collision source: a light copy of the visual mesh --------------------------------
-col_src = obj.copy()
-col_src.data = obj.data.copy()
-sc.collection.objects.link(col_src)
-col_src.name = name + "_col"
-decimate_to(col_src, COLLISION_TRIS)
+# --- collision source: the model's own (kept as it is, within reason), else a light copy
+# of the visual mesh
+if own_col:
+    col_src = own_col
+    col_src.name = name + "_col"
+    decimate_to(col_src, OWN_COLLISION_TRIS)
+else:
+    col_src = obj.copy()
+    col_src.data = obj.data.copy()
+    sc.collection.objects.link(col_src)
+    col_src.name = name + "_col"
+    decimate_to(col_src, COLLISION_TRIS)
 col_src.data.materials.clear()
 
 # --- drawable ------------------------------------------------------------------------
@@ -163,7 +189,7 @@ for b in [o for o in sc.objects if o.sollum_type in ("sollumz_bound_poly_triangl
 select_only(drawable)
 res = bpy.ops.sollumz.export_assets(directory=outdir, direct_export=True, use_custom_settings=True,
                                     target_formats={"CWXML"}, target_versions={"GEN8"})
-print("export:", res, "tris:", tri_count(model), "collision tris:", COLLISION_TRIS)
+print("export:", res, "tris:", tri_count(model), "collision tris:", tri_count(col_src) if own_col else COLLISION_TRIS)
 
 size = mx - mn
 # big props (a 10 m missile in the sky) stay drawn further away; small ones keep 150 m
