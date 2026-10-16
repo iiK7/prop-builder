@@ -166,12 +166,14 @@ res = bpy.ops.sollumz.export_assets(directory=outdir, direct_export=True, use_cu
 print("export:", res, "tris:", tri_count(model), "collision tris:", COLLISION_TRIS)
 
 size = mx - mn
+# big props (a 10 m missile in the sky) stay drawn further away; small ones keep 150 m
+lod_dist = max(150.0, 40.0 * max(size.x, size.y, size.z))
 ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
 <CMapTypes>
  <extensions/>
  <archetypes>
   <Item type="CBaseArchetypeDef">
-   <lodDist value="150.0"/>
+   <lodDist value="{lod_dist:.1f}"/>
    <flags value="32"/>
    <specialAttribute value="0"/>
    <bbMin x="{mn.x:.4f}" y="{mn.y:.4f}" z="{mn.z:.4f}"/>
