@@ -185,7 +185,7 @@ ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
    <textureDictionary>{name}</textureDictionary>
    <clipDictionary/>
    <drawableDictionary/>
-   <physicsDictionary/>
+   <physicsDictionary>{name}</physicsDictionary>
    <assetType>ASSET_TYPE_DRAWABLE</assetType>
    <assetName>{name}</assetName>
    <extensions/>
