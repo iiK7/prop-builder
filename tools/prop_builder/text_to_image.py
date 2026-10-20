@@ -1,9 +1,11 @@
 """Description -> product photo (PNG) for the image to 3D step.
-    python text_to_image.py "<description>" <out.png> [<info.json>]
+    python text_to_image.py "<description>" <out.png> <info.json> <engine>
 The description can be in any language: anything that is not plain English is translated first.
-Tries the free Pollinations API (no key, no GPU quota), then the FLUX.1-schnell Space on Hugging Face
-(uses HF_TOKEN and the daily GPU quota, which the 3D step also needs).
-Writes {"prompt": ..., "english": ..., "engine": ...} to <info.json> when given.
+engine (only that one is tried):
+  pollinations  free Pollinations API (no key, no GPU quota, basic model)
+  flux          FLUX.1-schnell Space on Hugging Face (better, uses HF_TOKEN and the daily GPU quota,
+                which the 3D step also needs)
+Writes {"prompt": ..., "english": ..., "engine": ...} to <info.json>.
 """
 import json
 import os
@@ -17,10 +19,12 @@ import urllib.request
 
 from PIL import Image
 
-text, out = sys.argv[1].strip(), sys.argv[2]
-info_path = sys.argv[3] if len(sys.argv) > 3 else None
+text, out, info_path = sys.argv[1].strip(), sys.argv[2], sys.argv[3]
+engine = sys.argv[4] if len(sys.argv) > 4 else "pollinations"
 if not text:
     sys.exit("empty description")
+if engine not in ("pollinations", "flux"):
+    sys.exit(f"unknown image engine {engine!r} (pollinations or flux)")
 
 UA = {"User-Agent": "prop-builder/1.0 (https://github.com/iiK7/prop-builder)"}
 
@@ -90,25 +94,25 @@ def flux_space():
     os.remove(tmp)
 
 
-engine, last_error = None, None
-for name, make, tries in (("pollinations", pollinations, 3), ("flux", flux_space, 1)):
-    for attempt in range(tries):
-        try:
-            print(f"{name}: attempt {attempt + 1}")
-            make()
-            engine = name
-            break
-        except Exception as e:
-            last_error = e
-            print(f"{name} failed: {e}")
-            time.sleep(5)
-    if engine:
+make, tries = (pollinations, 3) if engine == "pollinations" else (flux_space, 1)
+done, last_error = False, None
+for attempt in range(tries):
+    try:
+        print(f"{engine}: attempt {attempt + 1}")
+        make()
+        done = True
         break
+    except Exception as e:
+        last_error = e
+        print(f"{engine} failed: {e}")
+        time.sleep(5)
 
-if not engine:
-    sys.exit(f"description to image failed: {last_error}")
+if not done:
+    if "quota" in str(last_error).lower():
+        print("::error title=Daily GPU limit reached (flux)::The free Hugging Face GPU quota is used up for today. "
+              "Pick Pollinations for the picture or try again tomorrow.")
+    sys.exit(f"description to image failed on {engine}: {last_error}")
 
 print("image:", out, os.path.getsize(out), "bytes", f"({engine})")
-if info_path:
-    with open(info_path, "w") as f:
-        json.dump({"prompt": text, "english": english, "engine": engine}, f, ensure_ascii=False)
+with open(info_path, "w") as f:
+    json.dump({"prompt": text, "english": english, "engine": engine}, f, ensure_ascii=False)

@@ -11,6 +11,7 @@ on:
       - 'prop_requests/**.jpeg'
       - 'prop_requests/**.webp'
       - 'prop_requests/**.glb'
+      - 'prop_requests/**.txt'
   workflow_dispatch:
     inputs:
       name:
@@ -28,6 +29,12 @@ on:
       mode:
         description: 'ai (3D from photo), a flat product shape (bag, box, board, can) or room'
         default: 'ai'
+      engine:
+        description: '3D engine: trellis2, hunyuan, trellis or triposr (empty = the game setting in settings.json)'
+        required: false
+      image:
+        description: 'Picture from a description: pollinations or flux (empty = the game setting in settings.json)'
+        required: false
 
 permissions:
   contents: write
@@ -110,11 +117,16 @@ jobs:
           IN_HEIGHT: ${{ inputs.height }}
           IN_MODE: ${{ inputs.mode }}
           IN_PROMPT: ${{ inputs.prompt }}
+          IN_ENGINE: ${{ inputs.engine }}
+          IN_IMAGE: ${{ inputs.image }}
         run: |
           mkdir -p "$OUT/in"
+          engine="$IN_ENGINE"; image="$IN_IMAGE"
           case "$GITHUB_EVENT_NAME" in
             issues)
-              python "$TOOL/parse_issue.py" >> "$GITHUB_ENV" ;;
+              python "$TOOL/parse_issue.py" > "$RUNNER_TEMP/issue.env"
+              engine=$(sed -n 's/^ENGINE=//p' "$RUNNER_TEMP/issue.env")
+              grep -v '^ENGINE=' "$RUNNER_TEMP/issue.env" >> "$GITHUB_ENV" ;;
             workflow_dispatch)
               # one line only: a newline in the description must not add more variables
               prompt=$(printf '%s' "$IN_PROMPT" | tr '\r\n\t' '   ' | cut -c1-200)
@@ -122,15 +134,38 @@ jobs:
               { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "MODE=${IN_MODE:-ai}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV"
               [ -n "$IN_URL" ] || echo "PROMPT=$prompt" >> "$GITHUB_ENV" ;;
             push)
-              f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
-              [ -n "$f" ] || { echo "no new image/model in prop_requests"; exit 1; }
+              f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb|txt)$' | head -1 || true)
+              [ -n "$f" ] || { echo "no new image/model/description in prop_requests"; exit 1; }
               base=$(basename "$f"); stem="${base%.*}"
-              # file name: <name>[@<height>][@<mode>].<ext>
-              IFS='@' read -r name height mode <<< "$stem"; height="${height:-0}"; mode="${mode:-ai}"
-              name=$(echo "$name" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_\n' '_')
-              cp "$f" "$OUT/in/$base"
-              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; echo "LOCAL_FILE=$OUT/in/$base"; } >> "$GITHUB_ENV" ;;
+              # file name: <name>[@<height>][@<mode>][@<engine>][@<image>].<ext>, the parts after the name in any order;
+              # a .txt holds a description instead of a picture
+              IFS='@' read -ra parts <<< "$stem"
+              name=$(echo "${parts[0]}" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_\n' '_'); height=0; mode=ai
+              for part in "${parts[@]:1}"; do
+                case "$part" in
+                  trellis2|hunyuan|trellis|triposr) engine=$part ;;
+                  pollinations|flux) image=$part ;;
+                  ai|bag|box|board|can|room) mode=$part ;;
+                  *) height=$part ;;
+                esac
+              done
+              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; } >> "$GITHUB_ENV"
+              if [[ "$base" =~ \.[Tt][Xx][Tt]$ ]]; then
+                prompt=$(tr '\r\n\t' '   ' < "$f" | cut -c1-200)
+                [ -n "${prompt// /}" ] || { echo "::error::The description file is empty"; exit 1; }
+                echo "PROMPT=$prompt" >> "$GITHUB_ENV"
+              else
+                cp "$f" "$OUT/in/$base"
+                echo "LOCAL_FILE=$OUT/in/$base" >> "$GITHUB_ENV"
+              fi ;;
           esac
+          # nothing picked: the game setting chosen on the site (settings.json)
+          [ -n "$engine" ] || engine=$(python -c "import json;print(json.load(open('settings.json'))['game']['engine'])" 2>/dev/null || echo trellis2)
+          [ -n "$image" ] || image=$(python -c "import json;print(json.load(open('settings.json'))['game']['image'])" 2>/dev/null || echo pollinations)
+          case "$engine" in trellis2|hunyuan|trellis|triposr) ;; *) echo "::error::Unknown 3D engine $engine"; exit 1 ;; esac
+          case "$image" in pollinations|flux) ;; *) echo "::error::Unknown picture source $image"; exit 1 ;; esac
+          { echo "ENGINE=$engine"; echo "IMAGE=$image"; } >> "$GITHUB_ENV"
+          echo "3D engine: $engine, picture from a description: $image"
 
       - name: Pick a free name
         run: |
@@ -157,7 +192,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          python -u "$TOOL/text_to_image.py" "$PROMPT" "$OUT/in/prompt.png" "$OUT/prompt.json"
+          python -u "$TOOL/text_to_image.py" "$PROMPT" "$OUT/in/prompt.png" "$OUT/prompt.json" "$IMAGE"
           echo "LOCAL_FILE=$OUT/in/prompt.png" >> "$GITHUB_ENV"
 
       - name: Download the file
@@ -202,10 +237,10 @@ jobs:
             [ -e "$crop" ] || { echo "::error::No furniture found in the photo"; exit 1; }
             id=$(basename "$crop" .png)
             h=$(python -c "import json,sys;print(next(o['height'] for o in json.load(open(sys.argv[1]))['objects'] if o['id']==sys.argv[2]))" "$OUT/room_in/objects.json" "$id")
-            if PY=python bash "$TOOL/to3d.sh" "$crop" "$OUT/room_glb/$id.glb"; then
+            if PY=python bash "$TOOL/to3d.sh" "$crop" "$OUT/room_glb/$id.glb" "$ENGINE"; then
               cat "$OUT/room_glb/$id.engine" >> "$OUT/engines.txt"
             else
-              # TRELLIS and TripoSR both failed: stand-in box wearing the cut-out photo
+              # the picked engine failed on this piece: stand-in box wearing the cut-out photo
               echo "::warning::$id: 3D failed, using a photo box instead"
               python -u "$TOOL/flat_to_glb.py" "$crop" "$OUT/room_glb/$id.glb" box "$h"
               echo box >> "$OUT/engines.txt"
@@ -216,12 +251,12 @@ jobs:
           python -u "$TOOL/render_preview.py" "$OUT/room/room.glb" "$OUT/preview.png" | grep "^preview" || true
           echo "LOCAL_FILE=$OUT/room/room.glb" >> "$GITHUB_ENV"
 
-      - name: Image to 3D (TRELLIS, else TripoSR on the CPU)
+      - name: Image to 3D (the picked engine)
         if: ${{ !endsWith(env.LOCAL_FILE, '.glb') && !contains(fromJSON('["bag","box","board","can","room"]'), env.MODE) }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          PY=python bash "$TOOL/to3d.sh" "$LOCAL_FILE" "$OUT/in/model.glb"
+          PY=python bash "$TOOL/to3d.sh" "$LOCAL_FILE" "$OUT/in/model.glb" "$ENGINE"
           echo "LOCAL_FILE=$OUT/in/model.glb" >> "$GITHUB_ENV"
           cp "$OUT/in/model.engine" "$OUT/engines.txt"
 

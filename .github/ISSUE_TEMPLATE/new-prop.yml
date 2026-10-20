@@ -23,6 +23,17 @@ body:
         - Can (drink can, jar)
         - Room (photo of a whole room)
       default: 0
+  - type: dropdown
+    id: engine
+    attributes:
+      label: 3D engine
+      description: المحرك اللي يسوي المجسم (للغرض 3D والغرفة)
+      options:
+        - TRELLIS.2 (best)
+        - Hunyuan3D 2.1
+        - TRELLIS (old)
+        - TripoSR (no daily limit, lower quality)
+      default: 0
   - type: input
     id: height
     attributes:

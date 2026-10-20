@@ -5,8 +5,11 @@ Runs on GitHub Actions (`.github/workflows/prop-builder.yml`), so nothing needs 
 
 ## Pipeline
 
-1. **Image to 3D** (`image_to_glb.py`): sends the image to a TRELLIS Space on Hugging Face and gets a textured GLB.
-   Needs the `HF_TOKEN` repository secret (free account, small daily GPU quota). Skipped when the input is already a `.glb`.
+1. **Image to 3D** (`to3d.sh` + `image_to_glb.py`) with the engine **you pick** (nothing switches on its own):
+   `trellis2` (microsoft/TRELLIS.2, best), `hunyuan` (tencent/Hunyuan3D-2.1), `trellis` (the older TRELLIS) — free
+   Hugging Face Spaces that share the `HF_TOKEN` daily GPU quota — or `triposr` (GitHub's CPU, no limit, lower quality).
+   When the quota is used up the build fails with a message: pick another engine. Skipped for a `.glb`.
+   A description first becomes a picture (`text_to_image.py`, `pollinations` free with no limit, or `flux`).
 2. **GLB to CodeWalker XML** (`glb_to_cwxml.py`): Blender (`bpy`) with the Sollumz add-on. Scales the model to the
    requested height, puts the origin at the base, reduces it to 20k triangles, builds a 400-triangle collision mesh
    and exports `<name>.ydr.xml` and `<name>.ytyp.xml`.
@@ -19,9 +22,11 @@ Runs on GitHub Actions (`.github/workflows/prop-builder.yml`), so nothing needs 
 - **Issue**: New issue → "بروب جديد" form. Only the repository owner's issues start a build. The result is posted as a comment.
 - **Upload**: add `name.png` (or `name@0.9.png` for a 0.9 m tall prop) to `prop_requests/`.
 - **Manual**: Actions → Prop builder → Run workflow, with a link to the file.
-- **Description**: Run workflow with `prompt` instead of a link (any language). `text_to_image.py` translates it, makes a
-  product photo (free Pollinations API, then the FLUX.1-schnell Space) and the build goes on from that photo.
-  The estate script in the game starts builds this way.
+- **Site**: photo, `.glb` or a description, with the 3D engine and the picture source picked on the page.
+  It uploads `prop_requests/<name>@<height>[@<mode>]@<engine>[@<picture>].<ext>` (`.txt` = a description).
+- **Description**: Run workflow with `prompt` instead of a link (any language); `engine` and `image` pick the engines.
+- **Game**: the estate script starts builds this way without engines; they come from `settings.json` (`game`), which the
+  site's "pieces from the game" card saves.
 
 Results are uploaded as a run artifact and copied to the `prop-builds` branch under `builds/<name>/`
 (zip, `preview.png`, `info.json` and the game files in `stream/`).

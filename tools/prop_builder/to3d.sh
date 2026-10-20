@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
-# to3d.sh <image> <out.glb>
-# Image to 3D with fallbacks: TRELLIS on Hugging Face (best), then TripoSR on this machine's CPU
-# (free, no quota, lower quality). Exits non-zero only when both fail.
-# Writes the engine that made the model ("trellis" or "triposr") next to it, in <out>.engine.
+# to3d.sh <image> <out.glb> <engine>
+# Image to 3D with the engine you pick, nothing else is tried:
+#   trellis2 | hunyuan | trellis   free Hugging Face Spaces (daily GPU quota)
+#   triposr                        this machine's CPU (no quota, lower quality)
+# Writes the engine next to the model, in <out>.engine.
 #   Env: PY (bpy python), HF_TOKEN, TRIPOSR_HOME (cache dir for TripoSR's venv and checkout)
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PY="${PY:-python3}"
-IMG="$1"; OUT="$2"
+IMG="$1"; OUT="$2"; ENGINE_NAME="${3:-trellis2}"
 TRIPOSR_REF=107cefdc244c39106fa830359024f6a2f1c78871
 HOME_DIR="${TRIPOSR_HOME:-$HOME/.cache/triposr}"
 
 ENGINE="${OUT%.glb}.engine"
 
-if "$PY" -u "$HERE/image_to_glb.py" "$IMG" "$OUT"; then
-    echo trellis > "$ENGINE"
+if [ "$ENGINE_NAME" != triposr ]; then
+    "$PY" -u "$HERE/image_to_glb.py" "$IMG" "$OUT" "$ENGINE_NAME" || exit 1
+    echo "$ENGINE_NAME" > "$ENGINE"
     exit 0
 fi
 
-echo "::notice::TRELLIS unavailable, building with TripoSR on the CPU instead (slower, simpler textures)"
 VENV="$HOME_DIR/venv"; SRC="$HOME_DIR/TripoSR"
 if [ ! -x "$VENV/bin/python" ] || [ ! -d "$SRC/tsr" ]; then
     rm -rf "$VENV" "$SRC"; mkdir -p "$HOME_DIR"
