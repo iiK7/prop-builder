@@ -17,8 +17,11 @@ on:
         description: 'Prop name (a-z 0-9 _)'
         required: true
       file_url:
-        description: 'Link to an image (png/jpg) or a .glb model'
-        required: true
+        description: 'Link to an image (png/jpg) or a .glb model (leave empty when giving a description)'
+        required: false
+      prompt:
+        description: 'Or describe the prop in words (any language), e.g. brown leather sofa'
+        required: false
       height:
         description: 'Height in metres (0 keeps the model size)'
         default: '0'
@@ -106,13 +109,18 @@ jobs:
           IN_URL: ${{ inputs.file_url }}
           IN_HEIGHT: ${{ inputs.height }}
           IN_MODE: ${{ inputs.mode }}
+          IN_PROMPT: ${{ inputs.prompt }}
         run: |
           mkdir -p "$OUT/in"
           case "$GITHUB_EVENT_NAME" in
             issues)
               python "$TOOL/parse_issue.py" >> "$GITHUB_ENV" ;;
             workflow_dispatch)
-              { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "MODE=${IN_MODE:-ai}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV" ;;
+              # one line only: a newline in the description must not add more variables
+              prompt=$(printf '%s' "$IN_PROMPT" | tr '\r\n\t' '   ' | cut -c1-200)
+              [ -n "$IN_URL" ] || [ -n "${prompt// /}" ] || { echo "::error::Give a file link or a description"; exit 1; }
+              { echo "NAME=$IN_NAME"; echo "HEIGHT=${IN_HEIGHT:-0}"; echo "MODE=${IN_MODE:-ai}"; echo "FILE_URL=$IN_URL"; } >> "$GITHUB_ENV"
+              [ -n "$IN_URL" ] || echo "PROMPT=$prompt" >> "$GITHUB_ENV" ;;
             push)
               f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- prop_requests | grep -Ei '\.(png|jpe?g|webp|glb)$' | head -1 || true)
               [ -n "$f" ] || { echo "no new image/model in prop_requests"; exit 1; }
@@ -143,6 +151,14 @@ jobs:
           python -m venv "$RUNNER_TEMP/yolo"
           "$RUNNER_TEMP/yolo/bin/pip" install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
           "$RUNNER_TEMP/yolo/bin/pip" install -q ultralytics pillow
+
+      - name: Description to image
+        if: env.PROMPT != ''
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -u "$TOOL/text_to_image.py" "$PROMPT" "$OUT/in/prompt.png" "$OUT/prompt.json"
+          echo "LOCAL_FILE=$OUT/in/prompt.png" >> "$GITHUB_ENV"
 
       - name: Download the file
         if: env.LOCAL_FILE == ''
@@ -249,6 +265,9 @@ jobs:
           cp "$OUT/$NAME.zip" "$dir/builds/$NAME/"
           [ -f "$OUT/preview.png" ] && cp "$OUT/preview.png" "$dir/builds/$NAME/"
           cp "$LOCAL_FILE" "$dir/builds/$NAME/model.glb"
+          # the game files on their own too, so a server can fetch them without unzipping
+          [ -d "$OUT/$NAME/stream" ] && cp -r "$OUT/$NAME/stream" "$dir/builds/$NAME/stream"
+          [ -f "$OUT/in/prompt.png" ] && cp "$OUT/in/prompt.png" "$dir/builds/$NAME/source.png"
           # what made it (shown on the site) and which request it answers
           python - "$dir/builds/$NAME/info.json" <<'PY'
           import collections, datetime, glob, json, os, re, sys
@@ -260,6 +279,8 @@ jobs:
           info = {"name": os.environ["NAME"], "mode": os.environ["MODE"], "engines": dict(collections.Counter(engines)),
                   "size": os.environ["HEIGHT"] if os.environ["MODE"] == "room" else size,
                   "request": os.environ["GITHUB_SHA"], "built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
+          if os.path.exists(f"{os.environ['OUT']}/prompt.json"):
+              info["description"] = json.load(open(f"{os.environ['OUT']}/prompt.json"))
           json.dump(info, open(sys.argv[1], "w"), ensure_ascii=False)
           print(info)
           PY

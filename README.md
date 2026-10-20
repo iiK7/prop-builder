@@ -19,8 +19,12 @@ Runs on GitHub Actions (`.github/workflows/prop-builder.yml`), so nothing needs 
 - **Issue**: New issue → "بروب جديد" form. Only the repository owner's issues start a build. The result is posted as a comment.
 - **Upload**: add `name.png` (or `name@0.9.png` for a 0.9 m tall prop) to `prop_requests/`.
 - **Manual**: Actions → Prop builder → Run workflow, with a link to the file.
+- **Description**: Run workflow with `prompt` instead of a link (any language). `text_to_image.py` translates it, makes a
+  product photo (free Pollinations API, then the FLUX.1-schnell Space) and the build goes on from that photo.
+  The estate script in the game starts builds this way.
 
-Results are uploaded as a run artifact and copied to the `prop-builds` branch under `builds/<name>/`.
+Results are uploaded as a run artifact and copied to the `prop-builds` branch under `builds/<name>/`
+(zip, `preview.png`, `info.json` and the game files in `stream/`).
 
 ## Local run
 
