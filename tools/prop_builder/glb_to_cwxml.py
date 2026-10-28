@@ -20,6 +20,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 addon_utils.enable("Sollumz", default_set=True)
 from Sollumz.tools.meshhelper import get_uv_map_name, get_color_attr_name  # noqa: E402
 from Sollumz.ybn.collision_materials import create_collision_material_from_index  # noqa: E402
+from Sollumz.ydr.operators.materials import MaterialConverter  # noqa: E402
 
 sc = bpy.context.scene
 
@@ -134,6 +135,23 @@ model = next(o for o in sc.objects if o.sollum_type == "sollumz_drawable_model")
 drawable.name = name
 
 select_only(model)
+# materials named with "_glow" get a self-lit shader (emissive, for fire and lights) and ones named
+# with "_alpha" a see-through one that uses the texture's alpha; "_glow_alpha" both. Others: auto.
+for slot in model.material_slots:
+    m = slot.material
+    low = (m.name if m else "").lower()
+    glow, alpha = "_glow" in low, "_alpha" in low
+    if not (glow or alpha):
+        continue
+    preset = ("emissivestrong_alpha.sps" if alpha else "emissivestrong.sps") if glow else "alpha.sps"
+    try:
+        new = MaterialConverter(model, m).convert(preset)
+        mult = new.node_tree.nodes.get("emissiveMultiplier") if glow else None
+        if mult is not None:
+            mult.set(0, 4.0)
+        print("material", m.name, "->", preset)
+    except Exception as e:  # fall back to the auto shader below
+        print("material", m.name, preset, "failed:", e)
 bpy.ops.sollumz.autoconvertmaterials()
 
 # embed diffuse textures (written as PNG; build_prop.sh converts them to DDS)
