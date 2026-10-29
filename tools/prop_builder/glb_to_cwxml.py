@@ -193,8 +193,8 @@ res = bpy.ops.sollumz.export_assets(directory=outdir, direct_export=True, use_cu
 print("export:", res, "tris:", tri_count(model), "collision tris:", COLLISION_TRIS)
 
 size = mx - mn
-# flags 0, not 32 (Static): a static archetype gets no physics when a script makes the prop, so it
-# would be walked and driven through (its collision is left to the map's own files)
+# flags 0, not 32 (Static), and physicsDictionary = its own name: that links the archetype to the
+# collision inside the .ydr; without it a prop made by a script has no physics (walked through)
 ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
 <CMapTypes>
  <extensions/>
@@ -212,7 +212,7 @@ ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
    <textureDictionary>{name}</textureDictionary>
    <clipDictionary/>
    <drawableDictionary/>
-   <physicsDictionary/>
+   <physicsDictionary>{name}</physicsDictionary>
    <assetType>ASSET_TYPE_DRAWABLE</assetType>
    <assetName>{name}</assetName>
    <extensions/>
