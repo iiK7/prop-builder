@@ -61,7 +61,7 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "push" ] && git rev-parse -q --verify HEAD~1 > /dev/null; then
             changed=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- ptfx_requests)
           else
-            changed=$(find ptfx_requests -type f)
+            changed=$(find ptfx_requests -type f 2>/dev/null || true)
           fi
           done_names=""
           for f in $changed; do
