@@ -10,6 +10,9 @@ Runs on GitHub Actions (`.github/workflows/prop-builder.yml`), so nothing needs 
 2. **GLB to CodeWalker XML** (`glb_to_cwxml.py`): Blender (`bpy`) with the Sollumz add-on. Scales the model to the
    requested height, puts the origin at the base, reduces it to 20k triangles, builds a 400-triangle collision mesh
    and exports `<name>.ydr.xml` and `<name>.ytyp.xml`.
+   Words in a `.glb` material's name pick special shaders and options:
+   `_glow` self-lit (emissivestrong), `_alpha` see-through with the texture's alpha (alpha / emissivestrong_alpha),
+   `_noshadow` the prop casts no shadow, `_far` the prop is drawn up to 1500 m away (150 m otherwise).
 3. **Textures** (`png_to_dds.py`): PNG to DXT1/DXT5 DDS with a full mip chain.
 4. **Binary build** (`cwconv/`): CodeWalker.Core turns the XML into the game's `.ydr` / `.ytyp` and reads them back to check them.
 5. **Package** (`build_prop.sh`): resource folder from `template/`, zip and a preview render.

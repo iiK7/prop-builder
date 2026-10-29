@@ -135,6 +135,15 @@ model = next(o for o in sc.objects if o.sollum_type == "sollumz_drawable_model")
 drawable.name = name
 
 select_only(model)
+# whole-prop options, also from material names: "_noshadow" casts no shadow (smoke, glows),
+# "_far" stays drawn up to FAR_LOD m away instead of 150 (a smoke column seen across the map)
+FAR_LOD = 1500.0
+mat_names = [(sl.material.name if sl.material else "").lower() for sl in model.material_slots]
+no_shadow = any("_noshadow" in n for n in mat_names)
+lod_dist = FAR_LOD if any("_far" in n for n in mat_names) else 150.0
+if no_shadow:
+    model.data.drawable_model_properties.render_mask = 0xFF & ~(1 << 1)  # every view but the shadow
+    print("no shadow")
 # materials named with "_glow" get a self-lit shader (emissive, for fire and lights) and ones named
 # with "_alpha" a see-through one that uses the texture's alpha; "_glow_alpha" both. Others: auto.
 for slot in model.material_slots:
@@ -189,7 +198,7 @@ ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
  <extensions/>
  <archetypes>
   <Item type="CBaseArchetypeDef">
-   <lodDist value="150.0"/>
+   <lodDist value="{lod_dist:.1f}"/>
    <flags value="32"/>
    <specialAttribute value="0"/>
    <bbMin x="{mn.x:.4f}" y="{mn.y:.4f}" z="{mn.z:.4f}"/>
