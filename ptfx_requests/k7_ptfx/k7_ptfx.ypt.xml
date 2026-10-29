@@ -1,0 +1,3798 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ParticleEffectsList>
+ <Name>k7_ptfx</Name>
+ <EffectRuleDictionary>
+  <Item>
+   <Name>k7_column</Name>
+   <RefCount value="1" />
+   <FileVersion value="4.2" />
+   <NumLoops value="0xFFFFFFFF" />
+   <SortEventsByDistance value="0" />
+   <DrawListID value="0" />
+   <IsShortLived value="0" />
+   <HasNoShadows value="1" />
+   <VRandomOffsetPos x="0" y="0" z="0" />
+   <PreUpdateTime value="0" />
+   <PreUpdateTimeInterval value="0.25" />
+   <DurationMin value="2" />
+   <DurationMax value="2" />
+   <PlaybackRateScalarMin value="1" />
+   <PlaybackRateScalarMax value="1" />
+   <ViewportCullingMode value="4" />
+   <RenderWhenViewportCulled value="0" />
+   <UpdateWhenViewportCulled value="1" />
+   <EmitWhenViewportCulled value="0" />
+   <DistanceCullingMode value="4" />
+   <RenderWhenDistanceCulled value="0" />
+   <UpdateWhenDistanceCulled value="1" />
+   <EmitWhenDistanceCulled value="0" />
+   <ViewportCullingSphereOffset x="0" y="-1" z="0" />
+   <ViewportCullingSphereRadius value="3" />
+   <DistanceCullingFadeDist value="2500" />
+   <DistanceCullingCullDist value="3000" />
+   <LodEvoDistanceMin value="5" />
+   <LodEvoDistanceMax value="12" />
+   <CollisionRange value="0" />
+   <CollisionProbeDistance value="0" />
+   <CollisionType value="0" />
+   <ShareEntityCollisions value="0" />
+   <OnlyUseBVHCollisions value="0" />
+   <GameFlags value="1" />
+   <ColourTintMaxEnable value="0" />
+   <UseDataVolume value="0" />
+   <DataVolumeType value="0" />
+   <ZoomLevel value="100" />
+   <EventEmitters>
+    <Item>
+     <EmitterRule>k7_column</EmitterRule>
+     <ParticleRule>k7_column</ParticleRule>
+     <EventType value="0" />
+     <StartRatio value="0" />
+     <EndRatio value="1" />
+     <PlaybackRateScalarMin value="1" />
+     <PlaybackRateScalarMax value="1" />
+     <ZoomScalarMin value="1" />
+     <ZoomScalarMax value="1" />
+     <ColourTintMin value="0xFFFFFFFF" />
+     <ColourTintMax value="0xFFFFFFFF" />
+     <EvolutionList>
+      <Evolutions>
+       <Item>speed</Item>
+       <Item>temp</Item>
+       <Item>damage</Item>
+       <Item>throttle</Item>
+       <Item>LOD</Item>
+      </Evolutions>
+      <EvolvedKeyframeProps>
+       <Item>
+        <Name>ptxCreationDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.25045" y="3.992813" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.499099" y="4.0217333" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.756757" y="3.8811133" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.99839" y="4.138508" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.05" y="0.3" z="0.05" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-0.947521" z="-0.070187" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.159979" y="1.654493" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.5" y="0.5" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="4.558422" y="4.558422" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="2.519868" y="2.9605" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes />
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="6.33301" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="113.267" y="113.267" z="113.267" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="-0.003587" y="0.03" z="0.03" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.001202" y="-0.000815" z="0.06" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.005674" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.000308" y="0" z="-0.032364" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.232522" y="0.232522" z="0.090203" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.600812" y="1.6644142" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.138118" y="0.143367" z="0.054543" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.738333" y="1.3544024" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.139083" y="1.139083" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.492234" y="2.0315542" z="0" w="0" />
+            <KeyframeValue x="1.97413" y="1.97413" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.998208" y="1.9763862" z="0" w="0" />
+            <KeyframeValue x="1.400368" y="1.400368" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.889579" y="0.889579" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.67638" y="1.4784589" z="0" w="0" />
+            <KeyframeValue x="1.239133" y="1.239133" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+      </EvolvedKeyframeProps>
+     </EvolutionList>
+    </Item>
+   </EventEmitters>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="56" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMaxKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="57" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="58" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="23" y="24" z="100" w="100" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataSphereKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="59" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataCapsuleKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="60" />
+     <Keyframes />
+    </Item>
+   </KeyframeProps>
+   <EvolutionList>
+    <Evolutions>
+     <Item>speed</Item>
+     <Item>temp</Item>
+     <Item>damage</Item>
+     <Item>throttle</Item>
+     <Item>LOD</Item>
+    </Evolutions>
+    <EvolvedKeyframeProps>
+     <Item>
+      <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="0.8" y="0.8" z="0.8" w="0.1" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+     <Item>
+      <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="28" y="30" z="100" w="100" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+    </EvolvedKeyframeProps>
+   </EvolutionList>
+  </Item>
+  <Item>
+   <Name>k7_cap</Name>
+   <RefCount value="1" />
+   <FileVersion value="4.2" />
+   <NumLoops value="0xFFFFFFFF" />
+   <SortEventsByDistance value="0" />
+   <DrawListID value="0" />
+   <IsShortLived value="0" />
+   <HasNoShadows value="1" />
+   <VRandomOffsetPos x="0" y="0" z="0" />
+   <PreUpdateTime value="0" />
+   <PreUpdateTimeInterval value="0.25" />
+   <DurationMin value="2" />
+   <DurationMax value="2" />
+   <PlaybackRateScalarMin value="1" />
+   <PlaybackRateScalarMax value="1" />
+   <ViewportCullingMode value="4" />
+   <RenderWhenViewportCulled value="0" />
+   <UpdateWhenViewportCulled value="1" />
+   <EmitWhenViewportCulled value="0" />
+   <DistanceCullingMode value="4" />
+   <RenderWhenDistanceCulled value="0" />
+   <UpdateWhenDistanceCulled value="1" />
+   <EmitWhenDistanceCulled value="0" />
+   <ViewportCullingSphereOffset x="0" y="-1" z="0" />
+   <ViewportCullingSphereRadius value="3" />
+   <DistanceCullingFadeDist value="2500" />
+   <DistanceCullingCullDist value="3000" />
+   <LodEvoDistanceMin value="5" />
+   <LodEvoDistanceMax value="12" />
+   <CollisionRange value="0" />
+   <CollisionProbeDistance value="0" />
+   <CollisionType value="0" />
+   <ShareEntityCollisions value="0" />
+   <OnlyUseBVHCollisions value="0" />
+   <GameFlags value="1" />
+   <ColourTintMaxEnable value="0" />
+   <UseDataVolume value="0" />
+   <DataVolumeType value="0" />
+   <ZoomLevel value="100" />
+   <EventEmitters>
+    <Item>
+     <EmitterRule>k7_cap</EmitterRule>
+     <ParticleRule>k7_cap</ParticleRule>
+     <EventType value="0" />
+     <StartRatio value="0" />
+     <EndRatio value="1" />
+     <PlaybackRateScalarMin value="1" />
+     <PlaybackRateScalarMax value="1" />
+     <ZoomScalarMin value="1" />
+     <ZoomScalarMax value="1" />
+     <ColourTintMin value="0xFFFFFFFF" />
+     <ColourTintMax value="0xFFFFFFFF" />
+     <EvolutionList>
+      <Evolutions>
+       <Item>speed</Item>
+       <Item>temp</Item>
+       <Item>damage</Item>
+       <Item>throttle</Item>
+       <Item>LOD</Item>
+      </Evolutions>
+      <EvolvedKeyframeProps>
+       <Item>
+        <Name>ptxCreationDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.25045" y="3.992813" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.499099" y="4.0217333" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.756757" y="3.8811133" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.99839" y="4.138508" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.05" y="0.3" z="0.05" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-0.947521" z="-0.070187" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.159979" y="1.654493" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.5" y="0.5" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="4.558422" y="4.558422" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="2.519868" y="2.9605" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes />
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="6.33301" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="113.267" y="113.267" z="113.267" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="-0.003587" y="0.03" z="0.03" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.001202" y="-0.000815" z="0.06" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.005674" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.000308" y="0" z="-0.032364" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.232522" y="0.232522" z="0.090203" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.600812" y="1.6644142" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.138118" y="0.143367" z="0.054543" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.738333" y="1.3544024" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.139083" y="1.139083" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.492234" y="2.0315542" z="0" w="0" />
+            <KeyframeValue x="1.97413" y="1.97413" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.998208" y="1.9763862" z="0" w="0" />
+            <KeyframeValue x="1.400368" y="1.400368" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.889579" y="0.889579" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.67638" y="1.4784589" z="0" w="0" />
+            <KeyframeValue x="1.239133" y="1.239133" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+      </EvolvedKeyframeProps>
+     </EvolutionList>
+    </Item>
+   </EventEmitters>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="56" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMaxKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="57" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="58" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="23" y="24" z="100" w="100" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataSphereKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="59" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataCapsuleKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="60" />
+     <Keyframes />
+    </Item>
+   </KeyframeProps>
+   <EvolutionList>
+    <Evolutions>
+     <Item>speed</Item>
+     <Item>temp</Item>
+     <Item>damage</Item>
+     <Item>throttle</Item>
+     <Item>LOD</Item>
+    </Evolutions>
+    <EvolvedKeyframeProps>
+     <Item>
+      <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="0.8" y="0.8" z="0.8" w="0.1" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+     <Item>
+      <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="28" y="30" z="100" w="100" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+    </EvolvedKeyframeProps>
+   </EvolutionList>
+  </Item>
+  <Item>
+   <Name>k7_dust</Name>
+   <RefCount value="1" />
+   <FileVersion value="4.2" />
+   <NumLoops value="0xFFFFFFFF" />
+   <SortEventsByDistance value="0" />
+   <DrawListID value="0" />
+   <IsShortLived value="0" />
+   <HasNoShadows value="1" />
+   <VRandomOffsetPos x="0" y="0" z="0" />
+   <PreUpdateTime value="0" />
+   <PreUpdateTimeInterval value="0.25" />
+   <DurationMin value="2" />
+   <DurationMax value="2" />
+   <PlaybackRateScalarMin value="1" />
+   <PlaybackRateScalarMax value="1" />
+   <ViewportCullingMode value="4" />
+   <RenderWhenViewportCulled value="0" />
+   <UpdateWhenViewportCulled value="1" />
+   <EmitWhenViewportCulled value="0" />
+   <DistanceCullingMode value="4" />
+   <RenderWhenDistanceCulled value="0" />
+   <UpdateWhenDistanceCulled value="1" />
+   <EmitWhenDistanceCulled value="0" />
+   <ViewportCullingSphereOffset x="0" y="-1" z="0" />
+   <ViewportCullingSphereRadius value="3" />
+   <DistanceCullingFadeDist value="2500" />
+   <DistanceCullingCullDist value="3000" />
+   <LodEvoDistanceMin value="5" />
+   <LodEvoDistanceMax value="12" />
+   <CollisionRange value="0" />
+   <CollisionProbeDistance value="0" />
+   <CollisionType value="0" />
+   <ShareEntityCollisions value="0" />
+   <OnlyUseBVHCollisions value="0" />
+   <GameFlags value="1" />
+   <ColourTintMaxEnable value="0" />
+   <UseDataVolume value="0" />
+   <DataVolumeType value="0" />
+   <ZoomLevel value="100" />
+   <EventEmitters>
+    <Item>
+     <EmitterRule>k7_dust</EmitterRule>
+     <ParticleRule>k7_dust</ParticleRule>
+     <EventType value="0" />
+     <StartRatio value="0" />
+     <EndRatio value="1" />
+     <PlaybackRateScalarMin value="1" />
+     <PlaybackRateScalarMax value="1" />
+     <ZoomScalarMin value="1" />
+     <ZoomScalarMax value="1" />
+     <ColourTintMin value="0xFFFFFFFF" />
+     <ColourTintMax value="0xFFFFFFFF" />
+     <EvolutionList>
+      <Evolutions>
+       <Item>speed</Item>
+       <Item>temp</Item>
+       <Item>damage</Item>
+       <Item>throttle</Item>
+       <Item>LOD</Item>
+      </Evolutions>
+      <EvolvedKeyframeProps>
+       <Item>
+        <Name>ptxCreationDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.25045" y="3.992813" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.499099" y="4.0217333" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.756757" y="3.8811133" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.99839" y="4.138508" z="0" w="0" />
+            <KeyframeValue x="0" y="-1.2" z="0.1" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.05" y="0.3" z="0.05" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxTargetDomain:m_positionKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="-0.947521" z="-0.070187" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.01" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.159979" y="1.654493" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="0" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.5" y="0.5" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="4.558422" y="4.558422" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="2.519868" y="2.9605" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes />
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="6.33301" y="0.01" z="0.01" w="0.01" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="113.267" y="113.267" z="113.267" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="-0.003587" y="0.03" z="0.03" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.001202" y="-0.000815" z="0.06" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="1" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.005674" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.000308" y="0" z="-0.032364" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.232522" y="0.232522" z="0.090203" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.600812" y="1.6644142" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.138118" y="0.143367" z="0.054543" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.738333" y="1.3544024" z="0" w="0" />
+            <KeyframeValue x="0" y="0" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMaxKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="1.139083" y="1.139083" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.492234" y="2.0315542" z="0" w="0" />
+            <KeyframeValue x="1.97413" y="1.97413" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.998208" y="1.9763862" z="0" w="0" />
+            <KeyframeValue x="1.400368" y="1.400368" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+       <Item>
+        <Name>ptxu_Size:m_whdMinKFP</Name>
+        <BlendMode value="1" />
+        <Items>
+         <Item>
+          <EvolutionID value="3" />
+          <IsLodEvolution value="0" />
+          <Keyframes>
+           <Item>
+            <KeyframeTime x="0" y="0" z="0" w="0" />
+            <KeyframeValue x="0.889579" y="0.889579" z="0" w="0" />
+           </Item>
+           <Item>
+            <KeyframeTime x="0.67638" y="1.4784589" z="0" w="0" />
+            <KeyframeValue x="1.239133" y="1.239133" z="0" w="0" />
+           </Item>
+          </Keyframes>
+         </Item>
+        </Items>
+       </Item>
+      </EvolvedKeyframeProps>
+     </EvolutionList>
+    </Item>
+   </EventEmitters>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="56" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_colourTintMaxKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="57" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="58" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="23" y="24" z="100" w="100" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataSphereKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="59" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEffectRule:m_dataCapsuleKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="60" />
+     <Keyframes />
+    </Item>
+   </KeyframeProps>
+   <EvolutionList>
+    <Evolutions>
+     <Item>speed</Item>
+     <Item>temp</Item>
+     <Item>damage</Item>
+     <Item>throttle</Item>
+     <Item>LOD</Item>
+    </Evolutions>
+    <EvolvedKeyframeProps>
+     <Item>
+      <Name>ptxEffectRule:m_colourTintMinKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="0.8" y="0.8" z="0.8" w="0.1" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+     <Item>
+      <Name>ptxEffectRule:m_zoomScalarKFP</Name>
+      <BlendMode value="1" />
+      <Items>
+       <Item>
+        <EvolutionID value="0" />
+        <IsLodEvolution value="0" />
+        <Keyframes>
+         <Item>
+          <KeyframeTime x="0" y="0" z="0" w="0" />
+          <KeyframeValue x="28" y="30" z="100" w="100" />
+         </Item>
+        </Keyframes>
+       </Item>
+      </Items>
+     </Item>
+    </EvolvedKeyframeProps>
+   </EvolutionList>
+  </Item>
+ </EffectRuleDictionary>
+ <EmitterRuleDictionary>
+  <Item>
+   <Name>k7_column</Name>
+   <RefCount value="2" />
+   <IsOneShot value="0" />
+   <CreationDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="0" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxCreationDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="245" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxCreationDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="246" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxCreationDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="247" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="5" y="5" z="5" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxCreationDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="248" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </CreationDomainObj>
+   <TargetDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="1" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxTargetDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="249" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="4.0" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxTargetDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="250" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="251" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="2.0" y="2.0" z="1.2" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxTargetDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="252" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </TargetDomainObj>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="235" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="6" y="6" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverDistKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="236" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="237" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="22" y="30" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="238" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.9" y="0.01" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="239" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.8" y="1.2" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="240" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="100" y="100" z="100" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_accnScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="241" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_dampeningScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="242" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_matrixWeightScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="243" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_inheritVelocityKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="244" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+   </KeyframeProps>
+  </Item>
+  <Item>
+   <Name>k7_cap</Name>
+   <RefCount value="2" />
+   <IsOneShot value="0" />
+   <CreationDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="0" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxCreationDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="245" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxCreationDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="246" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxCreationDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="247" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="9" y="9" z="9" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxCreationDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="248" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </CreationDomainObj>
+   <TargetDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="1" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxTargetDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="249" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="1.5" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxTargetDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="250" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="251" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.75" y="0.75" z="0.44999999999999996" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxTargetDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="252" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </TargetDomainObj>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="235" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="5" y="5" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverDistKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="236" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="237" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="26" y="34" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="238" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.9" y="0.01" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="239" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.8" y="1.2" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="240" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="100" y="100" z="100" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_accnScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="241" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_dampeningScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="242" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_matrixWeightScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="243" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_inheritVelocityKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="244" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+   </KeyframeProps>
+  </Item>
+  <Item>
+   <Name>k7_dust</Name>
+   <RefCount value="2" />
+   <IsOneShot value="0" />
+   <CreationDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="0" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxCreationDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="245" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxCreationDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="246" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxCreationDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="247" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="12" y="12" z="12" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxCreationDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="248" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </CreationDomainObj>
+   <TargetDomainObj>
+    <DomainType value="Cylinder" />
+    <IsWorldSpace value="0" />
+    <IsPointRelative value="1" />
+    <IsCreationRelative value="0" />
+    <IsTargetRelatve value="0" />
+    <FileVersion value="2" />
+    <PositionKFP>
+     <Name>ptxTargetDomain:m_positionKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="249" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0.6" w="0" />
+      </Item>
+     </Keyframes>
+    </PositionKFP>
+    <RotationKFP>
+     <Name>ptxTargetDomain:m_rotationKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="250" />
+     <Keyframes />
+    </RotationKFP>
+    <SizeOuterKFP>
+     <Name>ptxTargetDomain:m_sizeOuterKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="251" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.3" y="0.3" z="0.18" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeOuterKFP>
+    <SizeInnerKFP>
+     <Name>ptxTargetDomain:m_sizeInnerKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="252" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </SizeInnerKFP>
+   </TargetDomainObj>
+   <KeyframeProps>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverTimeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="235" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="6" y="6" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_spawnRateOverDistKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="236" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_particleLifeKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="237" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="14" y="20" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_playbackRateScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="238" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.9" y="0.01" z="0.01" w="0.01" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_speedScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="239" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0.8" y="1.2" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_sizeScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="240" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="100" y="100" z="100" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_accnScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="241" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_dampeningScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="242" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_matrixWeightScalarKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="243" />
+     <Keyframes />
+    </Item>
+    <Item>
+     <Name>ptxEmitterRule:m_inheritVelocityKFP</Name>
+     <InvertBiasLink value="0" />
+     <RandomIndex value="244" />
+     <Keyframes>
+      <Item>
+       <KeyframeTime x="0" y="0" z="0" w="0" />
+       <KeyframeValue x="0" y="0" z="0" w="0" />
+      </Item>
+     </Keyframes>
+    </Item>
+   </KeyframeProps>
+  </Item>
+ </EmitterRuleDictionary>
+ <ParticleRuleDictionary>
+  <Item>
+   <Name>k7_column</Name>
+   <RefCount value="2" />
+   <ShaderFile>ptfx_sprite</ShaderFile>
+   <ShaderTechnique>RGBA_lit_soft</ShaderTechnique>
+   <CullMode value="2" />
+   <BlendSet value="0" />
+   <LightingMode value="2" />
+   <DepthWrite value="0" />
+   <DepthTest value="1" />
+   <AlphaBlend value="1" />
+   <TexFrameIDMin value="13" />
+   <TexFrameIDMax value="28" />
+   <ShaderTemplateTechniqueID value="5" />
+   <DiffuseMode value="0" />
+   <ProjectionMode value="0" />
+   <IsLit value="1" />
+   <IsSoft value="1" />
+   <IsScreenSpace value="0" />
+   <IsRefract value="0" />
+   <IsNormalSpec value="0" />
+   <SortType value="1" />
+   <DrawType value="0" />
+   <Flags value="0" />
+   <RuntimeFlags value="0" />
+   <EffectSpawnerAtRatio>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="0" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerAtRatio>
+   <EffectSpawnerOnCollision>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="1" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerOnCollision>
+   <AllBehaviours>
+    <Item>
+     <Type value="Age" />
+    </Item>
+    <Item>
+     <Type value="Acceleration" />
+     <ReferenceSpace value="0" />
+     <IsAffectedByZoom value="0" />
+     <EnableGravity value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="103" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.125" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="104" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.25" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Velocity" />
+    </Item>
+    <Item>
+     <Type value="Rotation" />
+     <InitRotationMode value="0" />
+     <UpdateRotationMode value="0" />
+     <AccumulateAngle value="0" />
+     <RotateAngleAxes value="0" />
+     <RotateInitAngleAxes value="0" />
+     <SpeedFadeThreshold value="0" />
+     <InitialAngleMinKFP>
+      <Name>ptxu_Rotation:m_initialAngleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="105" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMinKFP>
+     <InitialAngleMaxKFP>
+      <Name>ptxu_Rotation:m_initialAngleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="106" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMaxKFP>
+     <AngleMinKFP>
+      <Name>ptxu_Rotation:m_angleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="107" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMinKFP>
+     <AngleMaxKFP>
+      <Name>ptxu_Rotation:m_angleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="108" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Size" />
+     <KeyframeMode value="0" />
+     <IsProportional value="1" />
+     <WhdMinKFP>
+      <Name>ptxu_Size:m_whdMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="109" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="4.800000000000001" y="4.800000000000001" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="14.3" y="14.3" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="23.400000000000002" y="23.400000000000002" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMinKFP>
+     <WhdMaxKFP>
+      <Name>ptxu_Size:m_whdMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="110" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="6" y="6" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="16.900000000000002" y="16.900000000000002" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="26" y="26" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMaxKFP>
+     <TblrScalarKFP>
+      <Name>ptxu_Size:m_tblrScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="111" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="1" w="1" />
+       </Item>
+      </Keyframes>
+     </TblrScalarKFP>
+     <TblrVelScalarKFP>
+      <Name>ptxu_Size:m_tblrVelScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="112" />
+      <Keyframes />
+     </TblrVelScalarKFP>
+    </Item>
+    <Item>
+     <Type value="Dampening" />
+     <ReferenceSpace value="0" />
+     <EnableAirResistance value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="113" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.465137" z="0.380599" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.445291" z="0.150467" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="114" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.92537" y="1.040177" z="0.92537" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="MatrixWeight" />
+     <ReferenceSpace value="0" />
+     <mtxWeightKFP>
+      <Name>ptxu_MatrixWeight:m_mtxWeightKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="115" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="1.4285715" z="0" w="0" />
+        <KeyframeValue x="0.1" y="0.15" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </mtxWeightKFP>
+    </Item>
+    <Item>
+     <Type value="Wind" />
+     <HighLodRange value="3000" />
+     <LowLodRange value="3000" />
+     <HighLodDisturbanceMode value="2" />
+     <LodLodDisturbanceMode value="1" />
+     <IgnoreMtxWeight value="0" />
+     <InfluenceKFP>
+      <Name>ptxu_Wind:m_influenceKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="116" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.24" y="0.4" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.24" y="0.4" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InfluenceKFP>
+    </Item>
+    <Item>
+     <Type value="AnimateTexture" />
+     <KeyframeMode value="0" />
+     <LastFrameID value="37" />
+     <LoopMode value="1" />
+     <IsRandomised value="0" />
+     <IsScaledOverParticleLife value="1" />
+     <IsHeldOnLastFrame value="0" />
+     <DoFrameBlending value="1" />
+     <AnimRateKFP>
+      <Name>ptxu_AnimateTexture:m_animRateKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="117" />
+      <Keyframes />
+     </AnimRateKFP>
+    </Item>
+    <Item>
+     <Type value="Colour" />
+     <KeyframeMode value="0" />
+     <RGBAMaxEnable value="1" />
+     <RGBAProportional value="1" />
+     <RGBCanTint value="0" />
+     <RGBAMinKFP>
+      <Name>ptxu_Colour:m_rgbaMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="118" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.16" y="0.15" z="0.14" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.16" y="0.15" z="0.14" w="0.765" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.16" y="0.15" z="0.14" w="0.595" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.16" y="0.15" z="0.14" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMinKFP>
+     <RGBAMaxKFP>
+      <Name>ptxu_Colour:m_rgbaMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="119" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.24" y="0.22" z="0.2" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.24" y="0.22" z="0.2" w="0.85" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.24" y="0.22" z="0.2" w="0.68" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.24" y="0.22" z="0.2" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMaxKFP>
+     <EmissiveIntensityKFP>
+      <Name>ptxu_Colour:m_emissiveIntensityKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="120" />
+      <Keyframes />
+     </EmissiveIntensityKFP>
+    </Item>
+    <Item>
+     <Type value="Sprite" />
+     <AlignAxis x="0" y="0" z="0" />
+     <AlignmentMode value="0" />
+     <FlipChanceU value="0" />
+     <FlipChanceV value="0" />
+     <NearClipDist value="0" />
+     <FarClipDist value="0" />
+     <ProjectionDepth value="0" />
+     <ShadowCastIntensity value="0" />
+     <IsScreenSpace value="0" />
+     <IsHighRes value="0" />
+     <NearClip value="0" />
+     <FarClip value="0" />
+     <UVClip value="0" />
+     <DisableDraw value="0" />
+    </Item>
+   </AllBehaviours>
+   <ShaderVars>
+    <Item>
+     <Type value="Vector2" />
+     <Name>wraplightingterm</Name>
+     <ShaderVarID value="32" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.6" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>softness</Name>
+     <ShaderVarID value="31" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="10" />
+      </Item>
+      <Item>
+       <Unknown0 value="1" />
+       <Unknown4 value="1" />
+       <Unknown10 value="2" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>superalpha</Name>
+     <ShaderVarID value="23" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="6" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>directionalmult</Name>
+     <ShaderVarID value="22" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>ambientmult</Name>
+     <ShaderVarID value="21" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>shadowamount</Name>
+     <ShaderVarID value="20" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>extralightmult</Name>
+     <ShaderVarID value="19" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>camerabias</Name>
+     <ShaderVarID value="18" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.2" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>camerashrink</Name>
+     <ShaderVarID value="17" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="2.637715" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>normalarc</Name>
+     <ShaderVarID value="16" />
+     <IsKeyframeable value="1" />
+     <Items />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>dirnormalbias</Name>
+     <ShaderVarID value="15" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0.7" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnesscurve</Name>
+     <ShaderVarID value="14" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowmult</Name>
+     <ShaderVarID value="13" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowoffset</Name>
+     <ShaderVarID value="12" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>normalmapmult</Name>
+     <ShaderVarID value="11" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector4" />
+     <Name>alphacutoffminmax</Name>
+     <ShaderVarID value="10" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="1" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendstartdistance</Name>
+     <ShaderVarID value="9" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendenddistance</Name>
+     <ShaderVarID value="8" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>refractionmap</Name>
+     <ShaderVarID value="7" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>normalspecmap</Name>
+     <ShaderVarID value="6" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>diffusetex2</Name>
+     <ShaderVarID value="4" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="1" />
+     <TextureName>ptfx_smoke_wispy_anim</TextureName>
+    </Item>
+   </ShaderVars>
+  </Item>
+  <Item>
+   <Name>k7_cap</Name>
+   <RefCount value="2" />
+   <ShaderFile>ptfx_sprite</ShaderFile>
+   <ShaderTechnique>RGBA_lit_soft</ShaderTechnique>
+   <CullMode value="2" />
+   <BlendSet value="0" />
+   <LightingMode value="2" />
+   <DepthWrite value="0" />
+   <DepthTest value="1" />
+   <AlphaBlend value="1" />
+   <TexFrameIDMin value="13" />
+   <TexFrameIDMax value="28" />
+   <ShaderTemplateTechniqueID value="5" />
+   <DiffuseMode value="0" />
+   <ProjectionMode value="0" />
+   <IsLit value="1" />
+   <IsSoft value="1" />
+   <IsScreenSpace value="0" />
+   <IsRefract value="0" />
+   <IsNormalSpec value="0" />
+   <SortType value="1" />
+   <DrawType value="0" />
+   <Flags value="0" />
+   <RuntimeFlags value="0" />
+   <EffectSpawnerAtRatio>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="0" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerAtRatio>
+   <EffectSpawnerOnCollision>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="1" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerOnCollision>
+   <AllBehaviours>
+    <Item>
+     <Type value="Age" />
+    </Item>
+    <Item>
+     <Type value="Acceleration" />
+     <ReferenceSpace value="0" />
+     <IsAffectedByZoom value="0" />
+     <EnableGravity value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="103" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.05" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="104" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.1" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Velocity" />
+    </Item>
+    <Item>
+     <Type value="Rotation" />
+     <InitRotationMode value="0" />
+     <UpdateRotationMode value="0" />
+     <AccumulateAngle value="0" />
+     <RotateAngleAxes value="0" />
+     <RotateInitAngleAxes value="0" />
+     <SpeedFadeThreshold value="0" />
+     <InitialAngleMinKFP>
+      <Name>ptxu_Rotation:m_initialAngleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="105" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMinKFP>
+     <InitialAngleMaxKFP>
+      <Name>ptxu_Rotation:m_initialAngleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="106" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMaxKFP>
+     <AngleMinKFP>
+      <Name>ptxu_Rotation:m_angleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="107" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMinKFP>
+     <AngleMaxKFP>
+      <Name>ptxu_Rotation:m_angleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="108" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Size" />
+     <KeyframeMode value="0" />
+     <IsProportional value="1" />
+     <WhdMinKFP>
+      <Name>ptxu_Size:m_whdMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="109" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="8.0" y="8.0" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="22.0" y="22.0" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="36.0" y="36.0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMinKFP>
+     <WhdMaxKFP>
+      <Name>ptxu_Size:m_whdMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="110" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="10" y="10" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="26.0" y="26.0" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="40" y="40" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMaxKFP>
+     <TblrScalarKFP>
+      <Name>ptxu_Size:m_tblrScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="111" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="1" w="1" />
+       </Item>
+      </Keyframes>
+     </TblrScalarKFP>
+     <TblrVelScalarKFP>
+      <Name>ptxu_Size:m_tblrVelScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="112" />
+      <Keyframes />
+     </TblrVelScalarKFP>
+    </Item>
+    <Item>
+     <Type value="Dampening" />
+     <ReferenceSpace value="0" />
+     <EnableAirResistance value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="113" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.465137" z="0.380599" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.445291" z="0.150467" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="114" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.92537" y="1.040177" z="0.92537" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="MatrixWeight" />
+     <ReferenceSpace value="0" />
+     <mtxWeightKFP>
+      <Name>ptxu_MatrixWeight:m_mtxWeightKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="115" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="1.4285715" z="0" w="0" />
+        <KeyframeValue x="0.1" y="0.15" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </mtxWeightKFP>
+    </Item>
+    <Item>
+     <Type value="Wind" />
+     <HighLodRange value="3000" />
+     <LowLodRange value="3000" />
+     <HighLodDisturbanceMode value="2" />
+     <LodLodDisturbanceMode value="1" />
+     <IgnoreMtxWeight value="0" />
+     <InfluenceKFP>
+      <Name>ptxu_Wind:m_influenceKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="116" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.36" y="0.6" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.36" y="0.6" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InfluenceKFP>
+    </Item>
+    <Item>
+     <Type value="AnimateTexture" />
+     <KeyframeMode value="0" />
+     <LastFrameID value="37" />
+     <LoopMode value="1" />
+     <IsRandomised value="0" />
+     <IsScaledOverParticleLife value="1" />
+     <IsHeldOnLastFrame value="0" />
+     <DoFrameBlending value="1" />
+     <AnimRateKFP>
+      <Name>ptxu_AnimateTexture:m_animRateKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="117" />
+      <Keyframes />
+     </AnimRateKFP>
+    </Item>
+    <Item>
+     <Type value="Colour" />
+     <KeyframeMode value="0" />
+     <RGBAMaxEnable value="1" />
+     <RGBAProportional value="1" />
+     <RGBCanTint value="0" />
+     <RGBAMinKFP>
+      <Name>ptxu_Colour:m_rgbaMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="118" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.38" y="0.35" z="0.32" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.38" y="0.35" z="0.32" w="0.7200000000000001" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.38" y="0.35" z="0.32" w="0.5599999999999999" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.38" y="0.35" z="0.32" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMinKFP>
+     <RGBAMaxKFP>
+      <Name>ptxu_Colour:m_rgbaMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="119" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.52" y="0.48" z="0.44" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.52" y="0.48" z="0.44" w="0.8" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.52" y="0.48" z="0.44" w="0.6400000000000001" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.52" y="0.48" z="0.44" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMaxKFP>
+     <EmissiveIntensityKFP>
+      <Name>ptxu_Colour:m_emissiveIntensityKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="120" />
+      <Keyframes />
+     </EmissiveIntensityKFP>
+    </Item>
+    <Item>
+     <Type value="Sprite" />
+     <AlignAxis x="0" y="0" z="0" />
+     <AlignmentMode value="0" />
+     <FlipChanceU value="0" />
+     <FlipChanceV value="0" />
+     <NearClipDist value="0" />
+     <FarClipDist value="0" />
+     <ProjectionDepth value="0" />
+     <ShadowCastIntensity value="0" />
+     <IsScreenSpace value="0" />
+     <IsHighRes value="0" />
+     <NearClip value="0" />
+     <FarClip value="0" />
+     <UVClip value="0" />
+     <DisableDraw value="0" />
+    </Item>
+   </AllBehaviours>
+   <ShaderVars>
+    <Item>
+     <Type value="Vector2" />
+     <Name>wraplightingterm</Name>
+     <ShaderVarID value="32" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.6" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>softness</Name>
+     <ShaderVarID value="31" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="10" />
+      </Item>
+      <Item>
+       <Unknown0 value="1" />
+       <Unknown4 value="1" />
+       <Unknown10 value="2" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>superalpha</Name>
+     <ShaderVarID value="23" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="6" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>directionalmult</Name>
+     <ShaderVarID value="22" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>ambientmult</Name>
+     <ShaderVarID value="21" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>shadowamount</Name>
+     <ShaderVarID value="20" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>extralightmult</Name>
+     <ShaderVarID value="19" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>camerabias</Name>
+     <ShaderVarID value="18" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.2" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>camerashrink</Name>
+     <ShaderVarID value="17" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="2.637715" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>normalarc</Name>
+     <ShaderVarID value="16" />
+     <IsKeyframeable value="1" />
+     <Items />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>dirnormalbias</Name>
+     <ShaderVarID value="15" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0.7" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnesscurve</Name>
+     <ShaderVarID value="14" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowmult</Name>
+     <ShaderVarID value="13" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowoffset</Name>
+     <ShaderVarID value="12" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>normalmapmult</Name>
+     <ShaderVarID value="11" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector4" />
+     <Name>alphacutoffminmax</Name>
+     <ShaderVarID value="10" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="1" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendstartdistance</Name>
+     <ShaderVarID value="9" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendenddistance</Name>
+     <ShaderVarID value="8" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>refractionmap</Name>
+     <ShaderVarID value="7" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>normalspecmap</Name>
+     <ShaderVarID value="6" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>diffusetex2</Name>
+     <ShaderVarID value="4" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="1" />
+     <TextureName>ptfx_smoke_wispy_anim</TextureName>
+    </Item>
+   </ShaderVars>
+  </Item>
+  <Item>
+   <Name>k7_dust</Name>
+   <RefCount value="2" />
+   <ShaderFile>ptfx_sprite</ShaderFile>
+   <ShaderTechnique>RGBA_lit_soft</ShaderTechnique>
+   <CullMode value="2" />
+   <BlendSet value="0" />
+   <LightingMode value="2" />
+   <DepthWrite value="0" />
+   <DepthTest value="1" />
+   <AlphaBlend value="1" />
+   <TexFrameIDMin value="13" />
+   <TexFrameIDMax value="28" />
+   <ShaderTemplateTechniqueID value="5" />
+   <DiffuseMode value="0" />
+   <ProjectionMode value="0" />
+   <IsLit value="1" />
+   <IsSoft value="1" />
+   <IsScreenSpace value="0" />
+   <IsRefract value="0" />
+   <IsNormalSpec value="0" />
+   <SortType value="1" />
+   <DrawType value="0" />
+   <Flags value="0" />
+   <RuntimeFlags value="0" />
+   <EffectSpawnerAtRatio>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="0" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerAtRatio>
+   <EffectSpawnerOnCollision>
+    <EffectRule />
+    <DurationScalarMin value="0" />
+    <PlaybackRateScalarMin value="0" />
+    <ColourTintScalarMin value="0x0" />
+    <ZoomScalarMin value="0" />
+    <FlagsMin value="0" />
+    <DurationScalarMax value="0" />
+    <PlaybackRateScalarMax value="0" />
+    <ColourTintScalarMax value="0x0" />
+    <ZoomScalarMax value="0" />
+    <FlagsMax value="0" />
+    <TriggerInfo value="1" />
+    <InheritsPointLife value="0" />
+    <TracksPointPos value="0" />
+    <TracksPointDir value="0" />
+    <TracksPointNegDir value="0" />
+   </EffectSpawnerOnCollision>
+   <AllBehaviours>
+    <Item>
+     <Type value="Age" />
+    </Item>
+    <Item>
+     <Type value="Acceleration" />
+     <ReferenceSpace value="0" />
+     <IsAffectedByZoom value="0" />
+     <EnableGravity value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Acceleration:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="103" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.01" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Acceleration:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="104" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0" y="0" z="0.02" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Velocity" />
+    </Item>
+    <Item>
+     <Type value="Rotation" />
+     <InitRotationMode value="0" />
+     <UpdateRotationMode value="0" />
+     <AccumulateAngle value="0" />
+     <RotateAngleAxes value="0" />
+     <RotateInitAngleAxes value="0" />
+     <SpeedFadeThreshold value="0" />
+     <InitialAngleMinKFP>
+      <Name>ptxu_Rotation:m_initialAngleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="105" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMinKFP>
+     <InitialAngleMaxKFP>
+      <Name>ptxu_Rotation:m_initialAngleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="106" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="180" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InitialAngleMaxKFP>
+     <AngleMinKFP>
+      <Name>ptxu_Rotation:m_angleMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="107" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="-18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMinKFP>
+     <AngleMaxKFP>
+      <Name>ptxu_Rotation:m_angleMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="108" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="18" y="0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </AngleMaxKFP>
+    </Item>
+    <Item>
+     <Type value="Size" />
+     <KeyframeMode value="0" />
+     <IsProportional value="1" />
+     <WhdMinKFP>
+      <Name>ptxu_Size:m_whdMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="109" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="6.4" y="6.4" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="16.5" y="16.5" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="27.0" y="27.0" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMinKFP>
+     <WhdMaxKFP>
+      <Name>ptxu_Size:m_whdMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="110" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="8" y="8" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.3" y="0.3" z="0.3" w="0.3" />
+        <KeyframeValue x="19.5" y="19.5" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="30" y="30" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </WhdMaxKFP>
+     <TblrScalarKFP>
+      <Name>ptxu_Size:m_tblrScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="111" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="1" w="1" />
+       </Item>
+      </Keyframes>
+     </TblrScalarKFP>
+     <TblrVelScalarKFP>
+      <Name>ptxu_Size:m_tblrVelScalarKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="112" />
+      <Keyframes />
+     </TblrVelScalarKFP>
+    </Item>
+    <Item>
+     <Type value="Dampening" />
+     <ReferenceSpace value="0" />
+     <EnableAirResistance value="0" />
+     <XYZMinKFP>
+      <Name>ptxu_Dampening:m_xyzMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="113" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.465137" z="0.380599" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="0" w="0" />
+        <KeyframeValue x="0.393776" y="0.445291" z="0.150467" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMinKFP>
+     <XYZMaxKFP>
+      <Name>ptxu_Dampening:m_xyzMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="114" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.92537" y="1.040177" z="0.92537" w="0" />
+       </Item>
+      </Keyframes>
+     </XYZMaxKFP>
+    </Item>
+    <Item>
+     <Type value="MatrixWeight" />
+     <ReferenceSpace value="0" />
+     <mtxWeightKFP>
+      <Name>ptxu_MatrixWeight:m_mtxWeightKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="115" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="1" y="1" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="1.4285715" z="0" w="0" />
+        <KeyframeValue x="0.1" y="0.15" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </mtxWeightKFP>
+    </Item>
+    <Item>
+     <Type value="Wind" />
+     <HighLodRange value="3000" />
+     <LowLodRange value="3000" />
+     <HighLodDisturbanceMode value="2" />
+     <LodLodDisturbanceMode value="1" />
+     <IgnoreMtxWeight value="0" />
+     <InfluenceKFP>
+      <Name>ptxu_Wind:m_influenceKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="116" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.3" y="0.5" z="0" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.3" y="0.5" z="0" w="0" />
+       </Item>
+      </Keyframes>
+     </InfluenceKFP>
+    </Item>
+    <Item>
+     <Type value="AnimateTexture" />
+     <KeyframeMode value="0" />
+     <LastFrameID value="37" />
+     <LoopMode value="1" />
+     <IsRandomised value="0" />
+     <IsScaledOverParticleLife value="1" />
+     <IsHeldOnLastFrame value="0" />
+     <DoFrameBlending value="1" />
+     <AnimRateKFP>
+      <Name>ptxu_AnimateTexture:m_animRateKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="117" />
+      <Keyframes />
+     </AnimRateKFP>
+    </Item>
+    <Item>
+     <Type value="Colour" />
+     <KeyframeMode value="0" />
+     <RGBAMaxEnable value="1" />
+     <RGBAProportional value="1" />
+     <RGBCanTint value="0" />
+     <RGBAMinKFP>
+      <Name>ptxu_Colour:m_rgbaMinKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="118" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.55" y="0.47" z="0.36" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.55" y="0.47" z="0.36" w="0.54" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.55" y="0.47" z="0.36" w="0.42" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.55" y="0.47" z="0.36" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMinKFP>
+     <RGBAMaxKFP>
+      <Name>ptxu_Colour:m_rgbaMaxKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="119" />
+      <Keyframes>
+       <Item>
+        <KeyframeTime x="0" y="0" z="0" w="0" />
+        <KeyframeValue x="0.68" y="0.59" z="0.46" w="0" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.08" y="0.08" z="0.08" w="0.08" />
+        <KeyframeValue x="0.68" y="0.59" z="0.46" w="0.6" />
+       </Item>
+       <Item>
+        <KeyframeTime x="0.7" y="0.7" z="0.7" w="0.7" />
+        <KeyframeValue x="0.68" y="0.59" z="0.46" w="0.48" />
+       </Item>
+       <Item>
+        <KeyframeTime x="1" y="1" z="1" w="1" />
+        <KeyframeValue x="0.68" y="0.59" z="0.46" w="0" />
+       </Item>
+      </Keyframes>
+     </RGBAMaxKFP>
+     <EmissiveIntensityKFP>
+      <Name>ptxu_Colour:m_emissiveIntensityKFP</Name>
+      <InvertBiasLink value="0" />
+      <RandomIndex value="120" />
+      <Keyframes />
+     </EmissiveIntensityKFP>
+    </Item>
+    <Item>
+     <Type value="Sprite" />
+     <AlignAxis x="0" y="0" z="0" />
+     <AlignmentMode value="0" />
+     <FlipChanceU value="0" />
+     <FlipChanceV value="0" />
+     <NearClipDist value="0" />
+     <FarClipDist value="0" />
+     <ProjectionDepth value="0" />
+     <ShadowCastIntensity value="0" />
+     <IsScreenSpace value="0" />
+     <IsHighRes value="0" />
+     <NearClip value="0" />
+     <FarClip value="0" />
+     <UVClip value="0" />
+     <DisableDraw value="0" />
+    </Item>
+   </AllBehaviours>
+   <ShaderVars>
+    <Item>
+     <Type value="Vector2" />
+     <Name>wraplightingterm</Name>
+     <ShaderVarID value="32" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.6" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>softness</Name>
+     <ShaderVarID value="31" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="10" />
+      </Item>
+      <Item>
+       <Unknown0 value="1" />
+       <Unknown4 value="1" />
+       <Unknown10 value="2" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>superalpha</Name>
+     <ShaderVarID value="23" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="6" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>directionalmult</Name>
+     <ShaderVarID value="22" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>ambientmult</Name>
+     <ShaderVarID value="21" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>shadowamount</Name>
+     <ShaderVarID value="20" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>extralightmult</Name>
+     <ShaderVarID value="19" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>camerabias</Name>
+     <ShaderVarID value="18" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0.2" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>camerashrink</Name>
+     <ShaderVarID value="17" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="2.637715" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>normalarc</Name>
+     <ShaderVarID value="16" />
+     <IsKeyframeable value="1" />
+     <Items />
+    </Item>
+    <Item>
+     <Type value="Keyframe" />
+     <Name>dirnormalbias</Name>
+     <ShaderVarID value="15" />
+     <IsKeyframeable value="1" />
+     <Items>
+      <Item>
+       <Unknown0 value="0" />
+       <Unknown4 value="0" />
+       <Unknown10 value="0.7" />
+      </Item>
+     </Items>
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnesscurve</Name>
+     <ShaderVarID value="14" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowmult</Name>
+     <ShaderVarID value="13" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>softnessshadowoffset</Name>
+     <ShaderVarID value="12" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>normalmapmult</Name>
+     <ShaderVarID value="11" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector4" />
+     <Name>alphacutoffminmax</Name>
+     <ShaderVarID value="10" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="0" />
+     <VectorY value="1" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendstartdistance</Name>
+     <ShaderVarID value="9" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Vector2" />
+     <Name>rg_blendenddistance</Name>
+     <ShaderVarID value="8" />
+     <IsKeyFrameable value="0" />
+     <VectorX value="1" />
+     <VectorY value="0" />
+     <VectorZ value="0" />
+     <VectorW value="0" />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>refractionmap</Name>
+     <ShaderVarID value="7" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>normalspecmap</Name>
+     <ShaderVarID value="6" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="0" />
+     <TextureName />
+    </Item>
+    <Item>
+     <Type value="Texture" />
+     <Name>diffusetex2</Name>
+     <ShaderVarID value="4" />
+     <IsKeyframeable value="0" />
+     <ExternalReference value="1" />
+     <TextureName>ptfx_smoke_wispy_anim</TextureName>
+    </Item>
+   </ShaderVars>
+  </Item>
+ </ParticleRuleDictionary>
+ <DrawableDictionary />
+ <TextureDictionary />
+</ParticleEffectsList>
