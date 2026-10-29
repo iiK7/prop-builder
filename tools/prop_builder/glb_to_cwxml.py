@@ -193,13 +193,15 @@ res = bpy.ops.sollumz.export_assets(directory=outdir, direct_export=True, use_cu
 print("export:", res, "tris:", tri_count(model), "collision tris:", COLLISION_TRIS)
 
 size = mx - mn
+# flags 0, not 32 (Static): a static archetype gets no physics when a script makes the prop, so it
+# would be walked and driven through (its collision is left to the map's own files)
 ytyp = f"""<?xml version="1.0" encoding="UTF-8"?>
 <CMapTypes>
  <extensions/>
  <archetypes>
   <Item type="CBaseArchetypeDef">
    <lodDist value="{lod_dist:.1f}"/>
-   <flags value="32"/>
+   <flags value="0"/>
    <specialAttribute value="0"/>
    <bbMin x="{mn.x:.4f}" y="{mn.y:.4f}" z="{mn.z:.4f}"/>
    <bbMax x="{mx.x:.4f}" y="{mx.y:.4f}" z="{mx.z:.4f}"/>
