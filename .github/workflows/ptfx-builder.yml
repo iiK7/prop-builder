@@ -1,0 +1,107 @@
+name: Particle builder
+
+# Particle effects (.ypt), with the same CodeWalker converter as the props (tools/prop_builder/cwconv):
+#   ptfx_requests/<name>.ypt                 -> ptfx/<name>/xml/ (<name>.ypt.xml + its textures), to edit
+#   ptfx_requests/<name>/<name>.ypt.xml      -> ptfx/<name>/<name>.ypt (textures as .dds next to the XML)
+# Results go to the prop-builds branch.
+on:
+  push:
+    paths:
+      - 'ptfx_requests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prop-builder
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CODEWALKER_REF: 485d56bec00262ed7fa472261cce7bbc6202b96e
+      DEPS: ${{ github.workspace }}/.ptfx-deps
+      TOOL: ${{ github.workspace }}/tools/prop_builder
+      OUT: ${{ github.workspace }}/out
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/prop_builder/cwconv
+            ptfx_requests
+          fetch-depth: 2
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore converter cache
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: .ptfx-deps
+          key: ptfx-deps-${{ env.CODEWALKER_REF }}-${{ hashFiles('tools/prop_builder/cwconv/**') }}
+
+      - name: Build the CodeWalker converter
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: |
+          git init -q "$RUNNER_TEMP/CodeWalker"
+          git -C "$RUNNER_TEMP/CodeWalker" fetch -q --depth 1 https://github.com/dexyfex/CodeWalker.git "$CODEWALKER_REF"
+          git -C "$RUNNER_TEMP/CodeWalker" checkout -q FETCH_HEAD
+          dotnet publish "$TOOL/cwconv/cwconv.csproj" -c Release -o "$DEPS/cwconv" -p:CodeWalkerDir="$RUNNER_TEMP/CodeWalker"
+
+      - name: Convert
+        run: |
+          CW="$DEPS/cwconv/cwconv"
+          mkdir -p "$OUT"
+          # what this push changed (a manual run: everything in ptfx_requests)
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && git rev-parse -q --verify HEAD~1 > /dev/null; then
+            changed=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- ptfx_requests)
+          else
+            changed=$(find ptfx_requests -type f)
+          fi
+          done_names=""
+          for f in $changed; do
+            case "$f" in
+              *.ypt)
+                name=$(basename "$f" .ypt)
+                echo "::group::$name.ypt -> XML"
+                "$CW" --ypt2xml "$f" "$OUT/ptfx/$name/xml"
+                echo "::endgroup::" ;;
+              *.ypt.xml)
+                name=$(basename "$f" .ypt.xml)
+                case " $done_names " in *" $name "*) continue ;; esac
+                done_names="$done_names $name"
+                echo "::group::$name.ypt.xml -> $name.ypt"
+                mkdir -p "$OUT/ptfx/$name"
+                "$CW" "$f" "$OUT/ptfx/$name/$name.ypt"
+                "$CW" --check-ypt "$OUT/ptfx/$name/$name.ypt"
+                echo "::endgroup::" ;;
+            esac
+          done
+          [ -d "$OUT/ptfx" ] || { echo "nothing to convert"; exit 0; }
+          ls -R "$OUT/ptfx" | head -50
+
+      - name: Copy to the prop-builds branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -d "$OUT/ptfx" ] || exit 0
+          repo="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          dir="$RUNNER_TEMP/builds"
+          git clone -q --depth 1 --branch prop-builds "$repo" "$dir"
+          mkdir -p "$dir/ptfx"
+          cp -r "$OUT/ptfx/." "$dir/ptfx/"
+          cd "$dir"
+          git config user.name "prop-builder"
+          git config user.email "prop-builder@users.noreply.github.com"
+          git add -A && git commit -qm "Build particles ($GITHUB_SHA)" || exit 0
+          for try in 1 2 3 4 5 6; do
+            git push -q origin prop-builds && exit 0
+            sleep $((try * 3))
+            git pull -q --rebase origin prop-builds || { git rebase --abort; echo "::error::could not merge with another build"; exit 1; }
+          done
+          echo "::error::could not save the build after 6 tries"; exit 1

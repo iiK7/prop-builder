@@ -1,4 +1,5 @@
-// cwconv: CodeWalker XML -> binary GTA V asset (.ydr / .ytyp), using CodeWalker.Core
+// cwconv: CodeWalker XML -> binary GTA V asset (.ydr / .ytyp / .ypt), using CodeWalker.Core;
+// also a particle file (.ypt) -> CodeWalker XML with its textures (--ypt2xml), to edit it
 using System.Xml;
 using CodeWalker.GameFiles;
 
@@ -21,7 +22,28 @@ if (args.Length == 2 && args[0] == "--check")
     }
     return 0;
 }
-if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ytyp.xml> <out file>"); return 1; }
+if (args.Length == 3 && args[0] == "--ypt2xml")
+{
+    var bytes = File.ReadAllBytes(Path.GetFullPath(args[1]));
+    var outDir = Path.GetFullPath(args[2]);
+    Directory.CreateDirectory(outDir);
+    var ypt = new YptFile(); ypt.Load(bytes);
+    if (ypt.PtfxList == null) { Console.Error.WriteLine($"could not read the particle file: {ypt.ErrorMessage}"); return 2; }
+    var name = Path.GetFileNameWithoutExtension(args[1]);
+    File.WriteAllText(Path.Combine(outDir, name + ".ypt.xml"), YptXml.GetXml(ypt, outDir));
+    Console.WriteLine($"OK {name}.ypt.xml effects={ypt.AllEffects?.Length}");
+    if (ypt.AllEffects != null) foreach (var fx in ypt.AllEffects) Console.WriteLine($"  effect {fx?.Name}");
+    return 0;
+}
+if (args.Length == 2 && args[0] == "--check-ypt")
+{
+    var ypt = new YptFile(); ypt.Load(File.ReadAllBytes(Path.GetFullPath(args[1])));
+    if (ypt.PtfxList == null) { Console.Error.WriteLine($"could not read the particle file: {ypt.ErrorMessage}"); return 2; }
+    Console.WriteLine($"YPT effects={ypt.AllEffects?.Length} textures={ypt.PtfxList.TextureDictionary?.Textures?.data_items?.Length}");
+    if (ypt.AllEffects != null) foreach (var fx in ypt.AllEffects) Console.WriteLine($"  effect {fx?.Name}");
+    return 0;
+}
+if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ytyp.xml|in.ypt.xml> <out file> | --ypt2xml <in.ypt> <out dir>"); return 1; }
 var input = Path.GetFullPath(args[0]);
 var output = Path.GetFullPath(args[1]);
 var folder = Path.GetDirectoryName(input);
@@ -33,6 +55,8 @@ if (input.EndsWith(".ydr.xml", StringComparison.OrdinalIgnoreCase))
     data = XmlYdr.GetYdr(doc, folder).Save();
 else if (input.EndsWith(".ytyp.xml", StringComparison.OrdinalIgnoreCase))
     data = XmlMeta.GetData(doc, MetaFormat.RSC, folder);
+else if (input.EndsWith(".ypt.xml", StringComparison.OrdinalIgnoreCase))
+    data = XmlYpt.GetYpt(doc, folder).Save();
 else { Console.Error.WriteLine("unsupported input"); return 1; }
 
 if (data == null || data.Length == 0) { Console.Error.WriteLine("conversion produced no data"); return 2; }

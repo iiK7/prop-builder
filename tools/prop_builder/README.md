@@ -32,3 +32,13 @@ pip install -r requirements.txt
 # DEPS must contain Sollumz/ (pinned commit in the workflow) and the published cwconv/
 PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 ```
+
+## Particle effects (.ypt)
+
+`.github/workflows/ptfx-builder.yml` uses the same converter (`cwconv`) for particle files:
+
+- add `ptfx_requests/<name>.ypt` (a particle file taken from the game) to get it as editable XML with its
+  textures in `ptfx/<name>/xml/` on the `prop-builds` branch;
+- add `ptfx_requests/<name>/<name>.ypt.xml` with its `.dds` textures next to it to build `ptfx/<name>/<name>.ypt`
+  (read back once to check it).
+
