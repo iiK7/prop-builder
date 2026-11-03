@@ -44,10 +44,19 @@ PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 
 ## Clothes designer (new textures for existing clothes)
 
-`.github/workflows/clothes-builder.yml` + `clothes_variant.py` + the site page `docs/clothes/` ("مصمم الملابس"):
-a new colour (`tint`), logo (`logo`) or pattern from a description (`prompt`, via `text_to_image.py ... pattern`) for
-one drawable of a freemode MP pack or an addon ped. The page uploads `clothes_requests/<name>.zip` (the pack, or only
-this piece's files when the pack is over 40 MB) and `clothes_requests/<name>.json` (the design) in one commit.
+The **code** is here (`clothes_variant.py`, `clothes_preview.py` + `clothes_preview_bpy.py`, `cwconv`) and the site page
+`docs/clothes/` ("مصمم الملابس"); the **workflow, the uploaded packs and the results live in the private repository
+`iiK7/claude-private`** (`.github/workflows/clothes-builder.yml` there checks this repository out for the tools). Nothing
+clothes-related is processed or stored in this public repository: clothing packs are often paid, so they must never be
+uploaded here (no `clothes_requests/` folder, no clothes results on `prop-builds`).
+
+The page uploads `clothes_requests/<name>.zip` (the pack, or only this piece's files + the ped's `.yft` when the pack is
+over 40 MB) and `clothes_requests/<name>.json` (the design) to `claude-private` in one commit, and reads the results from
+its `clothes-builds` branch through the API with the owner's key (a fine-grained token with access to **both**
+prop-builder and claude-private: Contents read/write, Actions read).
+
+`clothes_variant.py`: a new colour (`tint`), logo (`logo`) or pattern from a description (`prompt`, via `text_to_image.py
+... pattern`) for one drawable of a freemode MP pack or an addon ped.
 The tool adds the first letter without a file (`_b` ... `_z`; a hole between the files first): a copy of the base `.ytd` with the diffuse recoloured and renamed
 (same format, size and mip count; BC7 is written as DXT5/DXT1), or one more texture inside `<ped>.ytd` when every
 texture lives there. Real packs often list more `aTexData` items than files (the game skips the missing ones): when the
@@ -56,8 +65,16 @@ bla ...); otherwise items are added up to the new letter and `numAvailTex` (= al
 the same number. Props of an addon ped follow its `PropsName` (meta file): their files are `<PropsName>^p_..._diff_...`
 and `<PropsName>.ymt` must be in the pack. It refuses escrow (`.fxap`) / unreadable files, packs without a `.ymt`
 (base-game items must be made an addon first) and 26 letters used.
-Results: `prop-builds` branch `clothes/<name>/` (zip, `preview_before.png`, `preview_after.png`, `info.json`, also for a
-refusal with its reason); an analysis (`"mode": "analyze"`) goes to `clothes_analysis/<name>/`.
+
+`clothes_preview.py` (3D preview, runs with every request and alone with `"mode": "preview"`): the ped body `.yft`
+(skeleton) and every component / prop `.ydd` -> CodeWalker XML (`cwconv res-to-xml`) -> Blender `bpy` + Sollumz (same
+pinned versions as the props) -> one `glb/<comp>_<nnn>.glb` per drawable in the skeleton's rest pose (props moved to their
+anchor bone), textures as `tex/<name>.png` (at most 1024 px), `parts.json` listing drawables, texture letters and which
+texture each material uses. A built design's zip is laid over the pack so the new letter is in the list. The page shows
+it with three.js.
+Results (private `clothes-builds` branch): `clothes/<name>/` (zip, `preview_before.png`, `preview_after.png`,
+`info.json`, also for a refusal with its reason), `clothes_analysis/<name>/` for `"mode": "analyze"`,
+`clothes_preview/<name>/` for the 3D preview.
 
 cwconv commands used for it: `ytd-export <ytd> <dir>`, `ytd-build <dir|dds...> <out.ytd> [--rename a=b] [--strict]`,
-`ymt-to-xml <ymt> <xml>`, `xml-to-ymt <xml> <ymt> [--pso]`.
+`ymt-to-xml <ymt> <xml>`, `xml-to-ymt <xml> <ymt> [--pso]`, `res-to-xml <yft|ydd|ydr> <dir>`.

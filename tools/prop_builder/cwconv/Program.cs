@@ -11,6 +11,9 @@
 //   ymt-to-xml <in.ymt> <out.xml>                ped variation file (CPedVariationInfo) -> CodeWalker meta XML;
 //                                                prints FORMAT RSC|PSO|RBF
 //   xml-to-ymt <in.xml> <out.ymt> [--pso]        and back (RSC meta, or PSO with --pso)
+// 3D preview (clothes_preview.py):
+//   res-to-xml <in.yft|in.ydd|in.ydr> <out dir>  model -> CodeWalker XML for Sollumz: <out dir>/<name>.yft.xml (.ydd.xml,
+//                                                .ydr.xml), embedded textures as .dds in <out dir>/<name>/
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -93,8 +96,12 @@ if (args.Length >= 1 && args[0] == "ytd-export")
         string png = null;
         try
         {
-            var px = DDSIO.GetPixels(t, 0);
-            if (px != null) { png = (t.Name ?? "null") + ".png"; File.WriteAllBytes(Path.Combine(dir, png), Png(px, t.Width, t.Height)); }
+            var px = DDSIO.GetPixels(t, 0);   // BGRA (CodeWalker's order for Windows bitmaps)
+            if (px != null)
+            {
+                for (int i = 0; i + 3 < px.Length; i += 4) (px[i], px[i + 2]) = (px[i + 2], px[i]);
+                png = (t.Name ?? "null") + ".png"; File.WriteAllBytes(Path.Combine(dir, png), Png(px, t.Width, t.Height));
+            }
         }
         catch { }
         list.Add(new { tex = TexInfo(t), png });
@@ -219,6 +226,37 @@ if (args.Length >= 1 && args[0] == "xml-to-ymt")
     return 0;
 }
 
+if (args.Length >= 1 && args[0] == "res-to-xml")
+{
+    if (args.Length != 3) return Fail("usage: cwconv res-to-xml <in.yft|in.ydd|in.ydr> <out dir>", 1);
+    var path = Path.GetFullPath(args[1]);
+    var file = Path.GetFileName(path); var ext = Path.GetExtension(path).ToLowerInvariant();
+    var stem = Path.GetFileNameWithoutExtension(path);
+    var bytes = File.ReadAllBytes(path);
+    if (bytes.Length < 16 || BitConverter.ToUInt32(bytes, 0) != 0x37435352) return Fail($"{file}: no RSC7 header (encrypted or another file)");
+    var dir = Path.GetFullPath(args[2]); Directory.CreateDirectory(dir);
+    var texDir = Path.Combine(dir, stem); Directory.CreateDirectory(texDir);
+    string xml;
+    try
+    {
+        var e = RpfFile.CreateResourceFileEntry(ref bytes, 0); e.Name = file;
+        var data = ResourceBuilder.Decompress(bytes);
+        switch (ext)
+        {
+            case ".yft": { var y = new YftFile(); y.Load(data, e); if (y.Fragment == null) return Fail($"{file}: no fragment"); xml = YftXml.GetXml(y, texDir); break; }
+            case ".ydd": { var y = new YddFile(); y.Load(data, e); if (y.DrawableDict == null) return Fail($"{file}: no drawables"); xml = YddXml.GetXml(y, texDir); Console.WriteLine($"DRAWABLES {y.DrawableDict.Drawables?.Count ?? 0}"); break; }
+            case ".ydr": { var y = new YdrFile(); y.Load(data, e); if (y.Drawable == null) return Fail($"{file}: no drawable"); xml = YdrXml.GetXml(y, texDir); break; }
+            default: return Fail("res-to-xml reads .yft, .ydd or .ydr", 1);
+        }
+    }
+    catch (Exception ex) { return Fail($"could not read {file}: {ex.Message}"); }
+    if (Directory.GetFileSystemEntries(texDir).Length == 0) Directory.Delete(texDir);
+    var outXml = Path.Combine(dir, stem + ext + ".xml");
+    File.WriteAllText(outXml, xml);
+    Console.WriteLine($"OK {Path.GetFileName(outXml)}");
+    return 0;
+}
+
 if (args.Length == 2 && args[0] == "--check")
 {
     var f = Path.GetFullPath(args[1]); var bytes = File.ReadAllBytes(f);
@@ -259,7 +297,7 @@ if (args.Length == 2 && args[0] == "--check-ypt")
     if (ypt.AllEffects != null) foreach (var fx in ypt.AllEffects) Console.WriteLine($"  effect {fx?.Name}");
     return 0;
 }
-if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ytyp.xml|in.ypt.xml> <out file> | --ypt2xml <in.ypt> <out dir> | ytd-export | ytd-build | ymt-to-xml | xml-to-ymt"); return 1; }
+if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ytyp.xml|in.ypt.xml> <out file> | --ypt2xml <in.ypt> <out dir> | ytd-export | ytd-build | ymt-to-xml | xml-to-ymt | res-to-xml"); return 1; }
 {
     var input = Path.GetFullPath(args[0]);
     var output = Path.GetFullPath(args[1]);

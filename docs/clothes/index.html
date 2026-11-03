@@ -7,6 +7,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  },
+  "integrity": {
+    "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js": "sha384-eCdgjbMm+jekI8fyaeCZ4Pnyg5k4Jn45w2qs3lfnAd5ES5IO4hKOXNisVBTyUzDO",
+    "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js": "sha384-VoIGt4hjsBN2DcfqRsMnLLSUBl1bpLaVmkZ4MO/qESaCNDuISU6ScEtXt1/j3IyF",
+    "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js": "sha384-aJoe4qqS/DgF2jh9njAuvA6QIveJYoCuYOfYjdFY8P3eawzmc9bEQ40jq2TvOyuP",
+    "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/utils/BufferGeometryUtils.js": "sha384-wOjwauvHlJO7K6APr7FmMGH2nupQa3Ndzas9bJZhsAMOK055efJud8ns4aYmASKv"
+  }
+}
+</script>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" integrity="sha384-eCdgjbMm+jekI8fyaeCZ4Pnyg5k4Jn45w2qs3lfnAd5ES5IO4hKOXNisVBTyUzDO" crossorigin="anonymous">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js" integrity="sha384-VoIGt4hjsBN2DcfqRsMnLLSUBl1bpLaVmkZ4MO/qESaCNDuISU6ScEtXt1/j3IyF" crossorigin="anonymous">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js" integrity="sha384-aJoe4qqS/DgF2jh9njAuvA6QIveJYoCuYOfYjdFY8P3eawzmc9bEQ40jq2TvOyuP" crossorigin="anonymous">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/utils/BufferGeometryUtils.js" integrity="sha384-wOjwauvHlJO7K6APr7FmMGH2nupQa3Ndzas9bJZhsAMOK055efJud8ns4aYmASKv" crossorigin="anonymous">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
 <style>
 /* Layout: single mobile column, same look as the prop page: header, key, piece, design, build log, result, past designs. */
@@ -91,18 +109,33 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
 label.chk{flex-direction:row;align-items:center;gap:8px;cursor:pointer;color:var(--fg)}
 label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
 .val{font-family:var(--f-mono);color:var(--fg)}
+/* 3D viewer: stage + side panel (one dropdown row per component), side panel under the stage on phones */
+.viewer{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage{position:relative;width:100%;aspect-ratio:3/4;max-height:72vh;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:#12181d;touch-action:none}
+.stage canvas{width:100%;height:100%;display:block}
+.vmsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--mute);font-size:14px;pointer-events:none}
+.vside{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;align-content:start;min-width:0}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:4px;align-items:end;min-width:0}
+.vrow label{font-size:12px;gap:2px}
+.vrow select{padding:6px 8px;font:13px var(--f-mono);direction:ltr}
+.vrow.on label{color:var(--accent)}
+.vgroup{grid-column:1/-1;font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:6px;margin-top:2px}
 /* phone: one column in the order of the steps; desktop (>= 900px): pack | big preview | design + result, gallery below */
 .col{display:contents}
-header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #designCard{order:4} #progress{order:5} #result{order:6} #galleryCard{order:7}
+header{order:0} #setup{order:1} #pieceCard{order:2} #viewCard{order:3} #previewCard{order:3} #designCard{order:4} #progress{order:5} #result{order:6} #galleryCard{order:7}
 @media (min-width:900px){
-  .wrap{max-width:1680px;display:grid;gap:20px;padding:28px 28px 56px;align-items:start;
-    grid-template-columns:minmax(300px,380px) minmax(0,1fr) minmax(320px,410px);
+  .wrap{max-width:1800px;display:grid;gap:20px;padding:28px 28px 56px;align-items:start;
+    grid-template-columns:minmax(280px,340px) minmax(0,1fr) minmax(300px,380px);
     /* RTL lays the first column on the right: written right-to-left so the pack sits on the left */
     grid-template-areas:"head head head" "l c r" "g g g"}
   header{grid-area:head} .colL{grid-area:l} .colC{grid-area:c} .colR{grid-area:r} #galleryCard{grid-area:g}
   .col{display:flex;flex-direction:column;gap:16px;min-width:0}
   .colC{position:sticky;top:16px}
   .uv{width:min(100%,calc(100vh - 210px));margin:0 auto}
+  .colC{position:static}
+  .viewer{display:grid;grid-template-columns:minmax(0,1fr) 200px;align-items:start}
+  .stage{aspect-ratio:auto;height:calc(100vh - 230px);min-height:460px;max-height:none}
+  .vside{grid-template-columns:1fr;max-height:calc(100vh - 230px);overflow-y:auto;padding-inline-end:2px}
   .pieces{max-height:260px;overflow-y:auto;align-content:flex-start;padding:2px}
   .gallery{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
   h1{font-size:40px}
@@ -122,8 +155,8 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
   <details class="card" id="setup">
     <summary id="setupSummary">الإعداد: مفتاح GitHub</summary>
     <ol class="how">
-      <li>افتح <a href="https://github.com/settings/personal-access-tokens/new?name=prop-builder-site&target_name=iiK7&expires_in=90&contents=write&actions=read" target="_blank" rel="noopener" style="color:var(--accent)">صفحة إنشاء المفتاح</a></li>
-      <li><b>Repository access</b> ← Only select repositories ← <b>prop-builder</b></li>
+      <li>افتح <a href="https://github.com/settings/personal-access-tokens/new?name=prop-builder-site&description=prop-builder+%2B+claude-private&target_name=iiK7&expires_in=90&contents=write&actions=read" target="_blank" rel="noopener" style="color:var(--accent)">صفحة إنشاء المفتاح</a></li>
+      <li><b>Repository access</b> ← Only select repositories ← اختر <b>prop-builder</b> و <b>claude-private</b> (الاثنين: GitHub ما يسمح يتحددون من الرابط، فاختارهم بنفسك)</li>
       <li><b>Permissions</b>: Contents = Read and write، و Actions = Read</li>
       <li>Generate token، وانسخه والصقه هنا</li>
     </ol>
@@ -131,7 +164,7 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
       <input id="token" class="mono" type="password" autocomplete="off" placeholder="github_pat_...">
     </label>
     <label class="chk"><input type="checkbox" id="remember"> تذكّر المفتاح على هالجهاز</label>
-    <p class="note">نفس مفتاح صفحة البروبز. بدون تذكير: ينحفظ لهالجلسة بس. لا تعلّم عليه بجهاز مو لك، ولا تلصق المفتاح بأي محادثة.</p>
+    <p class="note">نفس مفتاح صفحة البروبز، بس لازم يشمل الريبو الخاص <b>claude-private</b> بعد: هناك تنرفع الباكات وتنحفظ النتائج (الباكات المدفوعة ما تنرفع للريبو العام أبداً). بدون تذكير: ينحفظ لهالجلسة بس. لا تعلّم عليه بجهاز مو لك، ولا تلصق المفتاح بأي محادثة.</p>
     <div class="row"><button class="btn small" id="saveToken">حفظ</button><button class="btn small" id="clearToken">مسح</button><span id="tokenState" class="sub"></span></div>
   </details>
 
@@ -173,7 +206,11 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
     </div>
     <p class="note" id="pieceNote">اختر القطعة من فوق، أو اكتب نوعها ورقمها إذا كل التكسترات داخل ملف ytd واحد.</p>
     <div id="pieceErr" class="err" hidden></div>
-    <button class="btn" id="analyze" disabled>🔍 حلّل: اعرض التكستر الحالي وعدد التصاميم</button>
+    <div class="grid2">
+      <button class="btn" id="analyze" disabled>🔍 حلّل القطعة</button>
+      <button class="btn" id="preview3d" disabled>🧍 معاينة 3D بس</button>
+    </div>
+    <p class="note">التحليل يعرض التكستر الحالي وعدد التصاميم، ومعه معاينة 3D للبيد كامل (كل طلب يسويها).</p>
     <div id="analysis" hidden>
       <dl class="facts" id="anFacts"></dl>
     </div>
@@ -182,6 +219,19 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
   </div>
 
   <div class="col colC">
+  <section class="card" id="viewCard">
+    <div class="row"><h2>معاينة 3D</h2>
+      <label style="flex-direction:row;align-items:center;gap:8px;min-width:0;flex:1;max-width:320px">المعاينة<select id="vSel" class="mono" aria-label="المعاينة المعروضة"></select></label>
+    </div>
+    <div class="viewer">
+      <div class="stage" id="stage"><canvas id="v3d" aria-label="معاينة البيد ثلاثية الأبعاد: اسحب للتدوير، قرّب بعجلة الماوس أو بإصبعين"></canvas><div class="vmsg" id="vMsg">جاري التحميل…</div></div>
+      <div class="vside" id="vSide" aria-label="القطع المعروضة"></div>
+    </div>
+    <div class="row">
+      <div class="row" style="gap:6px"><button class="btn small" id="vReset" type="button">↺ الكاميرا</button><button class="btn small" id="vBg" type="button">◐ الخلفية</button></div>
+      <span class="sub mono" id="vInfo"></span>
+    </div>
+  </section>
   <section class="card" id="previewCard">
     <div class="row"><h2>المعاينة</h2><span class="sub">التكستر مفرود (UV)</span></div>
     <canvas class="uv" id="uv" width="512" height="512" aria-label="معاينة التكستر المفرود (UV): اسحب الشعار لتحريكه"></canvas>
@@ -238,7 +288,7 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
     <label>اسم التصميم
       <input id="name" class="mono" type="text" placeholder="jacket_gold_01" autocapitalize="off" spellcheck="false">
     </label>
-    <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ . الملفات تنرفع لمجلد clothes_requests بالريبو: لا ترفع باك مدفوع إذا الريبو عام.</p>
+    <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ . الباك ينرفع لمجلد clothes_requests بالريبو الخاص claude-private بس (مو prop-builder العام).</p>
     <button class="btn primary" id="build" disabled>سوِّ التصميم</button>
     <div id="formErr" class="err" hidden></div>
   </section>
@@ -276,9 +326,11 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #desig
 </div>
 
 <script>
-const OWNER = 'iiK7', REPO = 'prop-builder', API = `https://api.github.com/repos/${OWNER}/${REPO}`;
-const encPath = p => p.split('/').map(encodeURIComponent).join('/');
-const RAW = (path, v) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/prop-builds/${encPath(path)}${v ? '?v=' + encodeURIComponent(v) : ''}`;
+// Everything clothes-related goes to the PRIVATE repository (packs are often paid): requests on its main branch,
+// results on its clothes-builds branch, read through the API with the key (raw.githubusercontent needs no key and
+// would not reach a private repo). Nothing here ever writes to the public prop-builder.
+const OWNER = 'iiK7', REPO = 'claude-private', BRANCH = 'clothes-builds', API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+const NEED_KEY = 'هالصفحة تحتاج المفتاح: الباكات والنتائج بريبو خاص (claude-private). حط المفتاح فوق بالإعداد (لازم يشمل prop-builder و claude-private).';
 const $ = id => document.getElementById(id);
 // DOM node with attributes / properties and text or node children (names from files and the repo never go through innerHTML)
 function el(tag, props = {}, ...kids) {
@@ -315,7 +367,7 @@ function headers(json, anon) {
 }
 async function gh(path, opts = {}) {
   const { anon, ...rest } = opts;
-  const r = await fetch(path.startsWith('http') ? path : API + path, { ...rest, headers: headers(!!rest.body, anon) });
+  const r = await fetch(API + path, { ...rest, headers: headers(!!rest.body, anon) });
   if (!r.ok) {
     let msg = r.status + '';
     try { msg = (await r.json()).message || msg; } catch {}
@@ -324,8 +376,30 @@ async function gh(path, opts = {}) {
   return r.status === 204 ? null : r.json();
 }
 const keyError = e => e.status === 401 || e.status === 403
-  ? 'المفتاح غلط أو ناقص الصلاحيات (Contents: Read and write، Actions: Read).'
+  ? 'المفتاح غلط أو ناقص الصلاحيات: لازم يشمل الريبو claude-private (Contents: Read and write، Actions: Read).'
+  : e.status === 404 ? 'ما لقيت الريبو claude-private بهالمفتاح: عدّل المفتاح وضيف claude-private بـ Repository access.'
+  : e.status === 409 ? 'الريبو claude-private فاضي: ارفع فيه ملفات الـworkflow (README و .github) أول.'
   : 'خطأ: ' + e.message;
+// a file of the results branch by its git blob sha (immutable, so cached for the visit): Blob / object URL / JSON
+const blobs = new Map(), blobUrls = new Map();
+function blobOf(sha) {
+  if (!blobs.has(sha)) blobs.set(sha, (async () => {
+    if (!token()) throw Object.assign(new Error(NEED_KEY), { status: 0 });
+    const r = await fetch(`${API}/git/blobs/${sha}`, { headers: { Accept: 'application/vnd.github.raw+json', Authorization: 'Bearer ' + token() } });
+    if (!r.ok) throw Object.assign(new Error(r.status + ''), { status: r.status });
+    return r.blob();
+  })().catch(e => { blobs.delete(sha); throw e; }));
+  return blobs.get(sha);
+}
+async function urlOf(sha) {
+  if (!blobUrls.has(sha)) blobUrls.set(sha, URL.createObjectURL(await blobOf(sha)));
+  return blobUrls.get(sha);
+}
+async function jsonOf(sha) { return JSON.parse(await (await blobOf(sha)).text()); }
+// a private file can't be a plain link: fetch it, then save it from an object URL
+async function saveBlob(sha, filename) {
+  const a = el('a', { href: await urlOf(sha), download: filename }); document.body.append(a); a.click(); a.remove();
+}
 function refreshTokenState() {
   const t = token();
   $('remember').checked = remembered();
@@ -334,8 +408,10 @@ function refreshTokenState() {
   if (!t) $('setup').open = true;
   validate();
 }
-$('saveToken').onclick = () => { saveToken($('token').value.trim(), $('remember').checked); $('token').value = ''; refreshTokenState(); };
-$('clearToken').onclick = () => { saveToken(''); refreshTokenState(); };
+let lastToken = null;
+function tokenChanged() { if (token() === lastToken) return; lastToken = token(); blobs.clear(); loadGallery(); }
+$('saveToken').onclick = () => { saveToken($('token').value.trim(), $('remember').checked); $('token').value = ''; refreshTokenState(); tokenChanged(); };
+$('clearToken').onclick = () => { saveToken(''); refreshTokenState(); tokenChanged(); };
 $('remember').addEventListener('change', () => { const t = token(); if (t) saveToken(t, $('remember').checked); refreshTokenState(); });
 
 // ---- the piece: the files are read here only by name (the .ymt is read on GitHub) ----
@@ -459,19 +535,19 @@ function pieceFilter(comp, d) {
   const re = new RegExp(`^${comp}_(diff_)?${dd}_`, 'i');
   return e => {
     const b = base(e.path).replace(/^.*\^/, ''), lb = base(e.path).toLowerCase();
-    return /\.(ymt|meta)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || re.test(b) || lb === stem + '.ytd';
+    return /\.(ymt|meta|yft)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || re.test(b) || lb === stem + '.ytd';
   };
 }
-async function requestZip(analyze) {
+async function requestZip() {
   const total = pack.file ? pack.file.size : pack.entries.reduce((s, e) => s + e.size, 0);
-  const trim = analyze || total > MAX_UPLOAD;
+  const trim = total > MAX_UPLOAD;
   if (pack.file && !trim) return { blob: pack.file, trimmed: false };
   const keep = trim ? pieceFilter($('comp').value, +$('drawable').value) : () => true;
   const z = new JSZip();
   for (const e of pack.entries) if (keep(e)) z.file(e.path, await e.get());
   const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
   if (blob.size > 95 * 1048576) throw new Error('ملفات القطعة أكبر من 95MB، GitHub ما يقبلها.');
-  return { blob, trimmed: trim && !analyze };
+  return { blob, trimmed: trim };
 }
 
 // ---- design ----
@@ -553,11 +629,12 @@ function pieceReady() { return pack && !$('pieceErr').textContent && $('target')
 function validate() {
   const design = mode === 'tint' || (mode === 'logo' && logo) || (mode === 'prompt' && $('prompt').value.trim().length >= 3);
   $('build').disabled = busy || !token() || !pieceReady() || !design || !NAME_RE.test($('name').value);
-  $('analyze').disabled = busy || !token() || !pieceReady();
+  $('analyze').disabled = $('preview3d').disabled = busy || !token() || !pieceReady();
 }
-function spec(analyze) {
+function spec(what) {
+  const analyze = what !== 'build';
   const s = { target: $('target').value, component: $('comp').value, drawable: +$('drawable').value,
-    base: $('baseLetter').value || 'a', kind, mode: analyze ? 'analyze' : mode,
+    base: $('baseLetter').value || 'a', kind, mode: analyze ? what : mode,
     keep_skin: $('keepSkin').checked, strength: +$('strength').value / 100,
     // a new request every time, even with the same choices (the workflow builds what the commit changed)
     time: new Date().toISOString() };
@@ -592,7 +669,7 @@ async function commitRequest(name, zipBlob, json, say) {
 
 const STEP_LABELS = [
   [/converter/, 'تجهيز CodeWalker'], [/Python/, 'تجهيز الأدوات'], [/Read the request/, 'قراءة الطلب'],
-  [/Make the new texture/, 'صنع التكستر وتعديل الـymt'], [/prop-builds/, 'حفظ النتيجة'],
+  [/Make the new texture/, 'صنع التكستر وتعديل الـymt'], [/3D preview/, 'المعاينة 3D'], [/clothes-builds/, 'حفظ النتيجة'],
 ];
 let timerId = 0;
 function startTimer() {
@@ -626,36 +703,40 @@ async function waitForRun(sha) {
   }
 }
 
-// ---- results: ONE listing call (git tree of prop-builds), then info.json and pictures from raw ----
+// ---- results: ONE listing call (git tree of clothes-builds), then each file by its blob sha ----
 async function loadListing() {
+  if (!token()) throw Object.assign(new Error(NEED_KEY), { status: 0 });
   let r;
-  try { r = await gh('/git/trees/prop-builds?recursive=1'); } catch (e) {
-    if (e.status === 401 && token()) r = await gh('/git/trees/prop-builds?recursive=1', { anon: true });
-    else if (e.status === 404 || e.status === 409) return { designs: new Map(), scans: new Map() };
-    else throw e;
+  try { r = await gh(`/git/trees/${BRANCH}?recursive=1`); } catch (e) {
+    // no results branch yet (nothing built) / empty repository
+    if (e.status === 404 || e.status === 409) {
+      await gh('');   // throws when the repository itself is not reachable with this key
+      return { designs: new Map(), scans: new Map(), previews: new Map() };
+    }
+    throw e;
   }
-  const designs = new Map(), scans = new Map();
+  const designs = new Map(), scans = new Map(), previews = new Map();
   for (const t of r.tree) {
-    const m = t.path.match(/^(clothes|clothes_analysis)\/([^/]+)(?:\/(.+))?$/);
+    const m = t.path.match(/^(clothes|clothes_analysis|clothes_preview)\/([^/]+)(?:\/(.+))?$/);
     if (!m) continue;
-    const map = m[1] === 'clothes' ? designs : scans;
+    const map = m[1] === 'clothes' ? designs : m[1] === 'clothes_analysis' ? scans : previews;
     if (!m[3]) { if (t.type === 'tree' && !map.has(m[2])) map.set(m[2], new Map()); continue; }
     if (t.type === 'blob' && map.has(m[2])) map.get(m[2]).set(m[3], t.sha);
   }
-  return { designs, scans };
+  listing = { designs, scans, previews };
+  fillPreviews();
+  return listing;
 }
-async function fetchInfo(dir, name, v) {
-  const r = await fetch(RAW(`${dir}/${name}/info.json`, v));
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
-}
+let listing = { designs: new Map(), scans: new Map(), previews: new Map() };
+async function fetchInfo(dir, name, v) { return jsonOf(v); }
 async function findResult(dir, name, sha) {
+  const file = dir === 'clothes_preview' ? ['parts.json', 'error.json'] : ['info.json'];
   for (let i = 0; i < 6; i++) {
-    const l = await loadListing(), map = dir === 'clothes' ? l.designs : l.scans;
+    const l = await loadListing(), map = dir === 'clothes' ? l.designs : dir === 'clothes_analysis' ? l.scans : l.previews;
     for (const n of [name, ...Array.from({ length: 8 }, (_, k) => `${name.slice(0, 37)}_${k + 2}`)]) {
-      const files = map.get(n);
-      if (!files || !files.has('info.json')) continue;
-      try { const info = await fetchInfo(dir, n, files.get('info.json')); if (info.request === sha) return { name: n, info, files, dir }; } catch {}
+      const files = map.get(n), f = files && file.find(x => files.has(x));
+      if (!f) continue;
+      try { const info = await jsonOf(files.get(f)); if (info.request === sha) return { name: n, info, files, dir }; } catch {}
     }
     await sleep(2000);   // the result commit may land a moment after the run ends
   }
@@ -675,33 +756,39 @@ function showAnalysis(res) {
     ['الأساسي', `${b.texture} · ${b.width}×${b.height} · ${String(b.format || '').replace('D3DFMT_', '')} · ${b.mips} mips`],
     ['الترتيب', i.layout === 'dict' ? 'كلها داخل ytd واحد' : 'ملف ytd لكل تكستر']]);
   const prev = res.files.get('preview_before.png');
-  if (prev) {
-    const img = new Image(); img.crossOrigin = 'anonymous';
+  if (prev) urlOf(prev).then(u => {
+    const img = new Image();
     img.onload = () => { diffuse = img; $('uvNote').hidden = true; draw(); };
-    img.src = RAW(`clothes_analysis/${res.name}/preview_before.png`, prev);
-  }
+    img.src = u;
+  }).catch(() => {});
 }
 
-async function runRequest(analyze) {
+async function runRequest(what) {
+  const analyze = what !== 'build';
   const errEl = analyze ? $('pieceErr') : $('formErr');
   const say = t => { errEl.textContent = t; errEl.hidden = !t; };
   say(''); busy = true; validate();
   $('progress').hidden = false; $('runLink').hidden = true; $('steps').replaceChildren(); startTimer();
   $('progTitle').textContent = 'جاري التجهيز';
   try {
-    let name = analyze ? ($('name').value || 'piece').slice(0, 33) + '_scan' : $('name').value;
+    let name = what === 'build' ? $('name').value : ($('name').value || 'piece').slice(0, 33) + (what === 'preview' ? '_view' : '_scan');
     name = name.replace(/[^a-z0-9_]/g, '_');
-    const { blob, trimmed } = await requestZip(analyze);
-    const json = { ...spec(analyze), name, ...(trimmed ? { trimmed: true } : {}) };
+    const { blob, trimmed } = await requestZip();
+    const json = { ...spec(what), name, ...(trimmed ? { trimmed: true } : {}) };
     const sha = await commitRequest(name, blob, json, t => { $('progTitle').textContent = t; });
-    $('progTitle').textContent = analyze ? 'جاري التحليل' : 'جاري البناء';
+    $('progTitle').textContent = what === 'analyze' ? 'جاري التحليل' : what === 'preview' ? 'جاري تجهيز المعاينة' : 'جاري البناء';
     $('progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
     const run = await waitForRun(sha);
     clearInterval(timerId);
-    const res = await findResult(analyze ? 'clothes_analysis' : 'clothes', name, sha);
-    $('progTitle').replaceChildren(run.conclusion === 'success' ? el('span', { class: 'ok' }, 'خلص ✓') : el('span', { class: 'err' }, analyze ? 'التحليل فشل' : 'ما انبنى'));
+    const res = what === 'preview' ? null : await findResult(what === 'analyze' ? 'clothes_analysis' : 'clothes', name, sha);
+    $('progTitle').replaceChildren(run.conclusion === 'success' ? el('span', { class: 'ok' }, 'خلص ✓')
+      : el('span', { class: 'err' }, what === 'analyze' ? 'التحليل فشل' : what === 'preview' ? 'المعاينة فشلت' : 'ما انبنى'));
     if (res) analyze ? showAnalysis(res) : showResult(res);
-    else if (run.conclusion !== 'success') say('البناء فشل. شوف السجل.');
+    else if (what !== 'preview' && run.conclusion !== 'success') say('البناء فشل. شوف السجل.');
+    // the 3D preview of the same request (built with analyze / build too); the built name may have a _2 suffix
+    const pv = await findResult('clothes_preview', res ? res.name : name, sha);
+    if (pv && pv.files.has('parts.json')) openPreview(pv.name);
+    else if (pv && pv.info.message) say((what === 'preview' ? '' : 'المعاينة 3D: ') + pv.info.message);
     if (!analyze) loadGallery();
   } catch (e) {
     clearInterval(timerId);
@@ -709,8 +796,9 @@ async function runRequest(analyze) {
     say(e.status ? keyError(e) : e.message);
   } finally { busy = false; validate(); }
 }
-$('analyze').onclick = () => runRequest(true);
-$('build').onclick = () => { $('result').hidden = true; runRequest(false); };
+$('analyze').onclick = () => runRequest('analyze');
+$('preview3d').onclick = () => runRequest('preview');
+$('build').onclick = () => { $('result').hidden = true; runRequest('build'); };
 
 function showResult(res) {
   const { name, info, files } = res, failed = info.status === 'failed';
@@ -721,7 +809,10 @@ function showResult(res) {
   $('resFail').hidden = !failed;
   $('resFail').replaceChildren(...(failed ? [(info.error && info.error.message) || 'البناء فشل.', ' ',
     ...(info.run ? [el('a', { href: info.run, target: '_blank', rel: 'noopener', style: 'color:var(--accent)' }, 'السجل')] : [])] : []));
-  const pic = (f, img) => { const v = files.get(f); img.hidden = !v; if (v) img.src = RAW(`clothes/${name}/${f}`, v); else img.removeAttribute('src'); };
+  const pic = (f, img) => {
+    const v = files.get(f); img.hidden = !v; img.removeAttribute('src');
+    if (v) urlOf(v).then(u => { img.src = u; }).catch(() => { img.hidden = true; });
+  };
   pic('preview_before.png', $('imgBefore')); pic('preview_after.png', $('imgAfter'));
   $('resPair').hidden = !files.get('preview_before.png');
   const b = info.base || {};
@@ -733,7 +824,7 @@ function showResult(res) {
   $('resFiles').hidden = failed;
   if (!failed) {
     const zip = files.get(`${name}.zip`);
-    $('download').href = RAW(`clothes/${name}/${name}.zip`, zip); $('download').setAttribute('download', `${name}.zip`);
+    $('download').dataset.sha = zip || ''; $('download').dataset.file = `${name}.zip`; $('download').href = '#';
     $('download').textContent = info.patch ? 'تنزيل الملفات الجديدة (zip)' : 'تنزيل الريسورس (zip)';
     $('changed').replaceChildren(...(info.files || []).map(f => el('span', {}, f)));
     $('howTo').textContent = info.patch
@@ -742,7 +833,15 @@ function showResult(res) {
   }
   $('warnings').replaceChildren(...(info.warnings || []).map(w => el('li', {}, w)));
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (listing.previews.get(name)?.has('parts.json')) openPreview(name);
 }
+$('download').addEventListener('click', async e => {
+  e.preventDefault();
+  const b = e.currentTarget; if (!b.dataset.sha) return;
+  const t = b.textContent; b.textContent = 'جاري التنزيل…';
+  try { await saveBlob(b.dataset.sha, b.dataset.file); } catch (err) { $('formErr').textContent = err.status ? keyError(err) : err.message; $('formErr').hidden = false; }
+  b.textContent = t;
+});
 
 // ---- gallery ----
 let entries = [];
@@ -761,27 +860,40 @@ async function loadGallery() {
     entries = [...l.designs.keys()].reverse().map(name => ({ name, files: l.designs.get(name), info: null }));
     g.replaceChildren(...(entries.length ? entries.map(tile) : [el('span', { class: 'sub' }, 'ما فيه تصاميم للحين.')]));
     applyFilter();
-    entries.forEach(async en => {
-      const v = en.files.get('info.json'); if (!v) return;
-      try { en.info = await fetchInfo('clothes', en.name, v); } catch { return; }
-      if (my !== galleryLoad) return;
-      const failed = en.info.status === 'failed';
-      en.badge.textContent = failed ? 'رُفض' : `${en.info.component || ''}_${String(en.info.drawable ?? '').padStart(3, '0')} · _${en.info.letter || '?'}`;
-      en.badge.className = 'badge ' + (failed ? 'bad' : 'hi'); en.badge.hidden = false;
-      en.tile.classList.toggle('failed', failed);
-    });
   } catch (e) {
-    g.replaceChildren(el('span', { class: 'sub' }, `ما قدرت أجيب القائمة (${e.message}).`));
+    entries = []; $('gCount').textContent = '';
+    g.replaceChildren(el('span', { class: e.status === 0 ? 'note' : 'sub' }, e.status === 0 ? NEED_KEY : e.status ? keyError(e) : `ما قدرت أجيب القائمة (${e.message}).`));
+    viewMessage(e.status === 0 ? NEED_KEY : e.status ? keyError(e) : e.message);
   }
 }
+// tiles fetch their picture only when they scroll into view (each one is an API call)
+const seen = new IntersectionObserver(list => {
+  for (const it of list) {
+    if (!it.isIntersecting) continue;
+    seen.unobserve(it.target);
+    const img = it.target.querySelector('img[data-sha]');
+    if (img) urlOf(img.dataset.sha).then(u => { img.src = u; }).catch(() => {});
+    const en = entries.find(x => x.tile === it.target), v = en && en.files.get('info.json');
+    if (v) fetchInfo('clothes', en.name, v).then(info => {
+      en.info = info;
+      const failed = info.status === 'failed';
+      en.badge.textContent = failed ? 'رُفض' : `${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')} · _${info.letter || '?'}`;
+      en.badge.className = 'badge ' + (failed ? 'bad' : 'hi'); en.badge.hidden = false;
+      en.tile.classList.toggle('failed', failed);
+    }).catch(() => {});
+  }
+}, { rootMargin: '200px' });
 function tile(en) {
   const { name, files } = en, prev = files.get('preview_after.png') || files.get('preview_before.png');
-  const pic = prev ? el('img', { loading: 'lazy', src: RAW(`clothes/${name}/${files.get('preview_after.png') ? 'preview_after.png' : 'preview_before.png'}`, prev), alt: name })
-    : el('div', { class: 'ph', 'aria-hidden': 'true' }, '👕');
+  const pic = prev ? el('img', { 'data-sha': prev, alt: name }) : el('div', { class: 'ph', 'aria-hidden': 'true' }, '👕');
   en.badge = el('span', { class: 'badge', hidden: true });
   const node = el('div', { class: 'g' }, el('button', { type: 'button', class: 'open' }, pic, el('span', { class: 'gname' }, name), en.badge));
-  if (files.has(`${name}.zip`)) node.append(el('a', { class: 'gdl', href: RAW(`clothes/${name}/${name}.zip`, files.get(`${name}.zip`)), download: `${name}.zip`, title: `تنزيل ${name}.zip`, 'aria-label': `تنزيل ${name}.zip` }, '⬇'));
-  en.tile = node;
+  if (files.has(`${name}.zip`)) {
+    const a = el('a', { class: 'gdl', href: '#', title: `تنزيل ${name}.zip`, 'aria-label': `تنزيل ${name}.zip` }, '⬇');
+    a.addEventListener('click', e => { e.preventDefault(); saveBlob(files.get(`${name}.zip`), `${name}.zip`).catch(() => {}); });
+    node.append(a);
+  }
+  en.tile = node; seen.observe(node);
   return node;
 }
 $('gallery').addEventListener('click', async e => {
@@ -792,7 +904,200 @@ $('gallery').addEventListener('click', async e => {
 });
 $('refresh').onclick = loadGallery;
 
-showVals(); draw(); refreshTokenState(); loadGallery();
+// ---- 3D preview: the viewer (module below) gets parts.json + a way to read each file of that preview ----
+const viewer = new Promise(res => { window.__pedViewer = res; });
+let viewerFailed = false;
+setTimeout(() => { if (!window.__pedViewerReady) { viewerFailed = true; viewMessage('ما تحملت مكتبة العرض ثلاثي الأبعاد (three.js). حدّث الصفحة.'); } }, 20000);
+function viewMessage(t) { $('vMsg').textContent = t || ''; $('vMsg').hidden = !t; }
+let shownPreview = null;
+function fillPreviews() {
+  const names = [...listing.previews.keys()].filter(n => listing.previews.get(n).has('parts.json')).reverse();
+  const keep = $('vSel').value;
+  $('vSel').replaceChildren(...(names.length ? names.map(n => el('option', { value: n }, n)) : [el('option', { value: '' }, '—')]));
+  if (names.includes(keep)) $('vSel').value = keep;
+  if (!shownPreview && names.length) openPreview(names[0]);
+  else if (!names.length) viewMessage('ما فيه معاينات للحين: ارفع الباك واضغط "حلّل" أو "معاينة 3D".');
+}
+async function openPreview(name) {
+  const files = listing.previews.get(name);
+  if (!files || !files.has('parts.json')) return;
+  shownPreview = name; $('vSel').value = name;
+  viewMessage('جاري تحميل المعاينة…');
+  try {
+    const [v, parts] = await Promise.all([viewer, jsonOf(files.get('parts.json'))]);
+    if (shownPreview !== name) return;
+    await v.show(parts, rel => files.get(rel) ? blobOf(files.get(rel)) : Promise.reject(new Error('missing ' + rel)));
+    viewMessage('');
+  } catch (e) { if (shownPreview === name) viewMessage(e.status ? keyError(e) : 'ما قدرت أعرض المعاينة: ' + e.message); }
+}
+$('vSel').addEventListener('change', () => openPreview($('vSel').value));
+
+showVals(); draw(); refreshTokenState(); tokenChanged();
+</script>
+<script type="module">
+// 3D ped preview: three.js (pinned + SRI in the import map above). Each drawable is its own .glb in the ped skeleton's
+// rest pose (clothes_preview.py), so loading the selected one per component lines the parts up; textures are PNGs
+// chosen here: the component's selected letter for every diffuse, other textures by name from parts.json.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = id => document.getElementById(id);
+const COMPS = ['head', 'berd', 'hair', 'uppr', 'lowr', 'hand', 'feet', 'teef', 'accs', 'task', 'decl', 'jbib'];
+const PROPS = ['p_head', 'p_eyes', 'p_ears', 'p_mouth', 'p_lhand', 'p_rhand', 'p_lwrist', 'p_rwrist', 'p_hip', 'p_lfoot', 'p_rfoot'];
+const LABEL = { head: 'الرأس', berd: 'قناع', hair: 'الشعر', uppr: 'الجسم', lowr: 'بنطلون', hand: 'شنطة', feet: 'أحذية', teef: 'رقبة',
+  accs: 'داخلي', task: 'صدرية', decl: 'شعارات', jbib: 'جاكيت', p_head: 'قبعة', p_eyes: 'نظارة', p_ears: 'أذن', p_mouth: 'فم',
+  p_lhand: 'يد يسار', p_rhand: 'يد يمين', p_lwrist: 'ساعة يسار', p_rwrist: 'ساعة يمين', p_hip: 'خصر', p_lfoot: 'قدم يسار', p_rfoot: 'قدم يمين' };
+const BGS = [0x12181d, 0xd9dee3, 0x5b6670];
+
+const canvas = $('v3d'), stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+let bg = 0; scene.background = new THREE.Color(BGS[bg]);
+const camera = new THREE.PerspectiveCamera(28, 1, 0.02, 60);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.12; controls.minDistance = 0.25; controls.maxDistance = 12;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4048, 1.6));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(1.2, 2.4, 3); scene.add(key);
+const rim = new THREE.DirectionalLight(0xffffff, 0.9); rim.position.set(-1.5, 1.5, -3); scene.add(rim);
+const root = new THREE.Group(); scene.add(root);
+
+function resize() {
+  const w = Math.max(1, stage.clientWidth), h = Math.max(1, stage.clientHeight);
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); dirty = true;
+}
+let dirty = true;
+new ResizeObserver(resize).observe(stage); resize();
+controls.addEventListener('change', () => { dirty = true; });
+(function loop() { requestAnimationFrame(loop); if (controls.update() || dirty) { renderer.render(scene, camera); dirty = false; } })();
+
+// a ped faces +Z here (GTA -Y forward, glTF Y up): the camera starts in front of it, framing everything shown
+function frame() {
+  const box = new THREE.Box3().setFromObject(root);
+  if (box.isEmpty()) return;
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+  const fov = camera.fov * Math.PI / 180, fit = Math.max(size.y, size.x / camera.aspect) / 2 / Math.tan(fov / 2);
+  camera.position.set(c.x, c.y + size.y * 0.04, c.z + fit * 1.15 + size.z / 2);
+  controls.target.copy(c); controls.update(); dirty = true;
+}
+$('vReset').onclick = frame;
+$('vBg').onclick = () => { bg = (bg + 1) % BGS.length; scene.background.set(BGS[bg]); dirty = true; };
+
+const loader = new GLTFLoader();
+let parts = null, read = null, gen = 0;
+const glbs = new Map(), texs = new Map(), slots = {};   // slots[comp] = { group, entry, letter }
+function glbOf(rel) {
+  if (!glbs.has(rel)) glbs.set(rel, read(rel).then(b => b.arrayBuffer()).then(buf => loader.parseAsync(buf, '')).catch(e => { glbs.delete(rel); throw e; }));
+  return glbs.get(rel);
+}
+function texOf(rel, srgb) {
+  const k = rel + (srgb ? '' : '#lin');
+  if (!texs.has(k)) texs.set(k, read(rel).then(b => createImageBitmap(b)).then(bmp => {
+    const t = new THREE.Texture(bmp);
+    t.flipY = false; t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.needsUpdate = true;
+    return t;
+  }).catch(() => null));
+  return texs.get(k);
+}
+async function material(entry, letter, info) {
+  const diffRel = (entry.tex || {})[letter] || parts.textures[(info.diffuse || '').toLowerCase()];
+  const normRel = parts.textures[(info.normal || '').toLowerCase()];
+  const [map, normalMap] = await Promise.all([diffRel ? texOf(diffRel, true) : null, normRel ? texOf(normRel, false) : null]);
+  const decal = /decal/.test(info.shader || '');
+  const m = new THREE.MeshStandardMaterial({ color: map ? 0xffffff : 0x8d98a3, map, normalMap, roughness: 0.82, metalness: 0,
+    side: THREE.DoubleSide, alphaTest: decal ? 0 : 0.35, transparent: decal, depthWrite: !decal, polygonOffset: decal, polygonOffsetFactor: -2 });
+  if (normalMap) m.normalScale.set(1, -1);   // GTA normal maps are DirectX style (green down)
+  m.userData.textured = !!map;
+  return m;
+}
+async function setSlot(comp, index, letter) {
+  const list = (parts.components[comp] || parts.props[comp] || []);
+  const entry = index >= 0 ? list[index] : null;
+  const my = slots[comp] = { ...(slots[comp] || {}), entry, letter, pending: true };
+  let group = null;
+  if (entry) {
+    const gltf = await glbOf(entry.glb);
+    group = gltf.scene.clone(true);
+    const jobs = [];
+    group.traverse(o => {
+      if (!o.isMesh) return;
+      const info = (entry.materials || {})[o.material && o.material.name] || {};
+      jobs.push(material(entry, letter, info).then(m => { o.material = m; }));
+    });
+    await Promise.all(jobs);
+  }
+  if (slots[comp] !== my) return;   // a newer choice for this component came in meanwhile
+  if (my.group) root.remove(my.group);
+  my.group = group; my.pending = false;
+  if (group) { group.name = comp; root.add(group); }
+  dirty = true;
+}
+
+function rowFor(comp, list, pick) {
+  const sel = document.createElement('select'), let_ = document.createElement('select');
+  sel.id = 'v_' + comp; let_.id = 'vl_' + comp;
+  sel.setAttribute('aria-label', comp + ' drawable'); let_.setAttribute('aria-label', comp + ' texture');
+  sel.append(new Option('—', '-1'), ...list.map((e, i) => new Option(String(e.drawable).padStart(3, '0') + (e.verts < 12 ? ' ·' : ''), String(i))));
+  const row = document.createElement('div'); row.className = 'vrow';
+  const lab = document.createElement('label'); lab.textContent = `${comp} · ${LABEL[comp] || ''}`; lab.append(sel);
+  const lab2 = document.createElement('label'); lab2.textContent = 'تكستر'; lab2.append(let_);
+  row.append(lab, lab2);
+  const fillLetters = keep => {
+    const e = list[+sel.value];
+    const ls = e ? (e.textures || []) : [];
+    let_.replaceChildren(...(ls.length ? ls.map(l => new Option('_' + l, l)) : [new Option('—', '')]));
+    let_.disabled = !ls.length;
+    if (keep && ls.includes(keep)) let_.value = keep;
+    row.classList.toggle('on', +sel.value >= 0);
+  };
+  const apply = () => setSlot(comp, +sel.value, let_.value).then(info).catch(err => { $('vMsg').textContent = 'ما قدرت أحمّل ' + comp + ': ' + err.message; $('vMsg').hidden = false; });
+  sel.onchange = () => { fillLetters(); apply(); };
+  let_.onchange = apply;
+  sel.value = String(pick.index); fillLetters(pick.letter);
+  return { row, apply };
+}
+function info() {
+  let tris = 0, shown = 0;
+  root.traverse(o => { if (o.isMesh) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  for (const k in slots) if (slots[k].group) shown++;
+  $('vInfo').textContent = `${parts.ped || ''} · ${shown} قطعة · ${Math.round(tris / 1000)}k مثلث`;
+}
+
+async function show(p, reader) {
+  const my = ++gen;
+  parts = p; read = reader; glbs.clear(); texs.clear();
+  for (const k of Object.keys(slots)) { if (slots[k].group) root.remove(slots[k].group); delete slots[k]; }
+  const side = $('vSide'); side.replaceChildren();
+  const d = parts.design || {};
+  const rows = [];
+  const add = (group, names, isProp) => {
+    const present = names.filter(c => (group[c] || []).length);
+    if (!present.length) return;
+    const head = document.createElement('div'); head.className = 'vgroup'; head.textContent = isProp ? 'إكسسوارات (props)' : 'القطع';
+    side.append(head);
+    for (const c of present) {
+      const list = group[c];
+      let index = isProp ? -1 : 0, letter = (list[0].textures || [])[0];
+      if (d.component === c) {
+        const i = list.findIndex(e => e.drawable === +d.drawable);
+        if (i >= 0) { index = i; letter = d.letter || letter; }
+      }
+      const r = rowFor(c, list, { index, letter });
+      side.append(r.row); rows.push(r);
+    }
+  };
+  add(parts.components || {}, COMPS, false);
+  add(parts.props || {}, PROPS, true);
+  await Promise.all(rows.map(r => r.apply()));
+  if (my !== gen) return;
+  frame(); info();
+  window.__pedView = { slots, root, frame, camera, controls, box: o => new THREE.Box3().setFromObject(o) };
+}
+window.__pedViewerReady = true;
+window.__pedViewer({ show });
 </script>
 </body>
 </html>
