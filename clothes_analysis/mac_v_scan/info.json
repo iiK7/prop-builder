@@ -1,0 +1,26 @@
+{
+ "name": "mac_v_scan",
+ "mode": "analyze",
+ "status": "failed",
+ "error": {
+  "code": "mismatch",
+  "message": "الـymt يقول 4 تكستر لهالقطعة بس الملفات 2 (a, b).",
+  "detail": "ymt says 4 textures, files have 2"
+ },
+ "built": "2026-11-03T06:18Z",
+ "spec": {
+  "target": "mac",
+  "component": "accs",
+  "drawable": 0,
+  "base": "a",
+  "kind": "ped",
+  "mode": "analyze",
+  "keep_skin": true,
+  "strength": 1,
+  "time": "2026-11-03T06:17:34.317Z",
+  "name": "mac_v_scan"
+ },
+ "request": "f24ca3542493ddd941ffd3a51d092fc562f81f70",
+ "source": "clothes_requests/mac_v_scan.zip",
+ "run": "https://github.com/iiK7/prop-builder/actions/runs/41588972966"
+}
