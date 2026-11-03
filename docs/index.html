@@ -94,6 +94,19 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
 .files a{font-family:var(--f-mono);font-size:12px;direction:ltr;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 8px;text-decoration:none}
 .manage{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px}
 h3{font-size:15px;margin:0;font-weight:600}
+/* phone: one column in the old order; desktop (>= 900px): the form on the start side, build log, result and the
+   gallery in the wide column */
+.col{display:contents}
+header{order:0} #setup{order:1} #newCard{order:2} #progress{order:3} #result{order:4} #gameCard{order:5} #galleryCard{order:6}
+@media (min-width:900px){
+  .wrap{max-width:1560px;display:grid;gap:20px;padding:28px 28px 56px;align-items:start;
+    grid-template-columns:minmax(360px,440px) minmax(0,1fr);grid-template-areas:"head head" "form main"}
+  header{grid-area:head} .colForm{grid-area:form} .colMain{grid-area:main}
+  .col{display:flex;flex-direction:column;gap:16px;min-width:0}
+  model-viewer{height:520px}
+  .gallery{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+  h1{font-size:40px}
+}
 @media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
 </style>
 </head>
@@ -107,6 +120,7 @@ h3{font-size:15px;margin:0;font-weight:600}
     </div>
   </header>
 
+  <div class="col colForm">
   <details class="card" id="setup">
     <summary id="setupSummary">الإعداد: مفتاح GitHub</summary>
     <ol class="how">
@@ -123,7 +137,7 @@ h3{font-size:15px;margin:0;font-weight:600}
     <div class="row"><button class="btn small" id="saveToken">حفظ</button><button class="btn small" id="clearToken">مسح</button><span id="tokenState" class="sub"></span></div>
   </details>
 
-  <section class="card">
+  <section class="card" id="newCard">
     <h2>بروب جديد</h2>
     <div class="types" id="types" role="group" aria-label="نوع البروب">
       <button data-mode="ai" class="on"><span>🪑</span>غرض 3D</button>
@@ -173,6 +187,18 @@ h3{font-size:15px;margin:0;font-weight:600}
     <div id="formErr" class="err" hidden></div>
   </section>
 
+  <section class="card" id="gameCard">
+    <h2>القطع من داخل اللعبة</h2>
+    <p class="note">لما لاعب يوصف قطعة وهو يأثث بيته، البناء يمشي على اللي تختاره هنا.</p>
+    <div class="grid2">
+      <label>محرك 3D<select id="gameEngine"></select></label>
+      <label>صورة الوصف من<select id="gameImg"></select></label>
+    </div>
+    <div class="row"><button class="btn small" id="saveGame" disabled>حفظ</button><span class="sub" id="gameState"></span></div>
+  </section>
+  </div>
+
+  <div class="col colMain">
   <section class="card" id="progress" hidden>
     <div class="row"><h2 id="progTitle">جاري البناء</h2><span class="timer" id="timer">0:00</span></div>
     <ul class="steps" id="steps"></ul>
@@ -212,17 +238,7 @@ h3{font-size:15px;margin:0;font-weight:600}
     </div>
   </section>
 
-  <section class="card">
-    <h2>القطع من داخل اللعبة</h2>
-    <p class="note">لما لاعب يوصف قطعة وهو يأثث بيته، البناء يمشي على اللي تختاره هنا.</p>
-    <div class="grid2">
-      <label>محرك 3D<select id="gameEngine"></select></label>
-      <label>صورة الوصف من<select id="gameImg"></select></label>
-    </div>
-    <div class="row"><button class="btn small" id="saveGame" disabled>حفظ</button><span class="sub" id="gameState"></span></div>
-  </section>
-
-  <section class="card">
+  <section class="card" id="galleryCard">
     <div class="row"><h2>البروبز السابقة</h2><button class="btn small" id="refresh">تحديث</button></div>
     <div class="filters" role="search">
       <input id="q" type="search" placeholder="دوّر بالاسم" aria-label="دوّر بالاسم" autocapitalize="off" spellcheck="false">
@@ -235,6 +251,7 @@ h3{font-size:15px;margin:0;font-weight:600}
     <p class="note">الباك: ريسورس واحد فيه كل البروبز المختارة. علّم على البروبز اللي تبيها، أو خلها فاضية عشان ياخذ الكل. لا تشغّله مع ريسورسات البروبز الفردية بنفس الوقت.</p>
     <div class="sub" id="packState" aria-live="polite"></div>
   </section>
+  </div>
 </div>
 
 <script>

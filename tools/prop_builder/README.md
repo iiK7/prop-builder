@@ -48,11 +48,14 @@ PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 a new colour (`tint`), logo (`logo`) or pattern from a description (`prompt`, via `text_to_image.py ... pattern`) for
 one drawable of a freemode MP pack or an addon ped. The page uploads `clothes_requests/<name>.zip` (the pack, or only
 this piece's files when the pack is over 40 MB) and `clothes_requests/<name>.json` (the design) in one commit.
-The tool adds the next letter (`_b` ... `_z`): a copy of the base `.ytd` with the diffuse recoloured and renamed
+The tool adds the first letter without a file (`_b` ... `_z`; a hole between the files first): a copy of the base `.ytd` with the diffuse recoloured and renamed
 (same format, size and mip count; BC7 is written as DXT5/DXT1), or one more texture inside `<ped>.ytd` when every
-texture lives there, and the `.ymt` (CPedVariationInfo) gets one more `aTexData` item for that drawable
-(`texData` for props) and `numAvailTex` + 1. It refuses escrow (`.fxap`) / unreadable files, packs without a `.ymt`
-(base-game items must be made an addon first), 26 letters used and files that do not match the `.ymt`.
+texture lives there. Real packs often list more `aTexData` items than files (the game skips the missing ones): when the
+`.ymt` already has a slot for that letter it stays as it is (only its texId is set to the base file's race, uni / whi /
+bla ...); otherwise items are added up to the new letter and `numAvailTex` (= all textures of the component) grows by
+the same number. Props of an addon ped follow its `PropsName` (meta file): their files are `<PropsName>^p_..._diff_...`
+and `<PropsName>.ymt` must be in the pack. It refuses escrow (`.fxap`) / unreadable files, packs without a `.ymt`
+(base-game items must be made an addon first) and 26 letters used.
 Results: `prop-builds` branch `clothes/<name>/` (zip, `preview_before.png`, `preview_after.png`, `info.json`, also for a
 refusal with its reason); an analysis (`"mode": "analyze"`) goes to `clothes_analysis/<name>/`.
 

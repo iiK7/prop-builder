@@ -91,6 +91,22 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
 label.chk{flex-direction:row;align-items:center;gap:8px;cursor:pointer;color:var(--fg)}
 label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
 .val{font-family:var(--f-mono);color:var(--fg)}
+/* phone: one column in the order of the steps; desktop (>= 900px): pack | big preview | design + result, gallery below */
+.col{display:contents}
+header{order:0} #setup{order:1} #pieceCard{order:2} #previewCard{order:3} #designCard{order:4} #progress{order:5} #result{order:6} #galleryCard{order:7}
+@media (min-width:900px){
+  .wrap{max-width:1680px;display:grid;gap:20px;padding:28px 28px 56px;align-items:start;
+    grid-template-columns:minmax(300px,380px) minmax(0,1fr) minmax(320px,410px);
+    /* RTL lays the first column on the right: written right-to-left so the pack sits on the left */
+    grid-template-areas:"head head head" "l c r" "g g g"}
+  header{grid-area:head} .colL{grid-area:l} .colC{grid-area:c} .colR{grid-area:r} #galleryCard{grid-area:g}
+  .col{display:flex;flex-direction:column;gap:16px;min-width:0}
+  .colC{position:sticky;top:16px}
+  .uv{width:min(100%,calc(100vh - 210px));margin:0 auto}
+  .pieces{max-height:260px;overflow-y:auto;align-content:flex-start;padding:2px}
+  .gallery{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+  h1{font-size:40px}
+}
 @media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
 </style>
@@ -102,6 +118,7 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
     <a href="../" class="sub" style="color:var(--accent)">← مصنع البروبز</a>
   </header>
 
+  <div class="col colL">
   <details class="card" id="setup">
     <summary id="setupSummary">الإعداد: مفتاح GitHub</summary>
     <ol class="how">
@@ -118,7 +135,7 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
     <div class="row"><button class="btn small" id="saveToken">حفظ</button><button class="btn small" id="clearToken">مسح</button><span id="tokenState" class="sub"></span></div>
   </details>
 
-  <section class="card">
+  <section class="card" id="pieceCard">
     <h2>القطعة</h2>
     <div class="tabs two" id="kinds" role="group" aria-label="نوع الملابس">
       <button data-kind="mp" class="on"><span>👕</span>ملابس الشخصية (freemode)</button>
@@ -162,7 +179,27 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
     </div>
   </section>
 
-  <section class="card">
+  </div>
+
+  <div class="col colC">
+  <section class="card" id="previewCard">
+    <div class="row"><h2>المعاينة</h2><span class="sub">التكستر مفرود (UV)</span></div>
+    <canvas class="uv" id="uv" width="512" height="512" aria-label="معاينة التكستر المفرود (UV): اسحب الشعار لتحريكه"></canvas>
+    <p class="note" id="uvNote">هذي صورة التكستر مفرودة (UV). تطلع الصورة الحقيقية بعد التحليل، وقبلها شبكة بس.</p>
+    <div id="logoCtl" hidden>
+      <div class="grid2">
+        <label>الحجم <span class="val" id="scaleVal">30%</span><input id="scale" type="range" min="2" max="100" step="1" value="30"></label>
+        <label>الدوران <span class="val" id="rotVal">0°</span><input id="rot" type="range" min="-180" max="180" step="1" value="0"></label>
+        <label>أفقي (u) <span class="val" id="uVal">0.50</span><input id="u" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>عمودي (v) <span class="val" id="vVal">0.50</span><input id="v" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      </div>
+      <p class="note">اسحب الشعار على الصورة، أو حرّكه من هنا.</p>
+    </div>
+  </section>
+  </div>
+
+  <div class="col colR">
+  <section class="card" id="designCard">
     <h2>التصميم الجديد</h2>
     <div class="tabs" id="modes" role="group" aria-label="نوع التصميم">
       <button data-mode="tint" class="on"><span>🎨</span>لون</button>
@@ -191,16 +228,6 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
         <label>تكرار النقشة <span class="val" id="tilesVal">2</span>
           <input id="tiles" type="range" min="1" max="8" step="1" value="2">
         </label>
-      </div>
-    </div>
-    <canvas class="uv" id="uv" width="512" height="512" aria-label="معاينة التكستر المفرود (UV): اسحب الشعار لتحريكه"></canvas>
-    <p class="note" id="uvNote">هذي صورة التكستر مفرودة (UV). تطلع الصورة الحقيقية بعد التحليل، وقبلها شبكة بس.</p>
-    <div id="logoCtl" hidden>
-      <div class="grid2">
-        <label>الحجم <span class="val" id="scaleVal">30%</span><input id="scale" type="range" min="2" max="100" step="1" value="30"></label>
-        <label>الدوران <span class="val" id="rotVal">0°</span><input id="rot" type="range" min="-180" max="180" step="1" value="0"></label>
-        <label>أفقي (u) <span class="val" id="uVal">0.50</span><input id="u" type="range" min="0" max="1" step="0.01" value="0.5"></label>
-        <label>عمودي (v) <span class="val" id="vVal">0.50</span><input id="v" type="range" min="0" max="1" step="0.01" value="0.5"></label>
       </div>
     </div>
     <label id="strengthBox">القوة <span class="val" id="strengthVal">100%</span>
@@ -238,8 +265,9 @@ label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
     </div>
     <ul class="sub" id="warnings" style="margin:0;padding-inline-start:18px"></ul>
   </section>
+  </div>
 
-  <section class="card">
+  <section class="card" id="galleryCard">
     <div class="row"><h2>التصاميم السابقة</h2><button class="btn small" id="refresh">تحديث</button></div>
     <input id="q" type="search" placeholder="دوّر بالاسم" aria-label="دوّر بالاسم" autocapitalize="off" spellcheck="false">
     <div class="sub" id="gCount" aria-live="polite"></div>
@@ -399,10 +427,10 @@ function pickPiece(i) {
   fillBase(picked.letters);
   const t = [...$('target').options].find(o => o.value.toLowerCase() === picked.prefix || picked.prefix.endsWith(o.value.toLowerCase().replace(/^(mp_[mf]_freemode_01)_/, '$1_p_')));
   if (t) $('target').value = t.value;
-  const next = 'abcdefghijklmnopqrstuvwxyz'[picked.letters.length];
-  $('pieceNote').textContent = picked.letters.length >= 26
+  const next = [...'abcdefghijklmnopqrstuvwxyz'].find(l => !picked.letters.includes(l));
+  $('pieceNote').textContent = !next
     ? 'هالقطعة فيها 26 تكستر (a لين z): ما فيه مكان لحرف جديد.'
-    : `فيها ${picked.letters.length} تكستر (${picked.letters.join(', ')}). التصميم الجديد بيكون _${next}.`;
+    : `فيها ${picked.letters.length} ملف تكستر (${picked.letters.join(', ')}). التصميم الجديد بيكون _${next} (أول حرف بدون ملف).`;
   resetAnalysis();
 }
 $('pieces').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pickPiece(+b.dataset.i); });
@@ -642,7 +670,8 @@ function showAnalysis(res) {
   if (i.status === 'failed') { pieceErr(i.error && i.error.message || 'التحليل فشل.'); return; }
   const b = i.base || {};
   facts($('anFacts'), [['الملف', i.ymt], ['القطعة', `${i.component}_${String(i.drawable).padStart(3, '0')}`],
-    ['التكسترات', `${i.textures} (${i.letters})`], ['الجديد', i.next ? '_' + i.next : 'ما فيه مكان (26)'],
+    ['بالـymt', `${i.textures} تكستر`], ['الملفات', i.letters], ['الجديد', i.next ? '_' + i.next : 'ما فيه مكان (26)'],
+    ['الـymt', i.slot === 'existing' ? 'فيه خانة لهالحرف: ما يتغير' : i.slot === 'added' ? 'تنضاف له خانة' : ''],
     ['الأساسي', `${b.texture} · ${b.width}×${b.height} · ${String(b.format || '').replace('D3DFMT_', '')} · ${b.mips} mips`],
     ['الترتيب', i.layout === 'dict' ? 'كلها داخل ytd واحد' : 'ملف ytd لكل تكستر']]);
   const prev = res.files.get('preview_before.png');
@@ -699,7 +728,8 @@ function showResult(res) {
   facts($('resFacts'), failed ? [['القطعة', info.spec ? `${info.spec.component} ${info.spec.drawable}` : '']] : [
     ['القطعة', `${info.component}_${String(info.drawable).padStart(3, '0')} · ${info.target}`],
     ['التكستر', info.texture], ['من', b.texture], ['الصيغة', `${String(info.format || '').replace('D3DFMT_', '')} · ${b.width}×${b.height} · ${info.mips} mips`],
-    ['بالـymt', info.ymt_textures ? `${info.ymt_textures.before} ← ${info.ymt_textures.after}` : ''], ['numAvailTex', info.numAvailTex]]);
+    ['بالـymt', info.ymt_textures ? (info.ymt_changed === false ? `${info.ymt_textures.before} (ما تغير، الحرف له خانة)` : `${info.ymt_textures.before} ← ${info.ymt_textures.after}`) : ''],
+    ['numAvailTex', info.numAvailTex]]);
   $('resFiles').hidden = failed;
   if (!failed) {
     const zip = files.get(`${name}.zip`);
@@ -707,7 +737,7 @@ function showResult(res) {
     $('download').textContent = info.patch ? 'تنزيل الملفات الجديدة (zip)' : 'تنزيل الريسورس (zip)';
     $('changed').replaceChildren(...(info.files || []).map(f => el('span', {}, f)));
     $('howTo').textContent = info.patch
-      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource} (الـymt يتبدّل)، وبعدين restart ${info.resource}.`
+      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource}${info.ymt_changed === false ? '' : ' (الـymt يتبدّل)'}، وبعدين restart ${info.resource}.`
       : `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + التكستر الجديد + الـymt المعدّل)، وبعدين restart ${info.resource}. التصميم الجديد رقمه ${'abcdefghijklmnopqrstuvwxyz'.indexOf(info.letter)} بالتكسترات.`;
   }
   $('warnings').replaceChildren(...(info.warnings || []).map(w => el('li', {}, w)));

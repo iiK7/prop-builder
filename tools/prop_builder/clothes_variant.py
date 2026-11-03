@@ -5,9 +5,10 @@ Works for freemode MP packs (stream/<ped>_<collection>^jbib_diff_000_a_uni.ytd +
 <ped>_p_<collection>^p_head_diff_000_a.ytd) and addon peds (<ped>.ymt with uppr_diff_000_a_uni.ytd files, in a <ped>/
 folder or as <ped>^..., or every texture inside one <ped>.ytd).
 
-A new design is the next free letter of that drawable (_b, _c ... _z): a copy of the base texture's .ytd with the
-diffuse recoloured and renamed, and the .ymt (CPedVariationInfo) with one more aTexData item for that drawable and
-numAvailTex of the component raised by one. Everything else in the pack is copied as it is.
+A new design is the first letter of that drawable without a file (_b ... _z): a copy of the base texture's .ytd with the
+diffuse recoloured and renamed. The .ymt (CPedVariationInfo) is left as it is when it already lists that letter (real packs
+often list more aTexData items than files); otherwise items are added up to it and numAvailTex grows by as many.
+Props of an addon ped follow its PropsName (meta file). Everything else in the pack is copied as it is.
 
 spec.json:
   {"target": "<ymt name without .ymt>" (needed when the pack has several),
@@ -240,27 +241,46 @@ def textures_of(ymt, comp, drawable):
     return ds[drawable], node, items(node)
 
 
-def add_texture(ymt, comp, drawable, base_index):
-    """append a copy of the base texture's item; numAvailTex +1 (components). Returns notes."""
+RACE_IDS = {"uni": 0, "whi": 1, "bla": 2, "chi": 3, "lat": 4, "ara": 5, "kor": 8, "pak": 10}
+
+
+def fit_slots(ymt, comp, drawable, new_index, base_index, race):
+    """make the .ymt hold texture `new_index` of this drawable. Real packs often list MORE aTexData items than there
+    are files (the game skips the missing ones): an existing slot is used as it is; only when the new texture is past
+    the list are items added (copies of the base one), and numAvailTex grows by the number added.
+    The new slot's texId (the race part of the name: 0 uni, 1 whi, 2 bla ...) follows the base texture's file.
+    Returns (items added, texId changed, notes)."""
     notes = []
     owner, node, texs = textures_of(ymt, comp, drawable)
-    new = ET.fromstring(ET.tostring(texs[base_index]))
-    if comp in PROPS:
-        # props: texId counts the textures (0, 1, 2 ...) in the packs seen; keep the pack's own way otherwise
-        ids = [ival(t, "texId") for t in texs]
-        if ids == list(range(len(ids))):
-            set_val(new, "texId", len(ids))
-        else:
-            notes.append("prop texId kept from the base texture (the pack does not number them 0, 1, 2...)")
-    node.append(new)
+    n = len(texs)
+    base_item = texs[min(base_index, n - 1)]
+    added = 0
+    while len(items(node)) <= new_index:
+        new = ET.fromstring(ET.tostring(base_item))
+        if comp in PROPS:
+            # props: texId counts the textures (0, 1, 2 ...) in the packs seen; keep the pack's own way otherwise
+            ids = [ival(t, "texId") for t in items(node)]
+            if ids == list(range(len(ids))):
+                set_val(new, "texId", len(ids))
+        node.append(new)
+        added += 1
+    changed = False
     if comp not in PROPS:
+        want = RACE_IDS.get((race or "").lower(), ival(base_item, "texId"))
+        slot = items(node)[new_index]
+        if ival(slot, "texId") != want:
+            notes.append(f"slot {LETTERS[new_index]}: texId {ival(slot, 'texId')} -> {want} (the race of the base file)")
+            set_val(slot, "texId", want)
+            changed = True
         c = ymt.component(COMPONENTS.index(comp))
         before = ival(c, "numAvailTex")
         total = sum(len(items(d.find("aTexData"))) for d in ymt.drawables(COMPONENTS.index(comp)))
-        set_val(c, "numAvailTex", before + 1)
-        if before != total - 1:
-            notes.append(f"numAvailTex was {before} while the drawables have {total - 1} textures; raised by one anyway")
-    return notes
+        if before != total - added:
+            notes.append(f"numAvailTex is {before} while the component lists {total - added} textures (left as it was"
+                         + (f", +{added})" if added else ")"))
+        if added:
+            set_val(c, "numAvailTex", before + added)
+    return added, changed, notes
 
 
 # ---------------- textures ----------------
@@ -467,7 +487,26 @@ def manifest_for(root_dir):
 
 
 # ---------------- main ----------------
-def find_base_files(files, stem, comp, drawable):
+def props_names(pack, files):
+    """{ped name: PropsName} from the peds .meta files (an addon ped's props can belong to another name)"""
+    out = {}
+    for f in files:
+        if not f.lower().endswith((".meta", ".xml")):
+            continue
+        try:
+            text = open(os.path.join(pack, f), "rb").read(2_000_000).decode("utf-8", "ignore")
+        except OSError:
+            continue
+        if "CPedModelInfo__InitDataList" not in text:
+            continue
+        for item in re.findall(r"<Item\b.*?</Item>", text, re.S):
+            nm, pn = re.search(r"<Name>\s*([^<\s]+)", item), re.search(r"<PropsName>\s*([^<\s]*)", item)
+            if nm and pn and pn.group(1) and pn.group(1).lower() != "null":
+                out[nm.group(1).lower()] = pn.group(1).lower()
+    return out
+
+
+def find_base_files(files, stem, comp, drawable, props_name=None):
     """the .ytd files of this drawable, grouped by prefix: {prefix: {letter: (path, race)}}"""
     groups = {}
     for f in files:
@@ -478,7 +517,7 @@ def find_base_files(files, stem, comp, drawable):
         if not m or m.group("comp").lower() != comp or int(m.group("d")) != drawable:
             continue
         groups.setdefault(pre, {})[m.group("l").lower()] = (f, m.group("race"))
-    want = {stem.lower(), prop_prefix(stem.lower())} if comp in PROPS else {stem.lower()}
+    want = {stem.lower(), prop_prefix(stem.lower())} | ({props_name} if props_name else set()) if comp in PROPS else {stem.lower()}
     for pre in groups:
         if pre in want:
             return pre, groups[pre]
@@ -542,6 +581,18 @@ def run(src, spec, out_dir, name):
         drawable = -1
     if not 0 <= drawable <= 999:
         raise Refuse("bad_spec", "رقم القطعة (drawable) غلط.", "bad drawable number")
+    props_name = props_names(pack, files).get(stem.lower()) if comp in PROPS else None
+    if props_name and props_name != stem.lower():
+        other = [f for f in ymts if stem_of[f].lower() == props_name]
+        if not other:
+            raise Refuse("props_ymt", f"إكسسوارات (props) هالبيد تابعة لـ {props_name} (PropsName بملف الميتا)، وملف "
+                         f"{props_name}.ymt مو بالباك، فما أقدر أضيف لها تكستر. القطع العادية (uppr، lowr…) تشتغل عادي.",
+                         f"props of {stem} belong to PropsName {props_name}; {props_name}.ymt is not in the pack")
+        ymt_rel, stem = other[0], stem_of[other[0]]
+        fmt = ymt_to_xml(os.path.join(pack, ymt_rel), ymt_xml)
+        ymt = Ymt(ymt_xml)
+        summary = ymt.summary()
+        warnings.append(f"props follow PropsName {props_name}: {props_name}.ymt is the one changed")
     owner, tnode, texs = textures_of(ymt, comp, drawable)
     if comp not in PROPS and ymt.component(COMPONENTS.index(comp)) is None:
         raise Refuse("no_component", f"الـymt ما فيه {comp} أصلاً.", f"{comp} is not in {stem}.ymt", summary=summary)
@@ -552,14 +603,12 @@ def run(src, spec, out_dir, name):
     if n == 0:
         raise Refuse("mismatch", "هالقطعة ما لها ولا تكستر بالـymt.", "the drawable has no textures in the ymt")
 
-    base_letter = str(spec.get("base") or "a").lower()
-    if base_letter not in LETTERS[:n]:
-        raise Refuse("bad_spec", f"التكستر الأساسي _{base_letter} مو موجود (الموجود a لين {LETTERS[n - 1]}).",
-                     f"base texture {base_letter} does not exist")
+    base_letter = str(spec.get("base") or "a").lower()[:1] or "a"
+    if base_letter not in LETTERS:
+        raise Refuse("bad_spec", "التكستر الأساسي لازم حرف من a لين z.", f"bad base letter {base_letter}")
     base_index = LETTERS.index(base_letter)
-    new_letter = LETTERS[n] if n < 26 else None
 
-    prefix, by_letter = find_base_files(files, stem, comp, drawable)
+    prefix, by_letter = find_base_files(files, stem, comp, drawable, props_name)
     layout = "files" if by_letter else None
     container = None
     if not by_letter:
@@ -580,12 +629,21 @@ def run(src, spec, out_dir, name):
                      f"no {comp}_diff_{drawable:03d}_*.ytd for {stem}", summary=summary)
 
     letters = "".join(sorted(by_letter))
-    if letters != LETTERS[:len(letters)]:
-        raise Refuse("mismatch", f"حروف التكسترات فيها فراغ ({', '.join(letters)}): الترقيم لازم يكون a, b, c… بدون نقص.",
-                     f"texture letters have a gap: {letters}")
-    if len(letters) != n:
-        raise Refuse("mismatch", f"الـymt يقول {n} تكستر لهالقطعة بس الملفات {len(letters)} ({', '.join(letters)}).",
-                     f"ymt says {n} textures, files have {len(letters)}")
+    if base_letter not in by_letter:
+        raise Refuse("bad_spec", f"التكستر الأساسي _{base_letter} ما له ملف (الموجود: {', '.join(letters)}).",
+                     f"base texture {base_letter} has no file")
+    # the new texture takes the first letter without a file: a hole between the files, else the next one.
+    # The game loads <comp>_diff_<ddd>_<letter> for every aTexData item; items without a file are skipped.
+    free = next((i for i in range(26) if LETTERS[i] not in by_letter), None)
+    new_letter = LETTERS[free] if free is not None else None
+    gaps = [l for l in LETTERS[:LETTERS.index(letters[-1])] if l not in by_letter]
+    beyond = [l for l in letters if LETTERS.index(l) >= n]
+    if gaps:
+        warnings.append(f"letters without a file: {', '.join(gaps)}")
+    if beyond:
+        warnings.append(f"files past the {n} textures of the .ymt (the game never loads them until the .ymt lists them): "
+                        f"{', '.join(beyond)}")
+    slot = None if free is None else ("existing" if free < n else "added")
 
     if layout == "files":
         stem_ydd = [f for f in files if f.lower().endswith(".ydd") and local_name(f)[0] == prefix
@@ -619,7 +677,8 @@ def run(src, spec, out_dir, name):
     preview(before, os.path.join(out_dir, "preview_before.png"))
 
     info = {"name": name, "mode": mode, "kind": kind, "target": stem, "ymt": ymt_rel, "component": comp,
-            "drawable": drawable, "textures": n, "letters": letters, "next": new_letter, "layout": layout,
+            "drawable": drawable, "textures": n, "letters": letters, "next": new_letter, "slot": slot, "gaps": gaps,
+            "layout": layout,
             "base": {"letter": base_letter, "file": base_path, "texture": tex["name"], "width": tex["width"],
                      "height": tex["height"], "format": tex["format"], "mips": tex["mips"]},
             "summary": summary, "warnings": warnings}
@@ -654,11 +713,11 @@ def run(src, spec, out_dir, name):
         else:
             raise Refuse("format", f"صيغة التكستر {fmt_in} ما تنعدل هنا.", f"texture format {fmt_in} not supported")
     old_name = tex["name"]
+    race = by_letter[base_letter][1]
     m = TEX_RE.match(old_name)
     if m:
         new_name = f"{m.group('comp')}_diff_{m.group('d')}_{new_letter}" + (f"_{m.group('race')}" if m.group("race") else "")
     else:
-        race = by_letter[base_letter][1]
         new_name = f"{comp}_diff_{drawable:03d}_{new_letter}" + (f"_{race}" if race else "")
     # files: the copy keeps the .dds name (the texture is renamed in the build); dict: one more .dds next to the rest
     dds_out = os.path.join(base_dir, (new_name + ".dds") if layout == "dict" else tex["dds"])
@@ -685,8 +744,11 @@ def run(src, spec, out_dir, name):
                 renames.append((nm, new_name))
             elif mm and mm.group("l").lower() == base_letter and int(mm.group("d")) == drawable:
                 renames.append((nm, nm[:mm.start("l")] + new_letter + nm[mm.end("l"):]))
-        pre_part = os.path.basename(base_path).rsplit("^", 1)[0] + "^" if "^" in os.path.basename(base_path) else ""
-        out_rel = os.path.join(os.path.dirname(base_path), pre_part + new_name + ".ytd").replace("\\", "/")
+        bstem = os.path.basename(base_path)[:-4]
+        pre_part, _, bname = bstem.rpartition("^")
+        bm = TEX_RE.match(bname)
+        file_stem = (bname[:bm.start("l")] + new_letter + bname[bm.end("l"):]) if bm else new_name
+        out_rel = os.path.join(os.path.dirname(base_path), (pre_part + "^" if pre_part else "") + file_stem + ".ytd").replace("\\", "/")
         if out_rel in files:
             raise Refuse("mismatch", f"{os.path.basename(out_rel)} موجود من قبل بس الـymt ما يحسبه.",
                          f"{out_rel} already exists")
@@ -708,16 +770,21 @@ def run(src, spec, out_dir, name):
         raise RuntimeError("the dictionary lost a texture")
 
     # ---- the .ymt ----
-    notes = add_texture(ymt, comp, drawable, base_index)
+    added, texid_changed, notes = fit_slots(ymt, comp, drawable, free, base_index, race)
     warnings += notes
-    ymt.save(ymt_xml)
+    ymt_changed = bool(added or texid_changed)
     new_ymt = os.path.join(work, "new.ymt")
-    cw("xml-to-ymt", ymt_xml, new_ymt, *(["--pso"] if fmt == "PSO" else []))
+    if ymt_changed:
+        ymt.save(ymt_xml)
+        cw("xml-to-ymt", ymt_xml, new_ymt, *(["--pso"] if fmt == "PSO" else []))
+    else:
+        shutil.copy(os.path.join(pack, ymt_rel), new_ymt)
     back_xml = os.path.join(work, "back.xml")
     ymt_to_xml(new_ymt, back_xml)
     back = Ymt(back_xml)
-    if len(textures_of(back, comp, drawable)[2]) != n + 1:
-        raise RuntimeError("the rebuilt .ymt does not have the new texture")
+    after_n = len(textures_of(back, comp, drawable)[2])
+    if after_n != n + added or after_n <= free:
+        raise RuntimeError("the .ymt does not list the new texture")
     if comp not in PROPS:
         want = ival(ymt.component(COMPONENTS.index(comp)), "numAvailTex")
         if ival(back.component(COMPONENTS.index(comp)), "numAvailTex") != want:
@@ -742,8 +809,9 @@ def run(src, spec, out_dir, name):
     else:
         shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage)
         rel = lambda f: os.path.relpath(f, root_rel).replace("\\", "/") if root_rel else f
-    shutil.copy(new_ymt, os.path.join(stage, rel(ymt_rel)))
-    changed.append(rel(ymt_rel))
+    if ymt_changed:
+        shutil.copy(new_ymt, os.path.join(stage, rel(ymt_rel)))
+        changed.append(rel(ymt_rel))
     dst = os.path.join(stage, rel(out_rel))
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copy(new_ytd, dst)
@@ -783,7 +851,7 @@ def run(src, spec, out_dir, name):
 
     info.update({"status": "built", "letter": new_letter, "texture": new_name, "resource": res_name,
                  "files": changed, "patch": patch, "format": written, "mips": mips,
-                 "ymt_textures": {"before": n, "after": n + 1}, "zip": f"{name}.zip",
+                 "ymt_textures": {"before": n, "after": n + added}, "ymt_changed": ymt_changed, "zip": f"{name}.zip",
                  "built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")})
     if comp not in PROPS:
         info["numAvailTex"] = ival(back.component(COMPONENTS.index(comp)), "numAvailTex")
