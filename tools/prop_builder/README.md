@@ -42,3 +42,19 @@ PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 - add `ptfx_requests/<name>/<name>.ypt.xml` with its `.dds` textures next to it to build `ptfx/<name>/<name>.ypt`
   (read back once to check it).
 
+## Clothes designer (new textures for existing clothes)
+
+`.github/workflows/clothes-builder.yml` + `clothes_variant.py` + the site page `docs/clothes/` ("مصمم الملابس"):
+a new colour (`tint`), logo (`logo`) or pattern from a description (`prompt`, via `text_to_image.py ... pattern`) for
+one drawable of a freemode MP pack or an addon ped. The page uploads `clothes_requests/<name>.zip` (the pack, or only
+this piece's files when the pack is over 40 MB) and `clothes_requests/<name>.json` (the design) in one commit.
+The tool adds the next letter (`_b` ... `_z`): a copy of the base `.ytd` with the diffuse recoloured and renamed
+(same format, size and mip count; BC7 is written as DXT5/DXT1), or one more texture inside `<ped>.ytd` when every
+texture lives there, and the `.ymt` (CPedVariationInfo) gets one more `aTexData` item for that drawable
+(`texData` for props) and `numAvailTex` + 1. It refuses escrow (`.fxap`) / unreadable files, packs without a `.ymt`
+(base-game items must be made an addon first), 26 letters used and files that do not match the `.ymt`.
+Results: `prop-builds` branch `clothes/<name>/` (zip, `preview_before.png`, `preview_after.png`, `info.json`, also for a
+refusal with its reason); an analysis (`"mode": "analyze"`) goes to `clothes_analysis/<name>/`.
+
+cwconv commands used for it: `ytd-export <ytd> <dir>`, `ytd-build <dir|dds...> <out.ytd> [--rename a=b] [--strict]`,
+`ymt-to-xml <ymt> <xml>`, `xml-to-ymt <xml> <ymt> [--pso]`.

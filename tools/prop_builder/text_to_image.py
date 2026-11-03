@@ -1,5 +1,7 @@
 """Description -> product photo (PNG) for the image to 3D step.
-    python text_to_image.py "<description>" <out.png> <info.json> <engine>
+    python text_to_image.py "<description>" <out.png> <info.json> <engine> [style]
+style: product (default, a cut-out product photo for image to 3D) or pattern (a flat, seamless fabric pattern,
+used by the clothes designer, clothes_variant.py).
 The description can be in any language: anything that is not plain English is translated first.
 engine (only that one is tried):
   pollinations  free Pollinations API (no key, no GPU quota, basic model)
@@ -27,10 +29,13 @@ except Exception:
 
 text, out, info_path = sys.argv[1].strip(), sys.argv[2], sys.argv[3]
 engine = sys.argv[4] if len(sys.argv) > 4 else "pollinations"
+style = sys.argv[5] if len(sys.argv) > 5 else "product"
 if not text:
     sys.exit("empty description")
 if engine not in ("pollinations", "flux"):
     sys.exit(f"unknown image engine {engine!r} (pollinations or flux)")
+if style not in ("product", "pattern"):
+    sys.exit(f"unknown style {style!r} (product or pattern)")
 
 UA = {"User-Agent": "prop-builder/1.0 (https://github.com/iiK7/prop-builder)"}
 
@@ -44,7 +49,8 @@ def translate(s):
     """English stays as it is; anything else goes through the free text API, else stays as typed"""
     if re.fullmatch(r"[\x20-\x7e]+", s):
         return s
-    ask = f"Translate this furniture description to English. Reply with the translation only, no quotes: {s}"
+    what = "fabric pattern" if style == "pattern" else "furniture"
+    ask = f"Translate this {what} description to English. Reply with the translation only, no quotes: {s}"
     for attempt in range(3):
         try:
             reply = fetch("https://text.pollinations.ai/" + urllib.parse.quote(ask), 60).decode("utf-8", "replace").strip()
@@ -62,6 +68,9 @@ english = translate(text)
 prompt = (f"e-commerce catalog cutout photo of {english}, one single object isolated on a pure white seamless background, "
           "the whole object in view, three-quarter front view, centered, soft even studio lighting, "
           "empty background, no room, no other furniture, no text, no people")
+if style == "pattern":
+    prompt = (f"seamless tileable fabric pattern of {english}, flat textile swatch seen straight from above, "
+              "fills the whole frame edge to edge, even flat lighting, no shadows, no folds, no object, no text, no people")
 print("description:", text)
 print("english:", english)
 
@@ -123,4 +132,5 @@ if not done:
 
 print("image:", out, os.path.getsize(out), "bytes", f"({engine})")
 with open(info_path, "w") as f:
-    json.dump({"prompt": text, "english": english, "engine": engine}, f, ensure_ascii=False)
+    json.dump({"prompt": text, "english": english, "engine": engine, **({"style": style} if style != "product" else {})},
+              f, ensure_ascii=False)

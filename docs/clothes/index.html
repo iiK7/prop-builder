@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مصمم الملابس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&family=JetBrains+Mono:wght@400;600&display=swap">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+<style>
+/* Layout: single mobile column, same look as the prop page: header, key, piece, design, build log, result, past designs. */
+:root{
+  --bg:#0f1418; --panel:#171e24; --line:#2a353f; --fg:#e8edf1; --mute:#93a2af;
+  --accent:#f2a93b; --ok:#4cc38a; --bad:#e5604f; --run:#5aa9f0;
+  --f-display:"Lalezar","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:400;font-size:34px;margin:0;letter-spacing:.5px}
+h1 span{color:var(--accent)}
+h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+h3{font-size:15px;margin:0;font-weight:600}
+.sub{color:var(--mute);font-size:13px;margin:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+label{font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:6px;min-width:0}
+input[type=text],input[type=password],input[type=number],input[type=search],select,textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%}
+textarea{min-height:84px;resize:vertical}
+input.mono,.mono{font-family:var(--f-mono);direction:ltr;text-align:left}
+input:focus-visible,button:focus-visible,a:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent);direction:ltr}
+input[type=color]{width:56px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px;cursor:pointer}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+.btn{font:600 15px var(--f-body);border-radius:10px;padding:12px 16px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#14100a}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{padding:6px 10px;font-size:13px}
+.drop{border:1.5px dashed var(--line);border-radius:12px;min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--mute);text-align:center;padding:12px;position:relative;overflow:hidden}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.note{font-size:12px;color:var(--mute);border-inline-start:2px solid var(--accent);padding-inline-start:8px;margin:0}
+.err{color:var(--bad);font-size:14px}
+.ok{color:var(--ok)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tabs.two{grid-template-columns:1fr 1fr}
+.tabs button{font:600 13px var(--f-body);background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:9px 4px;cursor:pointer;line-height:1.3}
+.tabs button span{display:block;font-size:20px}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.steps li{display:flex;gap:10px;align-items:center;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.steps li.done .dot{background:var(--ok)} .steps li.run .dot{background:var(--run);animation:pulse 1s infinite}
+.steps li.fail .dot{background:var(--bad)} .steps li.skip{opacity:.4}
+@keyframes pulse{50%{opacity:.3}}
+.timer{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
+.pieces{display:flex;flex-wrap:wrap;gap:6px}
+.pieces button{font:600 12px var(--f-mono);direction:ltr;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;cursor:pointer}
+.pieces button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
+.pieces button small{font-weight:400;opacity:.75}
+.uv{width:100%;aspect-ratio:1;border-radius:10px;border:1px solid var(--line);touch-action:none;cursor:grab;background:#12181d;display:block}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pair figure{margin:0;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pair img{width:100%;aspect-ratio:1;object-fit:contain;background:#12181d;border-radius:8px;border:1px solid var(--line)}
+.pair figcaption{font-size:12px;color:var(--mute);text-align:center}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:13px;margin:0}
+.facts dt{color:var(--mute)} .facts dd{margin:0;font-family:var(--f-mono);direction:ltr;text-align:left;overflow-wrap:anywhere}
+.files{display:flex;flex-wrap:wrap;gap:6px}
+.files span{font-family:var(--f-mono);font-size:12px;direction:ltr;border:1px solid var(--line);border-radius:6px;padding:3px 8px;overflow-wrap:anywhere}
+.badge{font-size:11px;font-weight:600;border-radius:6px;padding:1px 6px;align-self:flex-start;border:1px solid currentColor}
+.badge.hi{color:var(--ok)} .badge.bad{color:var(--bad)} .badge.mid{color:var(--accent)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.g{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;position:relative;min-width:0}
+.g.failed{border-color:rgba(229,96,79,.5)}
+.g button{display:flex;flex-direction:column;width:100%;cursor:pointer;color:inherit;text-align:start;padding:0;font:inherit;background:none;border:0}
+.g img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.g .ph{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;background:#12181d}
+.g .gname{font-family:var(--f-mono);font-size:12px;padding:6px 8px 2px;overflow-wrap:anywhere;direction:ltr;text-align:left}
+.g .badge{margin:0 8px 8px}
+.g a.gdl{position:absolute;top:6px;inset-inline-end:6px;background:rgba(15,20,24,.8);border-radius:6px;padding:2px 7px;color:var(--fg);text-decoration:none;font-size:14px}
+details summary{cursor:pointer;color:var(--mute);font-size:14px}
+details[open] summary{margin-bottom:10px}
+ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
+label.chk{flex-direction:row;align-items:center;gap:8px;cursor:pointer;color:var(--fg)}
+label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.val{font-family:var(--f-mono);color:var(--fg)}
+@media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>مصمم <span>الملابس</span></h1><p class="sub">قطعة موجودة ← لون أو شعار أو نقشة جديدة ← تكستر جديد جاهز</p></div>
+    <a href="../" class="sub" style="color:var(--accent)">← مصنع البروبز</a>
+  </header>
+
+  <details class="card" id="setup">
+    <summary id="setupSummary">الإعداد: مفتاح GitHub</summary>
+    <ol class="how">
+      <li>افتح <a href="https://github.com/settings/personal-access-tokens/new?name=prop-builder-site&target_name=iiK7&expires_in=90&contents=write&actions=read" target="_blank" rel="noopener" style="color:var(--accent)">صفحة إنشاء المفتاح</a></li>
+      <li><b>Repository access</b> ← Only select repositories ← <b>prop-builder</b></li>
+      <li><b>Permissions</b>: Contents = Read and write، و Actions = Read</li>
+      <li>Generate token، وانسخه والصقه هنا</li>
+    </ol>
+    <label>المفتاح (يبقى بهالجهاز، وما يروح لأحد غير GitHub)
+      <input id="token" class="mono" type="password" autocomplete="off" placeholder="github_pat_...">
+    </label>
+    <label class="chk"><input type="checkbox" id="remember"> تذكّر المفتاح على هالجهاز</label>
+    <p class="note">نفس مفتاح صفحة البروبز. بدون تذكير: ينحفظ لهالجلسة بس. لا تعلّم عليه بجهاز مو لك، ولا تلصق المفتاح بأي محادثة.</p>
+    <div class="row"><button class="btn small" id="saveToken">حفظ</button><button class="btn small" id="clearToken">مسح</button><span id="tokenState" class="sub"></span></div>
+  </details>
+
+  <section class="card">
+    <h2>القطعة</h2>
+    <div class="tabs two" id="kinds" role="group" aria-label="نوع الملابس">
+      <button data-kind="mp" class="on"><span>👕</span>ملابس الشخصية (freemode)</button>
+      <button data-kind="ped"><span>🧍</span>بيد مضاف</button>
+    </div>
+    <p class="note" id="kindNote"></p>
+    <div class="tabs two" id="srcs" role="group" aria-label="طريقة الرفع">
+      <button data-src="zip" class="on">📦 ملف zip</button>
+      <button data-src="dir">📁 مجلد</button>
+    </div>
+    <div class="drop" id="drop">
+      <input id="zipFile" type="file" accept=".zip,application/zip" aria-label="اختر ملف zip للقطعة">
+      <input id="dirFiles" type="file" webkitdirectory multiple hidden aria-label="اختر مجلد القطعة">
+      <div id="dropHint">اضغط واختر zip فيه ملفات القطعة<br><span class="sub">ymt و ytd و ydd (الريسورس كامل أو مجلد stream)</span></div>
+    </div>
+    <div id="pickBox" hidden>
+      <div class="grid2">
+        <label>ملف الـymt
+          <select id="target"></select>
+        </label>
+        <label>التكستر الأساسي
+          <select id="baseLetter" class="mono"></select>
+        </label>
+      </div>
+      <div class="sub" style="margin-top:10px">القطع اللي لقيتها من أسماء ملفات التكستر:</div>
+      <div class="pieces" id="pieces" role="group" aria-label="القطع"></div>
+    </div>
+    <div class="grid2">
+      <label>نوع القطعة (component)
+        <select id="comp"></select>
+      </label>
+      <label>رقمها (drawable)
+        <input id="drawable" class="mono" type="number" min="0" max="999" step="1" value="0">
+      </label>
+    </div>
+    <p class="note" id="pieceNote">اختر القطعة من فوق، أو اكتب نوعها ورقمها إذا كل التكسترات داخل ملف ytd واحد.</p>
+    <div id="pieceErr" class="err" hidden></div>
+    <button class="btn" id="analyze" disabled>🔍 حلّل: اعرض التكستر الحالي وعدد التصاميم</button>
+    <div id="analysis" hidden>
+      <dl class="facts" id="anFacts"></dl>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>التصميم الجديد</h2>
+    <div class="tabs" id="modes" role="group" aria-label="نوع التصميم">
+      <button data-mode="tint" class="on"><span>🎨</span>لون</button>
+      <button data-mode="logo"><span>🏷️</span>شعار</button>
+      <button data-mode="prompt"><span>✍️</span>نقشة من وصف</button>
+    </div>
+    <div id="tintBox">
+      <div class="row">
+        <label style="flex-direction:row;align-items:center;gap:10px">اللون <input id="color" type="color" value="#b8862b"></label>
+        <span class="mono val" id="colorHex">#b8862b</span>
+      </div>
+    </div>
+    <div id="logoBox" hidden>
+      <label>صورة الشعار (PNG بخلفية شفافة أحسن)
+        <input id="logoFile" type="file" accept="image/png,image/webp,image/jpeg">
+      </label>
+    </div>
+    <div id="promptBox" hidden>
+      <label>وصف النقشة (أي لغة)
+        <textarea id="prompt" maxlength="200" placeholder="مثلاً: نقشة سدو حمراء وسوداء"></textarea>
+      </label>
+      <div class="grid2">
+        <label>الصورة من
+          <select id="engine"><option value="pollinations">Pollinations · بلا حد</option><option value="flux">FLUX · أحسن، حد GPU</option></select>
+        </label>
+        <label>تكرار النقشة <span class="val" id="tilesVal">2</span>
+          <input id="tiles" type="range" min="1" max="8" step="1" value="2">
+        </label>
+      </div>
+    </div>
+    <canvas class="uv" id="uv" width="512" height="512" aria-label="معاينة التكستر المفرود (UV): اسحب الشعار لتحريكه"></canvas>
+    <p class="note" id="uvNote">هذي صورة التكستر مفرودة (UV). تطلع الصورة الحقيقية بعد التحليل، وقبلها شبكة بس.</p>
+    <div id="logoCtl" hidden>
+      <div class="grid2">
+        <label>الحجم <span class="val" id="scaleVal">30%</span><input id="scale" type="range" min="2" max="100" step="1" value="30"></label>
+        <label>الدوران <span class="val" id="rotVal">0°</span><input id="rot" type="range" min="-180" max="180" step="1" value="0"></label>
+        <label>أفقي (u) <span class="val" id="uVal">0.50</span><input id="u" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>عمودي (v) <span class="val" id="vVal">0.50</span><input id="v" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      </div>
+    </div>
+    <label id="strengthBox">القوة <span class="val" id="strengthVal">100%</span>
+      <input id="strength" type="range" min="10" max="100" step="5" value="100">
+    </label>
+    <label class="chk" id="skinBox"><input type="checkbox" id="keepSkin"> خلّ لون الجلد على حاله (يدين، رقبة)</label>
+    <p class="note" id="skinNote">إذا القطعة نفسها بنية أو بيج، طفّها: هالألوان تنحسب جلد وما تتغير.</p>
+    <label>اسم التصميم
+      <input id="name" class="mono" type="text" placeholder="jacket_gold_01" autocapitalize="off" spellcheck="false">
+    </label>
+    <p class="note">الاسم: حروف إنجليزية صغيرة وأرقام و _ . الملفات تنرفع لمجلد clothes_requests بالريبو: لا ترفع باك مدفوع إذا الريبو عام.</p>
+    <button class="btn primary" id="build" disabled>سوِّ التصميم</button>
+    <div id="formErr" class="err" hidden></div>
+  </section>
+
+  <section class="card" id="progress" hidden>
+    <div class="row"><h2 id="progTitle">جاري البناء</h2><span class="timer" id="timer">0:00</span></div>
+    <ul class="steps" id="steps"></ul>
+    <a class="sub" id="runLink" target="_blank" rel="noopener" hidden>السجل الكامل على GitHub</a>
+  </section>
+
+  <section class="card" id="result" hidden>
+    <div class="row"><h2 id="resName" class="mono"></h2><span class="badge" id="resBadge"></span></div>
+    <p class="err" id="resFail" hidden></p>
+    <div class="pair" id="resPair">
+      <figure><img id="imgBefore" alt="التكستر الأساسي"><figcaption>قبل</figcaption></figure>
+      <figure><img id="imgAfter" alt="التصميم الجديد"><figcaption>بعد</figcaption></figure>
+    </div>
+    <dl class="facts" id="resFacts"></dl>
+    <div id="resFiles" class="files-box" style="display:flex;flex-direction:column;gap:10px">
+      <a class="btn primary" id="download" download>تنزيل (zip)</a>
+      <div class="sub">الملفات الجديدة والمتغيرة:</div>
+      <div class="files" id="changed"></div>
+      <p class="note" id="howTo"></p>
+    </div>
+    <ul class="sub" id="warnings" style="margin:0;padding-inline-start:18px"></ul>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2>التصاميم السابقة</h2><button class="btn small" id="refresh">تحديث</button></div>
+    <input id="q" type="search" placeholder="دوّر بالاسم" aria-label="دوّر بالاسم" autocapitalize="off" spellcheck="false">
+    <div class="sub" id="gCount" aria-live="polite"></div>
+    <div class="gallery" id="gallery"><span class="sub">جاري التحميل…</span></div>
+  </section>
+</div>
+
+<script>
+const OWNER = 'iiK7', REPO = 'prop-builder', API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+const RAW = (path, v) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/prop-builds/${encPath(path)}${v ? '?v=' + encodeURIComponent(v) : ''}`;
+const $ = id => document.getElementById(id);
+// DOM node with attributes / properties and text or node children (names from files and the repo never go through innerHTML)
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k in n && typeof v !== 'string') n[k] = v;
+    else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+}
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+  set(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} },
+};
+
+// ---- the key (same storage as the prop page: this session, or this device with "remember") ----
+const TOKEN_KEY = 'pb_token';
+function token() { try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } }
+function remembered() { try { return !!localStorage.getItem(TOKEN_KEY); } catch { return false; } }
+function saveToken(t, remember) {
+  try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+  try { localStorage.removeItem(TOKEN_KEY); } catch {}
+  if (!t) return;
+  try { (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, t); } catch {}
+}
+function headers(json, anon) {
+  const h = { Accept: 'application/vnd.github+json' };
+  if (token() && !anon) h.Authorization = 'Bearer ' + token();
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+async function gh(path, opts = {}) {
+  const { anon, ...rest } = opts;
+  const r = await fetch(path.startsWith('http') ? path : API + path, { ...rest, headers: headers(!!rest.body, anon) });
+  if (!r.ok) {
+    let msg = r.status + '';
+    try { msg = (await r.json()).message || msg; } catch {}
+    throw Object.assign(new Error(msg), { status: r.status });
+  }
+  return r.status === 204 ? null : r.json();
+}
+const keyError = e => e.status === 401 || e.status === 403
+  ? 'المفتاح غلط أو ناقص الصلاحيات (Contents: Read and write، Actions: Read).'
+  : 'خطأ: ' + e.message;
+function refreshTokenState() {
+  const t = token();
+  $('remember').checked = remembered();
+  $('tokenState').textContent = !t ? 'ما فيه مفتاح' : remembered() ? 'محفوظ بهالجهاز ✓' : 'محفوظ لهالجلسة بس ✓';
+  $('setupSummary').textContent = t ? 'الإعداد: المفتاح محفوظ ✓' : 'الإعداد: مفتاح GitHub (مطلوب مرة وحدة)';
+  if (!t) $('setup').open = true;
+  validate();
+}
+$('saveToken').onclick = () => { saveToken($('token').value.trim(), $('remember').checked); $('token').value = ''; refreshTokenState(); };
+$('clearToken').onclick = () => { saveToken(''); refreshTokenState(); };
+$('remember').addEventListener('change', () => { const t = token(); if (t) saveToken(t, $('remember').checked); refreshTokenState(); });
+
+// ---- the piece: the files are read here only by name (the .ymt is read on GitHub) ----
+const COMPS = [
+  ['head', 'head · الرأس'], ['berd', 'berd · قناع / لحية'], ['hair', 'hair · الشعر'], ['uppr', 'uppr · الجسم (يدين)'],
+  ['lowr', 'lowr · بنطلون'], ['hand', 'hand · شنطة / بارشوت'], ['feet', 'feet · أحذية'], ['teef', 'teef · إكسسوار رقبة'],
+  ['accs', 'accs · قميص داخلي'], ['task', 'task · درع / صدرية'], ['decl', 'decl · شعارات'], ['jbib', 'jbib · جاكيت / قميص'],
+  ['p_head', 'p_head · قبعة'], ['p_eyes', 'p_eyes · نظارة'], ['p_ears', 'p_ears · أذن'], ['p_mouth', 'p_mouth · فم'],
+  ['p_lwrist', 'p_lwrist · ساعة يسار'], ['p_rwrist', 'p_rwrist · ساعة يمين'], ['p_hip', 'p_hip · خصر'],
+  ['p_lfoot', 'p_lfoot · قدم يسار'], ['p_rfoot', 'p_rfoot · قدم يمين'], ['p_lhand', 'p_lhand · يد يسار'], ['p_rhand', 'p_rhand · يد يمين'],
+];
+$('comp').replaceChildren(...COMPS.map(([k, l]) => el('option', { value: k }, l)));
+$('comp').value = 'jbib';
+const KINDS = {
+  mp: { note: 'باك ملابس mp_m_freemode_01 / mp_f_freemode_01: الملفات مثل mp_m_freemode_01_<الباك>^jbib_diff_000_a_uni.ytd مع ملف <الباك>.ymt.', skin: false },
+  ped: { note: 'بيد مضاف (مثل pw_roscoe): ملف <البيد>.ymt مع تكسترات مثل uppr_diff_000_a_uni.ytd، أو كلها داخل <البيد>.ytd.', skin: true },
+};
+let kind = 'mp';
+$('kinds').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  kind = b.dataset.kind;
+  [...$('kinds').children].forEach(x => x.classList.toggle('on', x === b));
+  $('kindNote').textContent = KINDS[kind].note;
+  $('keepSkin').checked = KINDS[kind].skin;
+});
+$('kindNote').textContent = KINDS.mp.note;
+
+let srcMode = 'zip';
+$('srcs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  srcMode = b.dataset.src;
+  [...$('srcs').children].forEach(x => x.classList.toggle('on', x === b));
+  $('zipFile').hidden = srcMode !== 'zip'; $('dirFiles').hidden = srcMode !== 'dir';
+  $('dropHint').replaceChildren(...(srcMode === 'zip'
+    ? ['اضغط واختر zip فيه ملفات القطعة', el('br'), el('span', { class: 'sub' }, 'ymt و ytd و ydd (الريسورس كامل أو مجلد stream)')]
+    : ['اضغط واختر مجلد الريسورس أو مجلد stream', el('br'), el('span', { class: 'sub' }, 'المتصفح يرفع الملفات اللي فيه بس')]));
+});
+
+// pack = { entries: [{ path, size, get(): Promise<Uint8Array> }], zipSize }
+let pack = null, pieces = [], picked = null;
+const TEX_RE = /^(?:(.*)\^)?((?:p_)?[a-z]+)_diff_(\d{3})_([a-z])(?:_([a-z]+))?\.ytd$/i;
+const base = p => p.split('/').pop();
+function prefixOf(path) {
+  const b = base(path), m = b.match(/^(.*)\^/);
+  if (m) return m[1].toLowerCase();
+  const parts = path.split('/'); return (parts.length > 1 ? parts[parts.length - 2] : '').toLowerCase();
+}
+function listPieces() {
+  const groups = new Map();
+  for (const e of pack.entries) {
+    const m = base(e.path).match(TEX_RE);
+    if (!m) continue;
+    const key = `${prefixOf(e.path)}|${m[2].toLowerCase()}|${m[3]}`;
+    if (!groups.has(key)) groups.set(key, { prefix: prefixOf(e.path), comp: m[2].toLowerCase(), drawable: +m[3], letters: new Set() });
+    groups.get(key).letters.add(m[4].toLowerCase());
+  }
+  return [...groups.values()].map(g => ({ ...g, letters: [...g.letters].sort() }))
+    .sort((a, b) => a.prefix.localeCompare(b.prefix) || a.comp.localeCompare(b.comp) || a.drawable - b.drawable);
+}
+const ymtStems = () => pack.entries.filter(e => /\.ymt$/i.test(e.path)).map(e => base(e.path).slice(0, -4));
+const pieceErr = t => { $('pieceErr').textContent = t || ''; $('pieceErr').hidden = !t; };
+
+async function loadPack(entries, zipSize) {
+  pack = { entries, zipSize }; picked = null;
+  pieceErr('');
+  const names = entries.map(e => e.path);
+  if (names.some(n => /\.fxap$/i.test(n))) pieceErr('هالباك مشفّر (escrow / .fxap): ما ينفتح ولا ينعدل. لازم النسخة الأصلية بدون تشفير.');
+  else if (!names.some(n => /\.ymt$/i.test(n))) pieceErr('ما فيه ملف .ymt: هذي غالباً قطعة من اللعبة الأصلية، لازم تتحول لباك مضاف (addon) فيه ymt خاص فيه أول.');
+  const stems = ymtStems();
+  if (stems.some(s => /^mp_[mf]_freemode_01/i.test(s))) $('kinds').querySelector('[data-kind=mp]').click();
+  else if (stems.length) $('kinds').querySelector('[data-kind=ped]').click();
+  $('target').replaceChildren(...stems.map(s => el('option', { value: s }, s + '.ymt')));
+  pieces = listPieces();
+  $('pieces').replaceChildren(...pieces.map((p, i) => el('button', { type: 'button', 'data-i': String(i), title: p.prefix },
+    `${p.comp}_${String(p.drawable).padStart(3, '0')} `, el('small', {}, `(${p.letters.join('')})`))));
+  $('pickBox').hidden = !stems.length;
+  $('dropHint').replaceChildren(`${entries.length} ملف`, el('br'), el('span', { class: 'sub' },
+    `${stems.length} ymt · ${pieces.length} قطعة${zipSize ? ' · ' + (zipSize / 1048576).toFixed(1) + ' MB' : ''}`));
+  if (pieces.length) pickPiece(0);
+  else { fillBase(['a']); $('pieceNote').textContent = 'ما لقيت ملفات تكستر بأسماء القطع: اكتب نوع القطعة ورقمها (غالباً كل التكسترات داخل ملف ytd واحد).'; resetAnalysis(); }
+  if (!$('name').value) $('name').value = (stems[0] || 'clothes').toLowerCase().replace(/^mp_[mf]_freemode_01_/, '').replace(/[^a-z0-9_]/g, '_').slice(0, 30) + '_v';
+  validate();
+}
+function fillBase(letters) { $('baseLetter').replaceChildren(...letters.map(l => el('option', { value: l }, '_' + l))); }
+function pickPiece(i) {
+  picked = pieces[i];
+  [...$('pieces').children].forEach((b, j) => b.classList.toggle('on', j === i));
+  $('comp').value = picked.comp; $('drawable').value = picked.drawable;
+  fillBase(picked.letters);
+  const t = [...$('target').options].find(o => o.value.toLowerCase() === picked.prefix || picked.prefix.endsWith(o.value.toLowerCase().replace(/^(mp_[mf]_freemode_01)_/, '$1_p_')));
+  if (t) $('target').value = t.value;
+  const next = 'abcdefghijklmnopqrstuvwxyz'[picked.letters.length];
+  $('pieceNote').textContent = picked.letters.length >= 26
+    ? 'هالقطعة فيها 26 تكستر (a لين z): ما فيه مكان لحرف جديد.'
+    : `فيها ${picked.letters.length} تكستر (${picked.letters.join(', ')}). التصميم الجديد بيكون _${next}.`;
+  resetAnalysis();
+}
+$('pieces').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pickPiece(+b.dataset.i); });
+['comp', 'drawable', 'target'].forEach(id => $(id).addEventListener('change', () => { resetAnalysis(); validate(); }));
+
+$('zipFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (!window.JSZip) { pieceErr('أداة الضغط ما تحملت، حدّث الصفحة.'); return; }
+  try {
+    const z = await JSZip.loadAsync(f);
+    const entries = Object.values(z.files).filter(x => !x.dir)
+      .map(x => ({ path: x.name, size: x._data ? x._data.uncompressedSize : 0, get: () => x.async('uint8array') }));
+    pack = null; await loadPack(entries, f.size); pack.file = f;
+  } catch (err) { pieceErr('الملف مو zip سليم.'); }
+});
+$('dirFiles').addEventListener('change', async e => {
+  const fs = [...e.target.files]; if (!fs.length) return;
+  const entries = fs.map(f => ({ path: f.webkitRelativePath || f.name, size: f.size, get: async () => new Uint8Array(await f.arrayBuffer()) }));
+  await loadPack(entries, 0);
+});
+
+// what goes up: the whole pack (zip as chosen, or a folder zipped here) when small, else only this piece's files
+const MAX_UPLOAD = 40 * 1048576;
+function pieceFilter(comp, d) {
+  const dd = String(d).padStart(3, '0'), stem = ($('target').value || '').toLowerCase();
+  const re = new RegExp(`^${comp}_(diff_)?${dd}_`, 'i');
+  return e => {
+    const b = base(e.path).replace(/^.*\^/, ''), lb = base(e.path).toLowerCase();
+    return /\.(ymt|meta)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || re.test(b) || lb === stem + '.ytd';
+  };
+}
+async function requestZip(analyze) {
+  const total = pack.file ? pack.file.size : pack.entries.reduce((s, e) => s + e.size, 0);
+  const trim = analyze || total > MAX_UPLOAD;
+  if (pack.file && !trim) return { blob: pack.file, trimmed: false };
+  const keep = trim ? pieceFilter($('comp').value, +$('drawable').value) : () => true;
+  const z = new JSZip();
+  for (const e of pack.entries) if (keep(e)) z.file(e.path, await e.get());
+  const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  if (blob.size > 95 * 1048576) throw new Error('ملفات القطعة أكبر من 95MB، GitHub ما يقبلها.');
+  return { blob, trimmed: trim && !analyze };
+}
+
+// ---- design ----
+let mode = 'tint';
+$('modes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.mode;
+  [...$('modes').children].forEach(x => x.classList.toggle('on', x === b));
+  $('tintBox').hidden = mode !== 'tint'; $('logoBox').hidden = mode !== 'logo'; $('promptBox').hidden = mode !== 'prompt';
+  $('logoCtl').hidden = mode !== 'logo'; $('skinBox').hidden = $('skinNote').hidden = mode === 'logo';
+  $('strengthBox').hidden = mode === 'logo';
+  $('strength').value = mode === 'prompt' ? 85 : 100; showVals(); draw(); validate();
+});
+const showVals = () => {
+  $('colorHex').textContent = $('color').value;
+  $('strengthVal').textContent = $('strength').value + '%';
+  $('tilesVal').textContent = $('tiles').value;
+  $('scaleVal').textContent = $('scale').value + '%';
+  $('rotVal').textContent = $('rot').value + '°';
+  $('uVal').textContent = (+$('u').value).toFixed(2); $('vVal').textContent = (+$('v').value).toFixed(2);
+};
+['color', 'strength', 'tiles', 'scale', 'rot', 'u', 'v'].forEach(id => $(id).addEventListener('input', () => { showVals(); draw(); }));
+$('prompt').addEventListener('input', validate);
+
+// the logo goes up inside the request json: at most 1024 px, PNG
+let logo = null, logoImg = null;
+$('logoFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; logo = logoImg = null;
+  if (f) {
+    try {
+      const bmp = await createImageBitmap(f);
+      const s = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
+      const c = el('canvas', { width: Math.max(1, Math.round(bmp.width * s)), height: Math.max(1, Math.round(bmp.height * s)) });
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      logo = c.toDataURL('image/png').split(',')[1]; logoImg = c;
+    } catch { $('formErr').textContent = 'صورة الشعار ما انقرت.'; $('formErr').hidden = false; }
+  }
+  draw(); validate();
+});
+
+// flat UV preview: the real diffuse after an analysis, a grid before
+let diffuse = null;
+const uv = $('uv'), ctx = uv.getContext('2d');
+function draw() {
+  const W = uv.width;
+  ctx.clearRect(0, 0, W, W);
+  if (diffuse) ctx.drawImage(diffuse, 0, 0, W, W);
+  else {
+    ctx.fillStyle = '#12181d'; ctx.fillRect(0, 0, W, W);
+    ctx.strokeStyle = '#2a353f'; ctx.lineWidth = 1;
+    for (let i = 1; i < 8; i++) { const p = i * W / 8; ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, W); ctx.moveTo(0, p); ctx.lineTo(W, p); ctx.stroke(); }
+  }
+  if (mode === 'tint' && diffuse) {
+    // rough idea only: multiply by the colour (the real one keeps the shading around the average)
+    ctx.save(); ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = +$('strength').value / 100;
+    ctx.fillStyle = $('color').value; ctx.fillRect(0, 0, W, W); ctx.restore();
+  }
+  if (mode === 'logo' && logoImg) {
+    const lw = W * $('scale').value / 100, lh = lw * logoImg.height / logoImg.width;
+    ctx.save(); ctx.translate(+$('u').value * W, +$('v').value * W); ctx.rotate(+$('rot').value * Math.PI / 180);
+    ctx.drawImage(logoImg, -lw / 2, -lh / 2, lw, lh); ctx.restore();
+  }
+}
+let dragging = false;
+uv.addEventListener('pointerdown', e => { if (mode !== 'logo') return; dragging = true; uv.setPointerCapture(e.pointerId); moveLogo(e); });
+uv.addEventListener('pointermove', e => dragging && moveLogo(e));
+uv.addEventListener('pointerup', () => { dragging = false; });
+function moveLogo(e) {
+  const r = uv.getBoundingClientRect();
+  $('u').value = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)).toFixed(2);
+  $('v').value = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)).toFixed(2);
+  showVals(); draw();
+}
+
+const NAME_RE = /^[a-z0-9_]{3,40}$/;
+$('name').addEventListener('input', e => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'); validate(); });
+let busy = false;
+function pieceReady() { return pack && !$('pieceErr').textContent && $('target').value && $('comp').value && /^\d{1,3}$/.test($('drawable').value); }
+function validate() {
+  const design = mode === 'tint' || (mode === 'logo' && logo) || (mode === 'prompt' && $('prompt').value.trim().length >= 3);
+  $('build').disabled = busy || !token() || !pieceReady() || !design || !NAME_RE.test($('name').value);
+  $('analyze').disabled = busy || !token() || !pieceReady();
+}
+function spec(analyze) {
+  const s = { target: $('target').value, component: $('comp').value, drawable: +$('drawable').value,
+    base: $('baseLetter').value || 'a', kind, mode: analyze ? 'analyze' : mode,
+    keep_skin: $('keepSkin').checked, strength: +$('strength').value / 100,
+    // a new request every time, even with the same choices (the workflow builds what the commit changed)
+    time: new Date().toISOString() };
+  if (analyze) return s;
+  if (mode === 'tint') s.color = $('color').value;
+  if (mode === 'logo') s.logo = { png: logo, u: +$('u').value, v: +$('v').value, scale: $('scale').value / 100, rotation: +$('rot').value, opacity: 1, shade: true };
+  if (mode === 'prompt') s.prompt = { text: $('prompt').value.trim().slice(0, 200), engine: $('engine').value, tiles: +$('tiles').value, strength: +$('strength').value / 100 };
+  return s;
+}
+
+// ---- upload: zip + json in ONE commit on main (git data API), so the workflow runs once ----
+function toBase64(blob) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+async function commitRequest(name, zipBlob, json, say) {
+  say('جاري رفع الملفات…');
+  const zipSha = (await gh('/git/blobs', { method: 'POST', body: JSON.stringify({ content: await toBase64(zipBlob), encoding: 'base64' }) })).sha;
+  const jsonSha = (await gh('/git/blobs', { method: 'POST', body: JSON.stringify({ content: JSON.stringify(json), encoding: 'utf-8' }) })).sha;
+  for (let attempt = 0; ; attempt++) {
+    const head = (await gh('/git/ref/heads/main')).object.sha;
+    const commit = await gh(`/git/commits/${head}`);
+    const tree = await gh('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: [
+      { path: `clothes_requests/${name}.zip`, mode: '100644', type: 'blob', sha: zipSha },
+      { path: `clothes_requests/${name}.json`, mode: '100644', type: 'blob', sha: jsonSha }] }) });
+    const made = await gh('/git/commits', { method: 'POST', body: JSON.stringify({ message: `Request clothes ${name}`, tree: tree.sha, parents: [head] }) });
+    try {
+      await gh('/git/refs/heads/main', { method: 'PATCH', body: JSON.stringify({ sha: made.sha, force: false }) });
+      return made.sha;
+    } catch (e) { if (e.status !== 422 || attempt >= 2) throw e; }   // main moved meanwhile: redo on top of it
+  }
+}
+
+const STEP_LABELS = [
+  [/converter/, 'تجهيز CodeWalker'], [/Python/, 'تجهيز الأدوات'], [/Read the request/, 'قراءة الطلب'],
+  [/Make the new texture/, 'صنع التكستر وتعديل الـymt'], [/prop-builds/, 'حفظ النتيجة'],
+];
+let timerId = 0;
+function startTimer() {
+  const t0 = Date.now(); clearInterval(timerId);
+  timerId = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 1000);
+}
+function renderSteps(steps) {
+  const rows = [];
+  for (const [re, label] of STEP_LABELS) {
+    const st = steps.find(s => re.test(s.name)); if (!st) continue;
+    const cls = st.status === 'in_progress' ? 'run' : st.conclusion === 'success' ? 'done' : st.conclusion === 'failure' ? 'fail' : st.conclusion === 'skipped' ? 'skip' : '';
+    rows.push(el('li', { class: cls }, el('span', { class: 'dot' }), label));
+  }
+  $('steps').replaceChildren(...(rows.length ? rows : [el('li', { class: 'run' }, el('span', { class: 'dot' }), 'بانتظار سيرفر GitHub…')]));
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function waitForRun(sha) {
+  let run = null;
+  for (let i = 0; i < 40 && !run; i++) {
+    run = (await gh(`/actions/runs?head_sha=${sha}&per_page=1`)).workflow_runs[0];
+    if (!run) await sleep(3000);
+  }
+  if (!run) throw new Error('ما بدأ البناء. تأكد إن Actions شغال في الريبو.');
+  $('runLink').href = run.html_url; $('runLink').hidden = false;
+  while (true) {
+    const job = (await gh(`/actions/runs/${run.id}/jobs`)).jobs[0];
+    if (job) renderSteps(job.steps || []);
+    run = await gh(`/actions/runs/${run.id}`);
+    if (run.status === 'completed') return run;
+    await sleep(5000);
+  }
+}
+
+// ---- results: ONE listing call (git tree of prop-builds), then info.json and pictures from raw ----
+async function loadListing() {
+  let r;
+  try { r = await gh('/git/trees/prop-builds?recursive=1'); } catch (e) {
+    if (e.status === 401 && token()) r = await gh('/git/trees/prop-builds?recursive=1', { anon: true });
+    else if (e.status === 404 || e.status === 409) return { designs: new Map(), scans: new Map() };
+    else throw e;
+  }
+  const designs = new Map(), scans = new Map();
+  for (const t of r.tree) {
+    const m = t.path.match(/^(clothes|clothes_analysis)\/([^/]+)(?:\/(.+))?$/);
+    if (!m) continue;
+    const map = m[1] === 'clothes' ? designs : scans;
+    if (!m[3]) { if (t.type === 'tree' && !map.has(m[2])) map.set(m[2], new Map()); continue; }
+    if (t.type === 'blob' && map.has(m[2])) map.get(m[2]).set(m[3], t.sha);
+  }
+  return { designs, scans };
+}
+async function fetchInfo(dir, name, v) {
+  const r = await fetch(RAW(`${dir}/${name}/info.json`, v));
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function findResult(dir, name, sha) {
+  for (let i = 0; i < 6; i++) {
+    const l = await loadListing(), map = dir === 'clothes' ? l.designs : l.scans;
+    for (const n of [name, ...Array.from({ length: 8 }, (_, k) => `${name.slice(0, 37)}_${k + 2}`)]) {
+      const files = map.get(n);
+      if (!files || !files.has('info.json')) continue;
+      try { const info = await fetchInfo(dir, n, files.get('info.json')); if (info.request === sha) return { name: n, info, files, dir }; } catch {}
+    }
+    await sleep(2000);   // the result commit may land a moment after the run ends
+  }
+  return null;
+}
+
+function resetAnalysis() { diffuse = null; $('analysis').hidden = true; $('anFacts').replaceChildren(); $('uvNote').hidden = false; draw(); }
+function facts(node, rows) { node.replaceChildren(...rows.filter(r => r[1] != null && r[1] !== '').flatMap(([k, v]) => [el('dt', {}, k), el('dd', {}, String(v))])); }
+function showAnalysis(res) {
+  const i = res.info;
+  $('analysis').hidden = false;
+  if (i.status === 'failed') { pieceErr(i.error && i.error.message || 'التحليل فشل.'); return; }
+  const b = i.base || {};
+  facts($('anFacts'), [['الملف', i.ymt], ['القطعة', `${i.component}_${String(i.drawable).padStart(3, '0')}`],
+    ['التكسترات', `${i.textures} (${i.letters})`], ['الجديد', i.next ? '_' + i.next : 'ما فيه مكان (26)'],
+    ['الأساسي', `${b.texture} · ${b.width}×${b.height} · ${String(b.format || '').replace('D3DFMT_', '')} · ${b.mips} mips`],
+    ['الترتيب', i.layout === 'dict' ? 'كلها داخل ytd واحد' : 'ملف ytd لكل تكستر']]);
+  const prev = res.files.get('preview_before.png');
+  if (prev) {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => { diffuse = img; $('uvNote').hidden = true; draw(); };
+    img.src = RAW(`clothes_analysis/${res.name}/preview_before.png`, prev);
+  }
+}
+
+async function runRequest(analyze) {
+  const errEl = analyze ? $('pieceErr') : $('formErr');
+  const say = t => { errEl.textContent = t; errEl.hidden = !t; };
+  say(''); busy = true; validate();
+  $('progress').hidden = false; $('runLink').hidden = true; $('steps').replaceChildren(); startTimer();
+  $('progTitle').textContent = 'جاري التجهيز';
+  try {
+    let name = analyze ? ($('name').value || 'piece').slice(0, 33) + '_scan' : $('name').value;
+    name = name.replace(/[^a-z0-9_]/g, '_');
+    const { blob, trimmed } = await requestZip(analyze);
+    const json = { ...spec(analyze), name, ...(trimmed ? { trimmed: true } : {}) };
+    const sha = await commitRequest(name, blob, json, t => { $('progTitle').textContent = t; });
+    $('progTitle').textContent = analyze ? 'جاري التحليل' : 'جاري البناء';
+    $('progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const run = await waitForRun(sha);
+    clearInterval(timerId);
+    const res = await findResult(analyze ? 'clothes_analysis' : 'clothes', name, sha);
+    $('progTitle').replaceChildren(run.conclusion === 'success' ? el('span', { class: 'ok' }, 'خلص ✓') : el('span', { class: 'err' }, analyze ? 'التحليل فشل' : 'ما انبنى'));
+    if (res) analyze ? showAnalysis(res) : showResult(res);
+    else if (run.conclusion !== 'success') say('البناء فشل. شوف السجل.');
+    if (!analyze) loadGallery();
+  } catch (e) {
+    clearInterval(timerId);
+    $('progTitle').replaceChildren(el('span', { class: 'err' }, 'صار خطأ'));
+    say(e.status ? keyError(e) : e.message);
+  } finally { busy = false; validate(); }
+}
+$('analyze').onclick = () => runRequest(true);
+$('build').onclick = () => { $('result').hidden = true; runRequest(false); };
+
+function showResult(res) {
+  const { name, info, files } = res, failed = info.status === 'failed';
+  $('result').hidden = false;
+  $('resName').textContent = name;
+  $('resBadge').textContent = failed ? 'رُفض' : `تكستر جديد _${info.letter}`;
+  $('resBadge').className = 'badge ' + (failed ? 'bad' : 'hi');
+  $('resFail').hidden = !failed;
+  $('resFail').replaceChildren(...(failed ? [(info.error && info.error.message) || 'البناء فشل.', ' ',
+    ...(info.run ? [el('a', { href: info.run, target: '_blank', rel: 'noopener', style: 'color:var(--accent)' }, 'السجل')] : [])] : []));
+  const pic = (f, img) => { const v = files.get(f); img.hidden = !v; if (v) img.src = RAW(`clothes/${name}/${f}`, v); else img.removeAttribute('src'); };
+  pic('preview_before.png', $('imgBefore')); pic('preview_after.png', $('imgAfter'));
+  $('resPair').hidden = !files.get('preview_before.png');
+  const b = info.base || {};
+  facts($('resFacts'), failed ? [['القطعة', info.spec ? `${info.spec.component} ${info.spec.drawable}` : '']] : [
+    ['القطعة', `${info.component}_${String(info.drawable).padStart(3, '0')} · ${info.target}`],
+    ['التكستر', info.texture], ['من', b.texture], ['الصيغة', `${String(info.format || '').replace('D3DFMT_', '')} · ${b.width}×${b.height} · ${info.mips} mips`],
+    ['بالـymt', info.ymt_textures ? `${info.ymt_textures.before} ← ${info.ymt_textures.after}` : ''], ['numAvailTex', info.numAvailTex]]);
+  $('resFiles').hidden = failed;
+  if (!failed) {
+    const zip = files.get(`${name}.zip`);
+    $('download').href = RAW(`clothes/${name}/${name}.zip`, zip); $('download').setAttribute('download', `${name}.zip`);
+    $('download').textContent = info.patch ? 'تنزيل الملفات الجديدة (zip)' : 'تنزيل الريسورس (zip)';
+    $('changed').replaceChildren(...(info.files || []).map(f => el('span', {}, f)));
+    $('howTo').textContent = info.patch
+      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource} (الـymt يتبدّل)، وبعدين restart ${info.resource}.`
+      : `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + التكستر الجديد + الـymt المعدّل)، وبعدين restart ${info.resource}. التصميم الجديد رقمه ${'abcdefghijklmnopqrstuvwxyz'.indexOf(info.letter)} بالتكسترات.`;
+  }
+  $('warnings').replaceChildren(...(info.warnings || []).map(w => el('li', {}, w)));
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- gallery ----
+let entries = [];
+function applyFilter() {
+  const q = $('q').value.trim().toLowerCase(); let shown = 0;
+  for (const en of entries) { const ok = !q || en.name.toLowerCase().includes(q); en.tile.hidden = !ok; if (ok) shown++; }
+  $('gCount').textContent = entries.length ? `${shown} من ${entries.length}` : '';
+}
+$('q').addEventListener('input', applyFilter);
+let galleryLoad = 0;
+async function loadGallery() {
+  const g = $('gallery'), my = ++galleryLoad;
+  try {
+    const l = await loadListing();
+    if (my !== galleryLoad) return;
+    entries = [...l.designs.keys()].reverse().map(name => ({ name, files: l.designs.get(name), info: null }));
+    g.replaceChildren(...(entries.length ? entries.map(tile) : [el('span', { class: 'sub' }, 'ما فيه تصاميم للحين.')]));
+    applyFilter();
+    entries.forEach(async en => {
+      const v = en.files.get('info.json'); if (!v) return;
+      try { en.info = await fetchInfo('clothes', en.name, v); } catch { return; }
+      if (my !== galleryLoad) return;
+      const failed = en.info.status === 'failed';
+      en.badge.textContent = failed ? 'رُفض' : `${en.info.component || ''}_${String(en.info.drawable ?? '').padStart(3, '0')} · _${en.info.letter || '?'}`;
+      en.badge.className = 'badge ' + (failed ? 'bad' : 'hi'); en.badge.hidden = false;
+      en.tile.classList.toggle('failed', failed);
+    });
+  } catch (e) {
+    g.replaceChildren(el('span', { class: 'sub' }, `ما قدرت أجيب القائمة (${e.message}).`));
+  }
+}
+function tile(en) {
+  const { name, files } = en, prev = files.get('preview_after.png') || files.get('preview_before.png');
+  const pic = prev ? el('img', { loading: 'lazy', src: RAW(`clothes/${name}/${files.get('preview_after.png') ? 'preview_after.png' : 'preview_before.png'}`, prev), alt: name })
+    : el('div', { class: 'ph', 'aria-hidden': 'true' }, '👕');
+  en.badge = el('span', { class: 'badge', hidden: true });
+  const node = el('div', { class: 'g' }, el('button', { type: 'button', class: 'open' }, pic, el('span', { class: 'gname' }, name), en.badge));
+  if (files.has(`${name}.zip`)) node.append(el('a', { class: 'gdl', href: RAW(`clothes/${name}/${name}.zip`, files.get(`${name}.zip`)), download: `${name}.zip`, title: `تنزيل ${name}.zip`, 'aria-label': `تنزيل ${name}.zip` }, '⬇'));
+  en.tile = node;
+  return node;
+}
+$('gallery').addEventListener('click', async e => {
+  const node = e.target.closest('.g'); if (!node || !e.target.closest('button.open')) return;
+  const en = entries.find(x => x.tile === node); if (!en) return;
+  if (!en.info) { try { en.info = await fetchInfo('clothes', en.name, en.files.get('info.json')); } catch { en.info = { status: 'failed', error: { message: 'ما فيه معلومات عن هالتصميم.' } }; } }
+  showResult({ name: en.name, info: en.info, files: en.files });
+});
+$('refresh').onclick = loadGallery;
+
+showVals(); draw(); refreshTokenState(); loadGallery();
+</script>
+</body>
+</html>
