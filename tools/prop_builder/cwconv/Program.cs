@@ -1,4 +1,6 @@
-// cwconv: CodeWalker XML -> binary GTA V asset (.ydr / .ytyp / .ypt), using CodeWalker.Core;
+// cwconv: CodeWalker XML -> binary GTA V asset (.ydr / .ydd / .ytyp / .ypt), using CodeWalker.Core;
+// a .ydd.xml (drawable dictionary, e.g. a clothing piece from garment_bpy.py) takes its embedded textures from the
+// folder named like the file without .ydd.xml, next to it (Sollumz's export layout);
 // also a particle file (.ypt) -> CodeWalker XML with its textures (--ypt2xml), to edit it.
 // Clothing (clothes_variant.py):
 //   ytd-export <in.ytd> <dir>                    textures.xml + one .dds per texture (CodeWalker's own export),
@@ -297,7 +299,7 @@ if (args.Length == 2 && args[0] == "--check-ypt")
     if (ypt.AllEffects != null) foreach (var fx in ypt.AllEffects) Console.WriteLine($"  effect {fx?.Name}");
     return 0;
 }
-if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ytyp.xml|in.ypt.xml> <out file> | --ypt2xml <in.ypt> <out dir> | ytd-export | ytd-build | ymt-to-xml | xml-to-ymt | res-to-xml"); return 1; }
+if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.ydd.xml|in.ytyp.xml|in.ypt.xml> <out file> | --ypt2xml <in.ypt> <out dir> | ytd-export | ytd-build | ymt-to-xml | xml-to-ymt | res-to-xml"); return 1; }
 {
     var input = Path.GetFullPath(args[0]);
     var output = Path.GetFullPath(args[1]);
@@ -308,6 +310,8 @@ if (args.Length < 2) { Console.Error.WriteLine("usage: cwconv <in.ydr.xml|in.yty
     byte[] data;
     if (input.EndsWith(".ydr.xml", StringComparison.OrdinalIgnoreCase))
         data = XmlYdr.GetYdr(doc, folder).Save();
+    else if (input.EndsWith(".ydd.xml", StringComparison.OrdinalIgnoreCase))
+        data = XmlYdd.GetYdd(doc, Path.Combine(folder, Path.GetFileName(input)[..^8])).Save();
     else if (input.EndsWith(".ytyp.xml", StringComparison.OrdinalIgnoreCase))
         data = XmlMeta.GetData(doc, MetaFormat.RSC, folder);
     else if (input.EndsWith(".ypt.xml", StringComparison.OrdinalIgnoreCase))

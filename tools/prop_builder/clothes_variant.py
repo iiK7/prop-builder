@@ -1,5 +1,6 @@
 """Clothes designer: a NEW texture (colour / design) for an EXISTING clothing piece.
     python clothes_variant.py <pack.zip | folder> <spec.json> <out dir> [--cwconv PATH] [--name NAME]
+                              [--bpy-python PYTHON] [--sollumz DIR]   (garment mode)
 
 Works for freemode MP packs (stream/<ped>_<collection>^jbib_diff_000_a_uni.ytd + <ped>_<collection>.ymt, props as
 <ped>_p_<collection>^p_head_diff_000_a.ytd) and addon peds (<ped>.ymt with uppr_diff_000_a_uni.ytd files, in a <ped>/
@@ -18,6 +19,14 @@ spec.json:
    "logo": {"png": "<base64>", "u": .5, "v": .5, "scale": .3, "rotation": 0, "opacity": 1, "shade": true},
    "prompt": {"text": "...", "engine": "pollinations"|"flux", "tiles": 2, "strength": .85},
    "trimmed": true when the site sent only the files of this piece (the result is then a patch, not a whole resource)}
+
+NEW PIECE ("mode": "garment"): a garment template (garment_templates.py: ثوب، كندورة، عباية، روب، تيشيرت، قميص، هودي،
+جاكيت، صدرية، بنطلون، شورت، تنورة، شماغ وعقال، بشت، كاب) fitted to the ped's own body by garment_bpy.py (Blender bpy + Sollumz;
+--bpy-python / --sollumz) and added as the NEXT drawable of its component (a lowr that hides the legs for the long ones, a
+head prop p_head when the props .ymt can take it), with its .ytd and the .ymt entries (drawable + compInfos, or prop +
+aAnchors). Needs the ped's skeleton (<ped>.yft) and base drawables (uppr_000, lowr_000; hand / head / hair / feet _000 help).
+  {"mode": "garment", "template": "thobe", "params": {...}, "slot": "uppr" (optional), "target": ...,
+   "design": "none" | "tint" | "logo" | "prompt" (+ their fields as above: on the generated texture, never on skin)}
 
 Out dir: <name>.zip, preview_before.png, preview_after.png, info.json; on a refusal error.json (exit code 3).
 Env: CWCONV (converter path), TEXT_TO_IMAGE (script for the prompt mode, default text_to_image.py next to this file).
@@ -538,6 +547,8 @@ def run(src, spec, out_dir, name):
     warnings = []
 
     mode = spec.get("mode", "tint")
+    if mode == "garment":
+        return run_garment(pack, files, work, spec, out_dir, name)
     if mode not in ("tint", "logo", "prompt", "analyze"):
         raise Refuse("bad_spec", "نوع التصميم غلط.", f"unknown mode {mode}")
 
@@ -862,20 +873,488 @@ def run(src, spec, out_dir, name):
     return info
 
 
+
+# ---------------- garment mode: a NEW drawable from a template (garment_templates.py + garment_bpy.py) ----------------
+BODY_PARTS = ("uppr", "lowr", "hand", "head", "hair", "feet")
+DRW_FILE_RE = re.compile(r"^(?P<comp>(?:p_)?[a-z]+)_(?P<d>\d{3})(?:_(?P<s>[a-z]+))?\.ydd$", re.I)
+BPY_PYTHON = None
+SOLLUMZ_DIR = None
+
+
+def drawable_files(files):
+    """{(prefix, comp, drawable): path} of every .ydd"""
+    out = {}
+    for f in files:
+        if not f.lower().endswith(".ydd"):
+            continue
+        pre, _ = local_name(f[:-4] + ".ytd")
+        m = DRW_FILE_RE.match(os.path.basename(f).split("^")[-1])
+        if m:
+            out.setdefault((pre, m.group("comp").lower(), int(m.group("d"))), f)
+    return out
+
+
+def pick_ymt(pack, files, spec):
+    ymts = [f for f in files if f.lower().endswith(".ymt")]
+    if not ymts:
+        raise Refuse("no_ymt", "ما فيه ملف .ymt بالباك: القطعة الجديدة تنضاف لـymt البيد (لازم باك بيد مضاف أو باك ملابس فيه ymt).",
+                     "no .ymt in the pack")
+    stem_of = {f: os.path.basename(f)[:-4] for f in ymts}
+    target = str(spec.get("target") or "").strip()
+    if target.lower().endswith(".ymt"):
+        target = target[:-4]
+    picked = [f for f in ymts if stem_of[f].lower() == target.lower()] if target else ymts
+    if not picked:
+        raise Refuse("mismatch", f"ما لقيت {target}.ymt بالباك.", f"{target}.ymt not in the pack",
+                     candidates=sorted(stem_of.values()))
+    if len(picked) > 1:
+        # several: the one that has a ped .yft with the same name
+        yfts = {os.path.basename(f)[:-4].lower() for f in files if f.lower().endswith(".yft")}
+        both = [f for f in picked if stem_of[f].lower() in yfts]
+        if len(both) != 1:
+            raise Refuse("pick_ymt", "الباك فيه أكثر من ymt: اختر واحد.", "several .ymt files: give target",
+                         candidates=sorted(stem_of.values()))
+        picked = both
+    return picked[0], stem_of[picked[0]], ymts, stem_of
+
+
+def skin_colour(pack, files, prefixes, work):
+    """the ped's skin tone (median of the skin pixels of its hand / head texture), for legs under shorts / skirts"""
+    for part in ("hand", "head", "uppr"):
+        for f in sorted(files):
+            if not f.lower().endswith(".ytd"):
+                continue
+            pre, nm = local_name(f)
+            m = TEX_RE.match(nm)
+            if not m or pre not in prefixes or m.group("comp").lower() != part or int(m.group("d")) != 0:
+                continue
+            try:
+                tex = ytd_export(os.path.join(pack, f), os.path.join(work, "skin_" + part))
+                t = next(x for x in tex if TEX_RE.match(x["tex"]["name"] or ""))
+                a = to_float(load_dds(os.path.join(work, "skin_" + part, t["tex"]["dds"])))
+                sk = skin_mask(a[..., :3]) & (a[..., 3] > 0.5)
+                if sk.sum() > 200:
+                    return [int(x) for x in np.median(a[..., :3][sk], 0) * 255]
+            except Exception:  # an unreadable texture: try the next one
+                continue
+    return [150, 110, 85]
+
+
+def ymt_add_drawable(ymt, comp_idx, new_idx):
+    """one more drawable (one texture, letter a, uni) in component comp_idx + its compInfos entry"""
+    c = ymt.component(comp_idx)
+    node = c.find("aDrawblData3")
+    ds = items(node)
+    if len(ds) != new_idx:
+        raise RuntimeError(f"component {comp_idx} has {len(ds)} drawables, the new one would be {new_idx}")
+    nd = ET.fromstring(ET.tostring(ds[0]))
+    set_val(nd, "propMask", 1)
+    if nd.find("numAlternatives") is not None:
+        set_val(nd, "numAlternatives", 0)
+    td = nd.find("aTexData")
+    for x in items(td)[1:]:
+        td.remove(x)
+    set_val(items(td)[0], "texId", 0)
+    cd = nd.find("clothData")
+    if cd is not None and cd.find("ownsCloth") is not None:
+        cd.find("ownsCloth").set("value", "false")
+    node.append(nd)
+    set_val(c, "numAvailTex", ival(c, "numAvailTex") + 1)
+    infos = ymt.root.find("compInfos")
+    added_info = False
+    if infos is not None and items(infos):
+        same = [i for i, x in enumerate(items(infos)) if ival(x, "pedXml_compIdx", -1) == comp_idx]
+        if same:
+            ni = ET.fromstring(ET.tostring(items(infos)[same[-1]]))
+            set_val(ni, "pedXml_drawblIdx", new_idx)
+            infos.insert(same[-1] + 1, ni)
+            added_info = True
+    return added_info
+
+
+ANCHOR_NAMES = {0: "ANCHOR_HEAD", 1: "ANCHOR_EYES", 2: "ANCHOR_EARS", 3: "ANCHOR_MOUTH", 4: "ANCHOR_LEFT_HAND",
+                5: "ANCHOR_RIGHT_HAND", 6: "ANCHOR_LEFT_WRIST", 7: "ANCHOR_RIGHT_WRIST", 8: "ANCHOR_HIP",
+                9: "ANCHOR_LEFT_FOOT", 10: "ANCHOR_RIGHT_FOOT"}
+PROP_ITEM = """<Item><audioId>none</audioId><expressionMods>0 0 0 0 0</expressionMods><texData itemType="CPedPropTexData">
+<Item><inclusions>0</inclusions><exclusions>0</exclusions><texId value="0" /><inclusionId value="0" />
+<exclusionId value="0" /><distribution value="255" /></Item></texData><renderFlags /><propFlags value="0" />
+<flags value="0" /><anchorId value="0" /><propId value="0" /><stickyness value="0" /></Item>"""
+
+
+def ymt_next_prop(ymt, anchor):
+    ids = [ival(p, "propId") for p in ymt.props if ival(p, "anchorId", -1) == anchor]
+    return max(ids) + 1 if ids else 0
+
+
+def ymt_add_prop(ymt, anchor, new_id):
+    """one more prop (one texture) on this anchor: aPropMetaData item + the anchor's count in aAnchors"""
+    root = ymt.root
+    pi = root.find("propInfo")
+    if pi is None:
+        pi = ET.SubElement(root, "propInfo")
+        ET.SubElement(pi, "numAvailProps", value="0")
+        ET.SubElement(pi, "aPropMetaData", itemType="CPedPropMetaData")
+        ET.SubElement(pi, "aAnchors", itemType="CAnchorProps")
+    meta = pi.find("aPropMetaData")
+    if meta is None:
+        meta = ET.SubElement(pi, "aPropMetaData", itemType="CPedPropMetaData")
+    props = items(meta)
+    same = [i for i, p in enumerate(props) if ival(p, "anchorId", -1) == anchor]
+    new = ET.fromstring(ET.tostring(props[same[-1]])) if same else ET.fromstring(PROP_ITEM)
+    td = new.find("texData")
+    for x in items(td)[1:]:
+        td.remove(x)
+    set_val(items(td)[0], "texId", 0)
+    rf = new.find("renderFlags")
+    if rf is not None:
+        rf.text = None
+    for tag, v in (("propFlags", 0), ("flags", 0), ("anchorId", anchor), ("propId", new_id)):
+        if new.find(tag) is not None:
+            set_val(new, tag, v)
+    if same:
+        meta.insert(same[-1] + 1, new)
+    else:
+        meta.append(new)
+    n = pi.find("numAvailProps")
+    if n is not None:
+        set_val(pi, "numAvailProps", ival(pi, "numAvailProps") + 1)
+    anchors = pi.find("aAnchors")
+    if anchors is None:
+        anchors = ET.SubElement(pi, "aAnchors", itemType="CAnchorProps")
+    name = ANCHOR_NAMES[anchor]
+    it = next((a for a in items(anchors) if (a.findtext("anchor") or "").strip() == name), None)
+    if it is None:
+        it = ET.SubElement(anchors, "Item")
+        ET.SubElement(it, "props").text = ""
+        ET.SubElement(it, "anchor").text = name
+    counts = (it.findtext("props") or "").split()
+    note = None
+    if len(counts) != new_id:
+        note = f"aAnchors {name} lists {len(counts)} props, the new prop is number {new_id}"
+        counts = (counts + ["1"] * new_id)[:new_id]
+    it.find("props").text = " ".join(counts + ["1"])
+    ymt.props = items(meta)
+    return note
+
+
+def ydd_vertex_count(xml_path):
+    x = open(xml_path, encoding="utf-8", errors="ignore").read()
+    return sum(len(b.strip().splitlines()) for b in re.findall(r"<Data>(.*?)</Data>", x, re.S))
+
+
+def run_garment(pack, files, work, spec, out_dir, name):
+    import garment_templates as G
+    warnings = []
+    tid = str(spec.get("template") or "")
+    try:
+        params = G.clean_params(tid, spec.get("params"))
+    except G.ParamError as e:
+        raise Refuse("bad_spec", e.ar, e.en)
+    tpl = G.BY_ID[tid]
+    ymt_rel, stem, ymts, stem_of = pick_ymt(pack, files, spec)
+    kind = "mp" if stem.lower().startswith(FREEMODE) else "ped"
+    try:
+        slot = G.slot_for(tid, spec.get("slot") or None, kind)
+    except G.ParamError as e:
+        raise Refuse("bad_spec", e.ar, e.en)
+    base_ped = next((p for p in FREEMODE if stem.lower().startswith(p)), stem.lower())
+    dfiles = drawable_files(files)
+    body_pre = [stem.lower(), base_ped]
+
+    # ---- the body: skeleton + base drawables of this ped
+    yft = next((f for f in files if f.lower().endswith(".yft") and not f.lower().endswith("_hi.yft")
+                and os.path.basename(f)[:-4].lower() in body_pre), None)
+    body = {}
+    for part in BODY_PARTS:
+        for pre in body_pre:
+            if (pre, part, 0) in dfiles:
+                body[part] = dfiles[(pre, part, 0)]
+                break
+    missing = [x for x, ok in ((f"{base_ped}.yft", yft), (f"{base_ped}^uppr_000", body.get("uppr")),
+                               (f"{base_ped}^lowr_000", body.get("lowr"))) if not ok]
+    if missing:
+        raise Refuse("no_body", "القطعة الجديدة تنقاس على جسم البيد نفسه، وناقص من الباك: " + "، ".join(missing) +
+                     (". لبيد الـfreemode لازم ترفع معه ملفات الجسم من اللعبة (mp_m_freemode_01.yft و uppr_000 و lowr_000)."
+                      if kind == "mp" else "."), f"the ped body is not in the pack: {missing}")
+
+    # ---- the slot: a component of this ymt, or a head prop (needs the props .ymt)
+    props_name = props_names(pack, files).get(stem.lower())
+    prop_ymt_rel = None
+    if props_name and props_name != stem.lower():
+        prop_ymt_rel = next((f for f in ymts if stem_of[f].lower() == props_name), None)
+    else:
+        prop_ymt_rel = ymt_rel
+    if slot == "auto":
+        slot = "p_head" if prop_ymt_rel else "berd"
+        if slot == "berd":
+            warnings.append(f"props of {stem} belong to {props_name} ({props_name}.ymt is not in the pack): built as berd")
+    if slot == "p_head" and not prop_ymt_rel:
+        raise Refuse("props_ymt", f"إكسسوارات الراس (p_head) لهالبيد تابعة لـ {props_name} وملفه {props_name}.ymt مو بالباك. "
+                     "اختر berd (مكان القناع) بدالها.", f"props of {stem} belong to {props_name}; {props_name}.ymt is not in the pack")
+    is_prop = slot in PROPS
+
+    # ---- the .ymt(s)
+    ymt_xml = os.path.join(work, "ymt.xml")
+    fmt = ymt_to_xml(os.path.join(pack, ymt_rel), ymt_xml)
+    if fmt == "RBF":
+        raise Refuse("unreadable", "الـymt بصيغة قديمة (RBF) ما تنعدل هنا.", "RBF ymt is not supported")
+    ymt = Ymt(ymt_xml)
+    pymt, pfmt, pymt_xml = ymt, fmt, ymt_xml
+    if is_prop and prop_ymt_rel != ymt_rel:
+        pymt_xml = os.path.join(work, "pymt.xml")
+        pfmt = ymt_to_xml(os.path.join(pack, prop_ymt_rel), pymt_xml)
+        pymt = Ymt(pymt_xml)
+
+    # where the new files go: next to the ped's own uppr_000 (same folder, same "prefix^" or folder style)
+    ref = body["uppr"]
+    ref_dir = os.path.dirname(ref)
+    caret = "^" in os.path.basename(ref)
+
+    def rel_for(prefix, filename):
+        if caret:
+            return (ref_dir + "/" if ref_dir else "") + f"{prefix}^{filename}"
+        return (os.path.dirname(ref_dir) + "/" if os.path.dirname(ref_dir) else "") + f"{prefix}/{filename}"
+
+    pieces = []
+    if is_prop:
+        anchor = PROPS.index(slot)
+        n = ymt_next_prop(pymt, anchor)
+        pp = props_name or prop_prefix(stem.lower())
+        pieces.append({"role": "main", "comp": slot, "prop": True, "bone": "SKEL_Head", "index": n, "prefix": pp,
+                       "dict": f"{pp}^{slot}_{n:03d}", "drawable": f"{slot}_{n:03d}", "diffuse": f"{slot}_diff_{n:03d}_a",
+                       "normal": f"{slot}_normal_{n:03d}", "spec": f"{slot}_spec_{n:03d}"})
+    else:
+        ci = COMPONENTS.index(slot)
+        if ymt.component(ci) is None:
+            raise Refuse("no_component", f"الـymt ما فيه {slot} أصلاً: اختر مكان ثاني للقطعة.", f"{slot} is not in {stem}.ymt",
+                         summary=ymt.summary())
+        n = len(ymt.drawables(ci))
+        pieces.append({"role": "main", "comp": slot, "index": n, "prefix": stem.lower(), "dict": f"{stem.lower()}^{slot}_{n:03d}_u",
+                       "drawable": f"{slot}_{n:03d}_u", "diffuse": f"{slot}_diff_{n:03d}_a_uni",
+                       "normal": f"{slot}_normal_{n:03d}", "spec": f"{slot}_spec_{n:03d}"})
+    hide = params.get("hide_lower", "keep")
+    if hide in ("empty", "cut") and slot != "lowr" and ymt.component(4) is not None:
+        n = len(ymt.drawables(4))
+        pieces.append({"role": "lower", "comp": "lowr", "mode": hide, "index": n, "prefix": stem.lower(),
+                       "dict": f"{stem.lower()}^lowr_{n:03d}_u", "drawable": f"lowr_{n:03d}_u",
+                       "diffuse": f"lowr_diff_{n:03d}_a_uni", "normal": f"lowr_normal_{n:03d}", "spec": f"lowr_spec_{n:03d}"})
+    for pc in pieces:
+        for ext in (".ydd",):
+            r = rel_for(pc["prefix"], pc["dict"].split("^")[-1] + ext)
+            if r in files:
+                warnings.append(f"{os.path.basename(r)} is in the pack but not in the .ymt: replaced")
+
+    # ---- CodeWalker XML of the body for Blender
+    xml_dir = os.path.join(work, "xml")
+    os.makedirs(xml_dir, exist_ok=True)
+
+    def to_xml(f):
+        try:
+            cw("res-to-xml", os.path.join(pack, f), xml_dir)
+        except RuntimeError as e:
+            raise Refuse("unreadable", f"ما قدرت أقرا {os.path.basename(f)} (مشفّر أو خربان).", f"{f}: {e}")
+        return os.path.join(xml_dir, os.path.basename(f) + ".xml")
+    sk_xml = to_xml(yft)
+    body_xml = {k: to_xml(v) for k, v in body.items()}
+    scaffold = {"uppr": body_xml["uppr"], "lowr": body_xml["lowr"]}
+    if not is_prop and slot not in scaffold:
+        own = next((dfiles[(p, slot, 0)] for p in body_pre if (p, slot, 0) in dfiles), None)
+        scaffold[slot] = to_xml(own) if own else body_xml["uppr"]
+    skin = skin_colour(pack, files, set(body_pre), work)
+    gout = os.path.join(work, "garment")
+    job = {"sollumz": SOLLUMZ_DIR or os.path.join(HERE, ".deps"), "skeleton": sk_xml, "body": body_xml,
+           "scaffold": scaffold, "template": tid, "params": params, "pieces": pieces, "skin": skin, "out": gout}
+    job_path, res_path = os.path.join(work, "garment_job.json"), os.path.join(work, "garment_result.json")
+    json.dump(job, open(job_path, "w"))
+    log(f"garment {tid} on {slot} ({stem}), Blender ...")
+    r = subprocess.run([BPY_PYTHON or sys.executable, os.path.join(HERE, "garment_bpy.py"), job_path, res_path],
+                       capture_output=True, text=True, timeout=1800)
+    if not os.path.exists(res_path):
+        raise RuntimeError(f"the Blender step stopped ({r.returncode}): {((r.stdout or '') + (r.stderr or ''))[-1500:]}")
+    res = json.load(open(res_path))
+    if "error" in res:
+        log(res.get("trace", ""))
+        raise Refuse("garment_failed", "ما قدرت أفصّل القطعة على جسم هالبيد.", f"garment build failed: {res['error']}")
+    built = {p["role"]: p for p in res["pieces"]}
+
+    # ---- the design on the generated texture (only where the mask allows: not on skin, gold trim, agal)
+    main = built["main"]
+    base_img = Image.open(main["diffuse_png"]).convert("RGBA")
+    rgba = to_float(base_img)
+    m = np.asarray(Image.open(main["mask_png"]).convert("L"), np.float32) / 255
+    design = spec.get("design") or "none"
+    extra = {}
+    if design == "tint":
+        out = recolour(rgba, parse_color(spec.get("color")), m, float(spec.get("strength", 1.0)))
+    elif design == "logo":
+        out = apply_logo(rgba, spec)
+        out = rgba * (1 - m[..., None]) + out * m[..., None]
+    elif design == "prompt":
+        out, extra = apply_prompt(rgba, {**spec, "keep_skin": False}, work)
+        out = rgba * (1 - m[..., None]) + out * m[..., None]
+    elif design == "none":
+        out = rgba
+    else:
+        raise Refuse("bad_spec", "نوع التصميم غلط.", f"unknown design {design}")
+    out[..., 3] = 1
+    after = to_image(out)
+    preview(base_img, os.path.join(out_dir, "preview_before.png"))
+    preview(after, os.path.join(out_dir, "preview_after.png"))
+
+    # ---- binaries: .ydd from the XML, .ytd per piece
+    new_files = {}   # rel path in the pack -> local file
+    tex_dir = os.path.join(work, "ytd_src")
+    os.makedirs(tex_dir, exist_ok=True)
+    piece_info = []
+    for pc in pieces:
+        b = built[pc["role"]]
+        ydd_rel = rel_for(pc["prefix"], pc["dict"].split("^")[-1] + ".ydd")
+        ydd_out = os.path.join(work, os.path.basename(ydd_rel))
+        cw(b["xml"], ydd_out)
+        rt = os.path.join(work, "rt_" + pc["role"])
+        os.makedirs(rt, exist_ok=True)
+        _, o = cw("res-to-xml", ydd_out, rt)
+        back = os.path.join(rt, os.path.basename(ydd_out) + ".xml")
+        nv_in, nv_back = ydd_vertex_count(b["xml"]), ydd_vertex_count(back)
+        if "DRAWABLES 1" not in o or nv_in != nv_back or nv_back == 0:
+            raise RuntimeError(f"{os.path.basename(ydd_out)} did not survive the round trip ({nv_in} -> {nv_back} vertices; {o.strip()[-200:]})")
+        new_files[ydd_rel] = ydd_out
+        ytd_rel = rel_for(pc["prefix"], pc["diffuse"] + ".ytd")
+        ytd_out = os.path.join(work, os.path.basename(ytd_rel))
+        if pc["role"] == "main":
+            dds = os.path.join(tex_dir, pc["diffuse"] + ".dds")
+            encode_dds(after, "D3DFMT_DXT1", 11, dds)
+            cw("ytd-build", dds, ytd_out)
+        elif pc.get("mode") == "cut" and b.get("mode") == "cut":
+            pre_, by_letter = find_base_files(files, stem, "lowr", 0)
+            if not by_letter.get("a"):
+                raise Refuse("no_diffuse", "ما لقيت تكستر البنطلون الأساسي (lowr_diff_000_a) عشان أقصّه.", "no lowr_diff_000_a")
+            exp = os.path.join(work, "lowr_base")
+            tex = ytd_export(os.path.join(pack, by_letter["a"][0]), exp)
+            old = next(t["tex"]["name"] for t in tex if TEX_RE.match(t["tex"]["name"] or "") or len(tex) == 1)
+            cw("ytd-build", exp, ytd_out, "--rename", f"{old}={pc['diffuse']}")
+        else:
+            dds = os.path.join(tex_dir, pc["diffuse"] + ".dds")
+            encode_dds(Image.open(b["diffuse_png"]).convert("RGBA"), "D3DFMT_DXT1", 7, dds)
+            cw("ytd-build", dds, ytd_out)
+        chk = {t["tex"]["name"] for t in ytd_export(ytd_out, os.path.join(work, "chk_" + pc["role"]))}
+        if pc["diffuse"] not in chk:
+            raise RuntimeError(f"{pc['diffuse']} is not in the built .ytd: {sorted(chk)}")
+        new_files[ytd_rel] = ytd_out
+        piece_info.append({"role": pc["role"], "component": pc["comp"], "drawable": pc["index"], "letter": "a",
+                           "texture": pc["diffuse"], "ydd": ydd_rel, "ytd": ytd_rel, "verts": b["verts"],
+                           "faces": b["faces"], "bones": len(b.get("groups") or {}),
+                           "max_influences": b.get("max_influences"), **({"mode": b.get("mode")} if pc["role"] == "lower" else {})})
+
+    # ---- the .ymt entries
+    changed_ymts = {}
+    comp_infos = []
+    for pc in pieces:
+        if pc.get("prop"):
+            note = ymt_add_prop(pymt, PROPS.index(pc["comp"]), pc["index"])
+            if note:
+                warnings.append(note)
+        else:
+            if ymt_add_drawable(ymt, COMPONENTS.index(pc["comp"]), pc["index"]):
+                comp_infos.append(pc["comp"])
+    targets = [(ymt, ymt_rel, ymt_xml, fmt)] if not is_prop or prop_ymt_rel == ymt_rel else []
+    if any(pc["role"] == "lower" for pc in pieces) and not targets:
+        targets.append((ymt, ymt_rel, ymt_xml, fmt))
+    if is_prop:
+        targets.append((pymt, prop_ymt_rel, pymt_xml, pfmt))
+    for y, rel, xp, f_ in {id(t[0]): t for t in targets}.values():
+        y.save(xp)
+        outp = os.path.join(work, "new_" + os.path.basename(rel))
+        cw("xml-to-ymt", xp, outp, *(["--pso"] if f_ == "PSO" else []))
+        bx = os.path.join(work, "back_" + os.path.basename(rel) + ".xml")
+        ymt_to_xml(outp, bx)
+        back = Ymt(bx)
+        for pc in pieces:
+            if pc.get("prop") and y is pymt:
+                if back.prop(PROPS.index(pc["comp"]), pc["index"]) is None:
+                    raise RuntimeError("the .ymt does not list the new prop")
+            elif not pc.get("prop") and y is ymt:
+                ci = COMPONENTS.index(pc["comp"])
+                if len(back.drawables(ci)) != pc["index"] + 1 or ival(back.component(ci), "numAvailTex") != ival(ymt.component(ci), "numAvailTex"):
+                    raise RuntimeError(f"the .ymt does not list {pc['comp']} {pc['index']}")
+        changed_ymts[rel] = outp
+    new_files.update(changed_ymts)
+
+    # ---- the resource (as clothes designs: the whole pack + new files, or only the new ones when big / trimmed)
+    root_rel = resource_root(files)
+    res_name = os.path.basename(root_rel) if root_rel else ""
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,64}", res_name or "") or res_name.lower() == "stream":
+        res_name = name
+    stage = os.path.join(work, "out", res_name)
+    if root_rel is None:
+        os.makedirs(os.path.join(stage, "stream"))
+        for f in files:
+            dst = os.path.join(stage, f if f.lower().endswith(".meta") else os.path.join("stream", f))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy(os.path.join(pack, f), dst)
+        rel = lambda f: (f if f.lower().endswith(".meta") else "stream/" + f)  # noqa: E731
+    else:
+        shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage)
+        rel = lambda f: os.path.relpath(f, root_rel).replace("\\", "/") if root_rel else f  # noqa: E731
+    changed = []
+    for f, local in new_files.items():
+        dst = os.path.join(stage, rel(f))
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy(local, dst)
+        changed.append(rel(f))
+    if not os.path.exists(os.path.join(stage, "fxmanifest.lua")) and not os.path.exists(os.path.join(stage, "__resource.lua")):
+        open(os.path.join(stage, "fxmanifest.lua"), "w").write(manifest_for(stage)[0])
+        changed.append("fxmanifest.lua")
+    zip_path = os.path.join(out_dir, f"{name}.zip")
+
+    def write_zip(only):
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+            for dp, _, names in os.walk(stage):
+                for nm in sorted(names):
+                    full = os.path.join(dp, nm)
+                    r_ = os.path.relpath(full, stage).replace("\\", "/")
+                    if only is None or r_ in only:
+                        z.write(full, f"{res_name}/{r_}")
+    patch = bool(spec.get("trimmed"))
+    write_zip(set(changed) if patch else None)
+    if not patch and os.path.getsize(zip_path) > MAX_ZIP_OUT:
+        patch = True
+        write_zip(set(changed))
+        warnings.append("the whole resource is over 90 MB: the zip has only the new and changed files")
+    warnings += [f"template: {w}" for w in res["report"].get("notes", [])]
+    shutil.rmtree(work, ignore_errors=True)
+    mp = piece_info[0]
+    info = {"name": name, "mode": "garment", "status": "built", "kind": kind, "target": stem, "ymt": ymt_rel,
+            "template": tid, "template_label": tpl["label"], "params": params, "slot": slot,
+            "design": design, "component": mp["component"], "drawable": mp["drawable"], "letter": "a",
+            "texture": mp["texture"], "pieces": piece_info, "resource": res_name, "files": changed, "patch": patch,
+            "comp_infos": comp_infos, "ymt_changed": True, "zip": f"{name}.zip", "warnings": warnings,
+            "landmarks": res["report"].get("landmarks"), "uv_islands": res["report"].get("islands"), "summary": ymt.summary(),
+            "built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
+    if design == "tint":
+        info["color"] = spec.get("color")
+    if extra:
+        info["description"] = extra
+    return info
+
+
 CW_PATH = os.path.join(HERE, ".deps", "cwconv", "cwconv")
 
 
 def main():
-    global CW_PATH
+    global CW_PATH, BPY_PYTHON, SOLLUMZ_DIR
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pack")
     ap.add_argument("spec")
     ap.add_argument("out")
     ap.add_argument("--cwconv")
     ap.add_argument("--name")
+    ap.add_argument("--bpy-python", help="garment mode: the Python with bpy (default: this one)")
+    ap.add_argument("--sollumz", help="garment mode: the folder holding Sollumz/")
     a = ap.parse_args()
     if a.cwconv:
         CW_PATH = a.cwconv
+    BPY_PYTHON, SOLLUMZ_DIR = a.bpy_python, a.sollumz
     os.makedirs(a.out, exist_ok=True)
     try:
         with open(a.spec, encoding="utf-8") as f:

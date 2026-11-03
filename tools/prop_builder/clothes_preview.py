@@ -15,7 +15,7 @@ parts.json:
   {"name", "ped", "skeleton": bool, "components": {"uppr": [{"drawable": 0, "glb": "glb/uppr_000.glb",
    "textures": ["a", "b"], "tex": {"a": "tex/uppr_diff_000_a_uni.png"}, "materials": {"m0": {"diffuse": ..., "normal": ...}},
    "verts": 6102}]}, "props": {"p_head": [... + "bone"]}, "textures": {"<texture name>": "tex/<name>.png"},
-   "skipped": [{"file", "reason"}], "design": {...} when --design is given}
+   "skipped": [{"file", "reason"}], "design": {...} when --design is given (+ "pieces" for a new garment)}
 Exit 3 with error.json on a refusal (same codes as clothes_variant.py).
 """
 import argparse
@@ -284,6 +284,10 @@ def main():
             parts["design"] = {"component": d.get("component", spec.get("component")),
                                "drawable": d.get("drawable", spec.get("drawable")),
                                "letter": d.get("letter"), "texture": d.get("texture")}
+            if d.get("pieces"):   # a new garment: every new drawable (the piece + the lowr that hides the legs)
+                parts["design"]["pieces"] = [{"component": x["component"], "drawable": x["drawable"], "letter": x["letter"]}
+                                             for x in d["pieces"]]
+                parts["design"]["template"] = d.get("template")
     with open(os.path.join(a.out, "parts.json"), "w") as f:
         json.dump(parts, f, ensure_ascii=False, indent=1)
     n = sum(len(v) for v in parts["components"].values()) + sum(len(v) for v in parts["props"].values())

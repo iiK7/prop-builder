@@ -140,14 +140,22 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #viewCard{order:3} #previewC
   .gallery{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
   h1{font-size:40px}
 }
-@media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}}
+/* new piece: template cards + the parameter form made from the template's schema */
+.tgroup{font-size:12px;color:var(--mute);margin:4px 0 -4px}
+.tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.tpls button{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 4px;cursor:pointer;font:600 12px var(--f-body);line-height:1.3;min-width:0}
+.tpls button span{font-size:26px;line-height:1.2}
+.tpls button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.params{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.params label.chk{align-self:end}
+@media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}.grid3>:first-child{grid-column:1/-1}.params{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div><h1>مصمم <span>الملابس</span></h1><p class="sub">قطعة موجودة ← لون أو شعار أو نقشة جديدة ← تكستر جديد جاهز</p></div>
+    <div><h1>مصمم <span>الملابس</span></h1><p class="sub">قطعة موجودة ← لون أو شعار أو نقشة جديدة، أو قطعة جديدة من قالب (ثوب، شماغ، بنطلون…) تنفصّل على البيد</p></div>
     <a href="../" class="sub" style="color:var(--accent)">← مصنع البروبز</a>
   </header>
 
@@ -250,7 +258,22 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #viewCard{order:3} #previewC
 
   <div class="col colR">
   <section class="card" id="designCard">
-    <h2>التصميم الجديد</h2>
+    <div class="tabs two" id="whats" role="group" aria-label="وش تبي تسوي">
+      <button data-what="variant" class="on" type="button"><span>🎨</span>تصميم لقطعة موجودة</button>
+      <button data-what="garment" type="button"><span>✂️</span>قطعة جديدة</button>
+    </div>
+    <div id="garmentBox" hidden>
+      <h2>قطعة جديدة</h2>
+      <p class="note">تنفصّل على جسم البيد نفسه (العظام والجسم من الباك) وتنضاف كقطعة جديدة برقم بعد آخر رقم، مع الـymt.</p>
+      <div id="tpls" role="group" aria-label="القوالب"></div>
+      <p class="note" id="tplNote"></p>
+      <label>المكان
+        <select id="gSlot" class="mono"></select>
+      </label>
+      <div class="params" id="gParams"></div>
+      <label class="chk"><input type="checkbox" id="gDesign"> فوقها لون أو شعار أو نقشة (من تحت)</label>
+    </div>
+    <h2 id="designTitle">التصميم الجديد</h2>
     <div class="tabs" id="modes" role="group" aria-label="نوع التصميم">
       <button data-mode="tint" class="on"><span>🎨</span>لون</button>
       <button data-mode="logo"><span>🏷️</span>شعار</button>
@@ -538,11 +561,19 @@ function pieceFilter(comp, d) {
     return /\.(ymt|meta|yft)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || re.test(b) || lb === stem + '.ytd';
   };
 }
-async function requestZip() {
+// a new piece is fitted to the ped's body: its skeleton (.yft) and base drawables _000 (+ the textures it reads)
+function garmentFilter() {
+  const body = /^(uppr|lowr|hand|head|hair|feet|jbib|task|accs|berd)_000_[a-z]+\.ydd$/i, tex = /^(lowr|hand|head)_diff_000_a(_[a-z]+)?\.ytd$/i;
+  return e => {
+    const lb = base(e.path).toLowerCase(), b = base(e.path).replace(/^.*\^/, '');
+    return /\.(ymt|meta|yft|xml)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || body.test(b) || tex.test(b);
+  };
+}
+async function requestZip(garment) {
   const total = pack.file ? pack.file.size : pack.entries.reduce((s, e) => s + e.size, 0);
   const trim = total > MAX_UPLOAD;
   if (pack.file && !trim) return { blob: pack.file, trimmed: false };
-  const keep = trim ? pieceFilter($('comp').value, +$('drawable').value) : () => true;
+  const keep = !trim ? () => true : garment ? garmentFilter() : pieceFilter($('comp').value, +$('drawable').value);
   const z = new JSZip();
   for (const e of pack.entries) if (keep(e)) z.file(e.path, await e.get());
   const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
@@ -550,16 +581,86 @@ async function requestZip() {
   return { blob, trimmed: trim };
 }
 
+// ---- new piece (garment templates): the same registry as tools/prop_builder/garment_templates.py (a test compares) ----
+const GARMENTS = /* GARMENTS:BEGIN */{"groups":{"long":"ثياب طويلة","upper":"علوي","lower":"سفلي","extra":"إضافات"},"templates":[{"id":"thobe","label":"ثوب","group":"long","icon":"👘","slots":["uppr"],"note":"ثوب سعودي بياقة واقفة وجيب أزرار. يختفي البنطلون تحته (قطعة lowr فاضية جديدة).","params":[{"id":"color","type":"color","label":"لون القماش","default":"#f4f2ec"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":100,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":2.2,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":30,"unit":"%"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"sleeve_width","type":"range","label":"عرض الكم","min":70,"max":160,"step":5,"default":100,"unit":"%"},{"id":"collar","type":"select","label":"الياقة","options":[{"value":"band","label":"واقفة"},{"value":"shirt","label":"ياقة قميص"},{"value":"none","label":"بدون"}],"default":"band"},{"id":"buttons","type":"range","label":"الأزرار","min":0,"max":7,"step":1,"default":5,"unit":""},{"id":"hide_lower","type":"select","label":"اللي تحت (البنطلون)","options":[{"value":"empty","label":"يختفي (قطعة lowr فاضية)"},{"value":"cut","label":"يبقى تحت الطرف بس"},{"value":"keep","label":"يبقى مثل ما هو"}],"default":"empty"}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]}]},{"id":"kandura","label":"كندورة","group":"long","icon":"🥻","slots":["uppr"],"note":"كندورة إماراتية بدون ياقة، رقبة مدورة وكركوشة (طرّة) معلقة على الصدر.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#f6f5f1"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":100,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":2.4,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":35,"unit":"%"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"sleeve_width","type":"range","label":"عرض الكم","min":70,"max":160,"step":5,"default":105,"unit":"%"},{"id":"tassel","type":"range","label":"طول الكركوشة","min":0,"max":40,"step":1,"default":24,"unit":"cm"},{"id":"hide_lower","type":"select","label":"اللي تحت (البنطلون)","options":[{"value":"empty","label":"يختفي (قطعة lowr فاضية)"},{"value":"cut","label":"يبقى تحت الطرف بس"},{"value":"keep","label":"يبقى مثل ما هو"}],"default":"empty"}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]},{"id":"tassel","label":"الكركوشة","rect":[0.67,0.0,0.83,0.12]}]},{"id":"abaya","label":"عباية","group":"long","icon":"🧕","slots":["uppr"],"note":"عباية واسعة بأكمام عريضة، مفتوحة من قدام (تحتها طبقة داخلية) أو مسكّرة.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#141416"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":100,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":3.5,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":60,"unit":"%"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"sleeve_width","type":"range","label":"عرض الكم","min":100,"max":220,"step":5,"default":170,"unit":"%"},{"id":"opening","type":"select","label":"الفتحة من قدام","options":[{"value":"open","label":"مفتوحة"},{"value":"closed","label":"مسكّرة"}],"default":"open"},{"id":"open_width","type":"range","label":"عرض الفتحة","min":2,"max":30,"step":1,"default":12,"unit":"cm"},{"id":"trim","type":"bool","label":"تطريز على الأطراف","default":true},{"id":"hide_lower","type":"select","label":"اللي تحت (البنطلون)","options":[{"value":"empty","label":"يختفي (قطعة lowr فاضية)"},{"value":"cut","label":"يبقى تحت الطرف بس"},{"value":"keep","label":"يبقى مثل ما هو"}],"default":"empty"}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]},{"id":"inner","label":"الطبقة الداخلية","rect":[0.84,0.0,1.0,0.29]}]},{"id":"robe","label":"روب","group":"long","icon":"🛁","slots":["uppr"],"note":"روب حمام بفتحة V على الصدر وحزام مربوط. يبقى البنطلون تحت طرف الروب بس.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#e9e4da"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":25,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":3.0,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":20,"unit":"%"},{"id":"sleeve","type":"range","label":"طول الكم","min":50,"max":100,"step":1,"default":88,"unit":"%"},{"id":"sleeve_width","type":"range","label":"عرض الكم","min":90,"max":180,"step":5,"default":135,"unit":"%"},{"id":"v_depth","type":"range","label":"عمق فتحة الصدر","min":5,"max":40,"step":1,"default":24,"unit":"cm"},{"id":"belt","type":"bool","label":"حزام","default":true},{"id":"fabric","type":"select","label":"القماش","options":[{"value":"terry","label":"فوطة"},{"value":"satin","label":"ساتان"}],"default":"terry"},{"id":"hide_lower","type":"select","label":"اللي تحت (البنطلون)","options":[{"value":"empty","label":"يختفي (قطعة lowr فاضية)"},{"value":"cut","label":"يبقى تحت الطرف بس"},{"value":"keep","label":"يبقى مثل ما هو"}],"default":"cut"}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]},{"id":"belt","label":"الحزام","rect":[0.67,0.0,0.83,0.29]},{"id":"inner","label":"الصدر","rect":[0.84,0.0,1.0,0.29]}]},{"id":"tshirt","label":"تيشيرت","group":"upper","icon":"👕","slots":["uppr","jbib","accs"],"note":"تيشيرت قطن بأكمام قصيرة ورقبة مدورة.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#f2f2f2"},{"id":"length","type":"range","label":"الطول (الخصر ← نص الفخذ)","min":0,"max":100,"step":1,"default":50,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":1.5,"unit":"cm"},{"id":"sleeve","type":"range","label":"طول الكم","min":25,"max":60,"step":1,"default":45,"unit":"%"},{"id":"sleeve_width","type":"range","label":"عرض الكم","min":80,"max":150,"step":5,"default":110,"unit":"%"},{"id":"neck","type":"select","label":"الرقبة","options":[{"value":"round","label":"مدورة"},{"value":"v","label":"V"}],"default":"round"}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]}]},{"id":"shirt","label":"قميص بأكمام طويلة","group":"upper","icon":"👔","slots":["uppr","jbib"],"note":"قميص بياقة وأزرار من فوق لتحت وأساور.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#cfe0f2"},{"id":"length","type":"range","label":"الطول (الخصر ← نص الفخذ)","min":0,"max":100,"step":1,"default":55,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":1.6,"unit":"cm"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"buttons","type":"range","label":"الأزرار","min":3,"max":9,"step":1,"default":7,"unit":""},{"id":"pocket","type":"bool","label":"جيب صدر","default":true}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]},{"id":"flap","label":"الياقة","rect":[0.67,0.0,0.83,0.29]}]},{"id":"hoodie","label":"هودي","group":"upper","icon":"🧥","slots":["uppr","jbib"],"note":"هودي بكابيشن (مرفوع أو نازل) وجيب كنغر وحبال.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#7b8088"},{"id":"length","type":"range","label":"الطول (الخصر ← نص الفخذ)","min":0,"max":100,"step":1,"default":45,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":2.6,"unit":"cm"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"hood","type":"select","label":"الكابيشن","options":[{"value":"down","label":"نازل على الظهر"},{"value":"up","label":"على الراس"},{"value":"none","label":"بدون"}],"default":"down"},{"id":"pocket","type":"bool","label":"جيب كنغر","default":true},{"id":"strings","type":"bool","label":"حبال","default":true}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]},{"id":"hood","label":"الكابيشن","rect":[0.67,0.0,0.83,0.29]},{"id":"strings","label":"الحبال","rect":[0.84,0.0,1.0,0.12]}]},{"id":"jacket","label":"جاكيت","group":"upper","icon":"🧥","slots":["jbib","uppr"],"note":"جاكيت بسحاب: مفتوح (يبين اللي تحته) أو مسكّر، بياقة واقفة.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#1f2a3a"},{"id":"length","type":"range","label":"الطول (الخصر ← نص الفخذ)","min":0,"max":100,"step":1,"default":40,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":3.2,"unit":"cm"},{"id":"sleeve","type":"range","label":"طول الكم","min":60,"max":100,"step":1,"default":100,"unit":"%"},{"id":"opening","type":"select","label":"السحاب","options":[{"value":"open","label":"مفتوح"},{"value":"closed","label":"مسكّر"}],"default":"closed"},{"id":"open_width","type":"range","label":"عرض الفتحة","min":4,"max":30,"step":1,"default":14,"unit":"cm"},{"id":"collar","type":"select","label":"الياقة","options":[{"value":"band","label":"واقفة"},{"value":"shirt","label":"ياقة قميص"},{"value":"none","label":"بدون"}],"default":"band"},{"id":"pockets","type":"bool","label":"جيوب","default":true}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]}]},{"id":"vest","label":"صدرية","group":"upper","icon":"🦺","slots":["task","jbib","accs"],"note":"صدرية بدون أكمام بفتحة V وأزرار، تنلبس فوق القميص.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#3a3d42"},{"id":"length","type":"range","label":"الطول (الخصر ← نص الفخذ)","min":0,"max":100,"step":1,"default":25,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":8,"step":0.5,"default":2.6,"unit":"cm"},{"id":"v_depth","type":"range","label":"عمق فتحة الصدر","min":5,"max":35,"step":1,"default":20,"unit":"cm"},{"id":"buttons","type":"range","label":"الأزرار","min":0,"max":6,"step":1,"default":4,"unit":""}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]}]},{"id":"trousers","label":"بنطلون","group":"lower","icon":"👖","slots":["lowr"],"note":"بنطلون بحزام وسحاب وجيوب.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#3b3a36"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":100,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":5,"step":0.5,"default":1.0,"unit":"cm"},{"id":"width","type":"range","label":"العرض","min":80,"max":130,"step":5,"default":100,"unit":"%"},{"id":"fabric","type":"select","label":"القماش","options":[{"value":"twill","label":"قماش"},{"value":"denim","label":"جينز"}],"default":"twill"}],"atlas":[{"id":"leg_L","label":"الرجل اليسار","rect":[0.0,0.0,0.42,1.0]},{"id":"leg_R","label":"الرجل اليمين","rect":[0.42,0.0,0.84,1.0]}]},{"id":"shorts","label":"شورت","group":"lower","icon":"🩳","slots":["lowr"],"note":"شورت لفوق الركبة، والساق تحته تنرسم بلون الجلد.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#2e3f5c"},{"id":"length","type":"range","label":"الطول (أعلى الفخذ ← الركبة)","min":0,"max":100,"step":1,"default":70,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":5,"step":0.5,"default":1.5,"unit":"cm"},{"id":"width","type":"range","label":"العرض","min":80,"max":140,"step":5,"default":110,"unit":"%"}],"atlas":[{"id":"leg_L","label":"الرجل اليسار","rect":[0.0,0.0,0.42,1.0]},{"id":"leg_R","label":"الرجل اليمين","rect":[0.42,0.0,0.84,1.0]},{"id":"skin_L","label":"جلد","rect":[0.84,0.0,0.92,1.0]},{"id":"skin_R","label":"جلد","rect":[0.92,0.0,1.0,1.0]}]},{"id":"skirt","label":"تنورة","group":"lower","icon":"👗","slots":["lowr"],"note":"تنورة من الخصر، والساق تحتها تنرسم بلون الجلد.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#20201f"},{"id":"length","type":"range","label":"الطول (أعلى الفخذ ← الكعب)","min":0,"max":100,"step":1,"default":40,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":6,"step":0.5,"default":1.5,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":40,"unit":"%"},{"id":"pleats","type":"bool","label":"كسرات","default":false}],"atlas":[{"id":"trunk","label":"التنورة (القدام بالنص)","rect":[0.0,0.0,0.7,1.0]},{"id":"skin_L","label":"جلد","rect":[0.71,0.0,0.855,1.0]},{"id":"skin_R","label":"جلد","rect":[0.855,0.0,1.0,1.0]}]},{"id":"shemagh","label":"شماغ وعقال","group":"extra","icon":"🧣","slots":["auto","berd","p_head"],"note":"شماغ نازل على الكتوف مع عقال. auto: إكسسوار راس (p_head) إذا الباك يقبل، وإلا قطعة berd (قناع).","params":[{"id":"pattern","type":"select","label":"النوع","options":[{"value":"red","label":"شماغ أحمر"},{"value":"white","label":"غترة بيضاء"}],"default":"red"},{"id":"color","type":"color","label":"لون القماش","default":"#b3202a"},{"id":"agal","type":"bool","label":"عقال","default":true},{"id":"drape","type":"range","label":"النزول على الكتوف","min":0,"max":100,"step":1,"default":60,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":4,"step":0.5,"default":1.0,"unit":"cm"}],"atlas":[{"id":"shemagh","label":"الشماغ","rect":[0.0,0.0,1.0,0.8]},{"id":"agal","label":"العقال","rect":[0.0,0.81,1.0,1.0]}]},{"id":"bisht","label":"بشت","group":"extra","icon":"🎽","slots":["jbib","task","accs"],"note":"بشت مفتوح من قدام بزري ذهبي، يتلبس فوق الثوب (قطعة منفصلة).","params":[{"id":"color","type":"color","label":"لون القماش","default":"#3a2a1c"},{"id":"length","type":"range","label":"الطول (ركبة ← الكعب)","min":0,"max":100,"step":1,"default":85,"unit":"%"},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":10,"step":0.5,"default":5.5,"unit":"cm"},{"id":"flare","type":"range","label":"الاتساع لتحت","min":0,"max":100,"step":1,"default":70,"unit":"%"},{"id":"sleeve","type":"range","label":"طول الكم","min":45,"max":100,"step":1,"default":72,"unit":"%"},{"id":"open_width","type":"range","label":"عرض الفتحة","min":6,"max":40,"step":1,"default":20,"unit":"cm"},{"id":"trim","type":"bool","label":"زري ذهبي","default":true}],"atlas":[{"id":"trunk","label":"الجسم (القدام بالنص)","rect":[0.0,0.0,0.66,1.0]},{"id":"sleeve_L","label":"الكم اليسار","rect":[0.67,0.3,0.83,1.0]},{"id":"sleeve_R","label":"الكم اليمين","rect":[0.84,0.3,1.0,1.0]}]},{"id":"cap","label":"كاب","group":"extra","icon":"🧢","slots":["auto","p_head","berd"],"note":"كاب بحافة قدام. auto: إكسسوار راس (p_head) إذا الباك يقبل، وإلا قطعة berd.","params":[{"id":"color","type":"color","label":"لون القماش","default":"#1d1d1f"},{"id":"brim","type":"range","label":"طول الحافة","min":3,"max":10,"step":0.5,"default":7,"unit":"cm"},{"id":"backwards","type":"bool","label":"مقلوب لورا","default":false},{"id":"ease","type":"range","label":"الوسع عن الجسم","min":0.5,"max":3,"step":0.5,"default":0.8,"unit":"cm"}],"atlas":[{"id":"crown","label":"الكاب (القدام بالنص)","rect":[0.0,0.0,0.7,1.0]},{"id":"brim","label":"الحافة","rect":[0.71,0.0,1.0,1.0]}]}]}/* GARMENTS:END */;
+let what = 'variant', tpl = null, gVals = {};
+const G_SLOT_LABEL = { auto: 'auto · إكسسوار راس إذا ينفع، وإلا berd', uppr: 'uppr · الجسم (يبدّل القميص)', jbib: 'jbib · فوق القميص',
+  accs: 'accs · داخلي', task: 'task · صدرية', lowr: 'lowr · بنطلون', berd: 'berd · مكان القناع', p_head: 'p_head · إكسسوار راس' };
+function fmtVal(p, v) { return p.type === 'range' ? `${+(+v).toFixed(p.step < 1 ? 1 : 0)}${p.unit === '%' ? '%' : p.unit ? ' ' + p.unit : ''}` : ''; }
+function buildTemplates() {
+  const box = $('tpls'); box.replaceChildren();
+  for (const [g, label] of Object.entries(GARMENTS.groups)) {
+    const list = GARMENTS.templates.filter(t => t.group === g);
+    if (!list.length) continue;
+    box.append(el('div', { class: 'tgroup' }, label),
+      el('div', { class: 'tpls' }, ...list.map(t => el('button', { type: 'button', 'data-id': t.id, title: t.note }, el('span', { 'aria-hidden': 'true' }, t.icon), t.label))));
+  }
+}
+function pickTemplate(id) {
+  tpl = GARMENTS.templates.find(t => t.id === id) || GARMENTS.templates[0];
+  for (const b of $('tpls').querySelectorAll('button')) b.classList.toggle('on', b.dataset.id === tpl.id);
+  $('tplNote').textContent = tpl.note;
+  $('gSlot').replaceChildren(...tpl.slots.map(sl => el('option', { value: sl }, G_SLOT_LABEL[sl] || sl)));
+  gVals = {};
+  const form = $('gParams'); form.replaceChildren();
+  for (const p of tpl.params) {
+    gVals[p.id] = p.default;
+    let input;
+    if (p.type === 'range') {
+      const val = el('span', { class: 'val' }, fmtVal(p, p.default));
+      input = el('input', { type: 'range', min: String(p.min), max: String(p.max), step: String(p.step), value: String(p.default), 'aria-label': p.label });
+      input.addEventListener('input', () => { gVals[p.id] = +input.value; val.textContent = fmtVal(p, input.value); });
+      form.append(el('label', {}, `${p.label} `, val, input));
+    } else if (p.type === 'select') {
+      input = el('select', { 'aria-label': p.label }, ...p.options.map(o => el('option', { value: o.value }, o.label)));
+      input.value = p.default;
+      input.addEventListener('change', () => { gVals[p.id] = input.value; });
+      form.append(el('label', {}, p.label, input));
+    } else if (p.type === 'bool') {
+      input = el('input', { type: 'checkbox', checked: !!p.default });
+      input.addEventListener('change', () => { gVals[p.id] = input.checked; });
+      form.append(el('label', { class: 'chk' }, input, ' ' + p.label));
+    } else if (p.type === 'color') {
+      const hex = el('span', { class: 'mono val' }, p.default);
+      input = el('input', { type: 'color', value: p.default, 'aria-label': p.label });
+      input.addEventListener('input', () => { gVals[p.id] = input.value; hex.textContent = input.value; draw(); });
+      form.append(el('label', { style: 'flex-direction:row;align-items:center;gap:10px;grid-column:1/-1' }, p.label, input, hex));
+    }
+    if (input) input.id = 'gp_' + p.id;
+  }
+  if (!$('name').value || /^[a-z]+_new$/.test($('name').value)) $('name').value = tpl.id + '_new';
+  draw(); validate();
+}
+$('tpls').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) pickTemplate(b.dataset.id); });
+function setWhat(w) {
+  what = w;
+  [...$('whats').children].forEach(x => x.classList.toggle('on', x.dataset.what === w));
+  const g = w === 'garment';
+  $('garmentBox').hidden = !g;
+  const designOn = !g || $('gDesign').checked;
+  $('designTitle').hidden = g;
+  $('modes').hidden = !designOn;
+  $('tintBox').hidden = !designOn || mode !== 'tint'; $('logoBox').hidden = !designOn || mode !== 'logo'; $('promptBox').hidden = !designOn || mode !== 'prompt';
+  $('logoCtl').hidden = !designOn || mode !== 'logo';
+  $('strengthBox').hidden = !designOn || mode === 'logo';
+  $('skinBox').hidden = $('skinNote').hidden = g || mode === 'logo';
+  $('build').textContent = g ? 'فصّل القطعة' : 'سوِّ التصميم';
+  $('uvNote').textContent = g ? 'مخطط تكستر القطعة الجديدة (UV): قدام الجسم بالنص. الشعار ينحط عليه.' : 'هذي صورة التكستر مفرودة (UV). تطلع الصورة الحقيقية بعد التحليل، وقبلها شبكة بس.';
+  $('uvNote').hidden = !g && !!diffuse;
+  if (g && !tpl) pickTemplate(GARMENTS.templates[0].id);
+  draw(); validate();
+}
+$('whats').addEventListener('click', e => { const b = e.target.closest('button[data-what]'); if (b) setWhat(b.dataset.what); });
+$('gDesign').addEventListener('change', () => setWhat(what));
+buildTemplates();
+
 // ---- design ----
 let mode = 'tint';
 $('modes').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   mode = b.dataset.mode;
   [...$('modes').children].forEach(x => x.classList.toggle('on', x === b));
-  $('tintBox').hidden = mode !== 'tint'; $('logoBox').hidden = mode !== 'logo'; $('promptBox').hidden = mode !== 'prompt';
-  $('logoCtl').hidden = mode !== 'logo'; $('skinBox').hidden = $('skinNote').hidden = mode === 'logo';
-  $('strengthBox').hidden = mode === 'logo';
-  $('strength').value = mode === 'prompt' ? 85 : 100; showVals(); draw(); validate();
+  $('strength').value = mode === 'prompt' ? 85 : 100; showVals(); setWhat(what);
 });
 const showVals = () => {
   $('colorHex').textContent = $('color').value;
@@ -594,13 +695,25 @@ const uv = $('uv'), ctx = uv.getContext('2d');
 function draw() {
   const W = uv.width;
   ctx.clearRect(0, 0, W, W);
-  if (diffuse) ctx.drawImage(diffuse, 0, 0, W, W);
+  if (what === 'garment' && tpl) {
+    ctx.fillStyle = '#12181d'; ctx.fillRect(0, 0, W, W);
+    ctx.font = '600 13px "IBM Plex Sans Arabic", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const isl of tpl.atlas) {
+      const [u0, v0, u1, v1] = isl.rect, x = u0 * W, y = (1 - v1) * W, w = (u1 - u0) * W, h = (v1 - v0) * W;
+      ctx.fillStyle = gVals.color || '#888'; ctx.globalAlpha = 0.35; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#93a2af'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      ctx.fillStyle = '#e8edf1'; ctx.fillText(isl.label, x + w / 2, y + Math.min(h / 2, 18), w - 4);
+      if (/^(trunk|crown)$/.test(isl.id)) { ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x + w / 2, y + 26); ctx.lineTo(x + w / 2, y + h); ctx.stroke(); ctx.setLineDash([]); }
+    }
+  } else if (diffuse) ctx.drawImage(diffuse, 0, 0, W, W);
   else {
     ctx.fillStyle = '#12181d'; ctx.fillRect(0, 0, W, W);
     ctx.strokeStyle = '#2a353f'; ctx.lineWidth = 1;
     for (let i = 1; i < 8; i++) { const p = i * W / 8; ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, W); ctx.moveTo(0, p); ctx.lineTo(W, p); ctx.stroke(); }
   }
-  if (mode === 'tint' && diffuse) {
+  const designOn = what !== 'garment' || $('gDesign').checked;
+  if (!designOn) return;
+  if (mode === 'tint' && diffuse && what !== 'garment') {
     // rough idea only: multiply by the colour (the real one keeps the shading around the average)
     ctx.save(); ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = +$('strength').value / 100;
     ctx.fillStyle = $('color').value; ctx.fillRect(0, 0, W, W); ctx.restore();
@@ -626,12 +739,24 @@ const NAME_RE = /^[a-z0-9_]{3,40}$/;
 $('name').addEventListener('input', e => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'); validate(); });
 let busy = false;
 function pieceReady() { return pack && !$('pieceErr').textContent && $('target').value && $('comp').value && /^\d{1,3}$/.test($('drawable').value); }
+function packReady() { return pack && !$('pieceErr').textContent && $('target').value; }
 function validate() {
-  const design = mode === 'tint' || (mode === 'logo' && logo) || (mode === 'prompt' && $('prompt').value.trim().length >= 3);
-  $('build').disabled = busy || !token() || !pieceReady() || !design || !NAME_RE.test($('name').value);
+  let design = mode === 'tint' || (mode === 'logo' && logo) || (mode === 'prompt' && $('prompt').value.trim().length >= 3);
+  if (what === 'garment' && !$('gDesign').checked) design = true;
+  const ready = what === 'garment' ? packReady() && tpl : pieceReady();
+  $('build').disabled = busy || !token() || !ready || !design || !NAME_RE.test($('name').value);
   $('analyze').disabled = $('preview3d').disabled = busy || !token() || !pieceReady();
 }
+function garmentSpec() {
+  const s = { target: $('target').value, kind, mode: 'garment', template: tpl.id, slot: $('gSlot').value, params: { ...gVals },
+    design: $('gDesign').checked ? mode : 'none', strength: +$('strength').value / 100, time: new Date().toISOString() };
+  if (s.design === 'tint') s.color = $('color').value;
+  if (s.design === 'logo') s.logo = { png: logo, u: +$('u').value, v: +$('v').value, scale: $('scale').value / 100, rotation: +$('rot').value, opacity: 1, shade: true };
+  if (s.design === 'prompt') s.prompt = { text: $('prompt').value.trim().slice(0, 200), engine: $('engine').value, tiles: +$('tiles').value, strength: +$('strength').value / 100 };
+  return s;
+}
 function spec(what) {
+  if (what === 'garment') return garmentSpec();
   const analyze = what !== 'build';
   const s = { target: $('target').value, component: $('comp').value, drawable: +$('drawable').value,
     base: $('baseLetter').value || 'a', kind, mode: analyze ? what : mode,
@@ -669,7 +794,7 @@ async function commitRequest(name, zipBlob, json, say) {
 
 const STEP_LABELS = [
   [/converter/, 'تجهيز CodeWalker'], [/Python/, 'تجهيز الأدوات'], [/Read the request/, 'قراءة الطلب'],
-  [/Make the new texture/, 'صنع التكستر وتعديل الـymt'], [/3D preview/, 'المعاينة 3D'], [/clothes-builds/, 'حفظ النتيجة'],
+  [/Make the new texture/, 'صنع التكستر أو القطعة وتعديل الـymt'], [/3D preview/, 'المعاينة 3D'], [/clothes-builds/, 'حفظ النتيجة'],
 ];
 let timerId = 0;
 function startTimer() {
@@ -764,19 +889,19 @@ function showAnalysis(res) {
 }
 
 async function runRequest(what) {
-  const analyze = what !== 'build';
+  const analyze = what === 'analyze' || what === 'preview';
   const errEl = analyze ? $('pieceErr') : $('formErr');
   const say = t => { errEl.textContent = t; errEl.hidden = !t; };
   say(''); busy = true; validate();
   $('progress').hidden = false; $('runLink').hidden = true; $('steps').replaceChildren(); startTimer();
   $('progTitle').textContent = 'جاري التجهيز';
   try {
-    let name = what === 'build' ? $('name').value : ($('name').value || 'piece').slice(0, 33) + (what === 'preview' ? '_view' : '_scan');
+    let name = what === 'build' || what === 'garment' ? $('name').value : ($('name').value || 'piece').slice(0, 33) + (what === 'preview' ? '_view' : '_scan');
     name = name.replace(/[^a-z0-9_]/g, '_');
-    const { blob, trimmed } = await requestZip();
+    const { blob, trimmed } = await requestZip(what === 'garment');
     const json = { ...spec(what), name, ...(trimmed ? { trimmed: true } : {}) };
     const sha = await commitRequest(name, blob, json, t => { $('progTitle').textContent = t; });
-    $('progTitle').textContent = what === 'analyze' ? 'جاري التحليل' : what === 'preview' ? 'جاري تجهيز المعاينة' : 'جاري البناء';
+    $('progTitle').textContent = what === 'analyze' ? 'جاري التحليل' : what === 'preview' ? 'جاري تجهيز المعاينة' : what === 'garment' ? 'جاري تفصيل القطعة' : 'جاري البناء';
     $('progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
     const run = await waitForRun(sha);
     clearInterval(timerId);
@@ -798,13 +923,14 @@ async function runRequest(what) {
 }
 $('analyze').onclick = () => runRequest('analyze');
 $('preview3d').onclick = () => runRequest('preview');
-$('build').onclick = () => { $('result').hidden = true; runRequest('build'); };
+$('build').onclick = () => { $('result').hidden = true; runRequest(what === 'garment' ? 'garment' : 'build'); };
 
 function showResult(res) {
-  const { name, info, files } = res, failed = info.status === 'failed';
+  const { name, info, files } = res, failed = info.status === 'failed', garment = info.mode === 'garment' || (info.spec || {}).mode === 'garment';
+  const pad = n => String(n).padStart(3, '0');
   $('result').hidden = false;
   $('resName').textContent = name;
-  $('resBadge').textContent = failed ? 'رُفض' : `تكستر جديد _${info.letter}`;
+  $('resBadge').textContent = failed ? 'رُفض' : garment ? `قطعة جديدة ${info.component}_${pad(info.drawable)}` : `تكستر جديد _${info.letter}`;
   $('resBadge').className = 'badge ' + (failed ? 'bad' : 'hi');
   $('resFail').hidden = !failed;
   $('resFail').replaceChildren(...(failed ? [(info.error && info.error.message) || 'البناء فشل.', ' ',
@@ -816,7 +942,12 @@ function showResult(res) {
   pic('preview_before.png', $('imgBefore')); pic('preview_after.png', $('imgAfter'));
   $('resPair').hidden = !files.get('preview_before.png');
   const b = info.base || {};
-  facts($('resFacts'), failed ? [['القطعة', info.spec ? `${info.spec.component} ${info.spec.drawable}` : '']] : [
+  if (garment) facts($('resFacts'), failed ? [['القالب', (info.spec || {}).template]] : [
+    ['القالب', `${info.template_label || ''} (${info.template})`], ['البيد', info.target], ['المكان', info.slot],
+    ...(info.pieces || []).map(p => [p.role === 'main' ? 'القطعة' : 'تحتها',
+      `${p.component}_${pad(p.drawable)}${p.mode === 'empty' ? ' (فاضية تخفي البنطلون)' : p.mode === 'cut' ? ' (البنطلون تحت الطرف بس)' : ''} · ${p.verts} نقطة · ${p.bones} عظمة`]),
+    ['التصميم', info.design === 'none' ? 'ألوان القالب' : info.design]]);
+  else facts($('resFacts'), failed ? [['القطعة', info.spec ? `${info.spec.component} ${info.spec.drawable}` : '']] : [
     ['القطعة', `${info.component}_${String(info.drawable).padStart(3, '0')} · ${info.target}`],
     ['التكستر', info.texture], ['من', b.texture], ['الصيغة', `${String(info.format || '').replace('D3DFMT_', '')} · ${b.width}×${b.height} · ${info.mips} mips`],
     ['بالـymt', info.ymt_textures ? (info.ymt_changed === false ? `${info.ymt_textures.before} (ما تغير، الحرف له خانة)` : `${info.ymt_textures.before} ← ${info.ymt_textures.after}`) : ''],
@@ -827,8 +958,10 @@ function showResult(res) {
     $('download').dataset.sha = zip || ''; $('download').dataset.file = `${name}.zip`; $('download').href = '#';
     $('download').textContent = info.patch ? 'تنزيل الملفات الجديدة (zip)' : 'تنزيل الريسورس (zip)';
     $('changed').replaceChildren(...(info.files || []).map(f => el('span', {}, f)));
+    const where = garment ? (info.pieces || []).map(p => `${p.component} رقم ${p.drawable}`).join(' و ') : '';
     $('howTo').textContent = info.patch
-      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource}${info.ymt_changed === false ? '' : ' (الـymt يتبدّل)'}، وبعدين restart ${info.resource}.`
+      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource}${info.ymt_changed === false ? '' : ' (الـymt يتبدّل)'}، وبعدين restart ${info.resource}.${garment ? ' القطعة الجديدة: ' + where + '.' : ''}`
+      : garment ? `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + القطعة الجديدة + الـymt المعدّل)، وبعدين restart ${info.resource}. البسها من ${where}، تكستر 0.`
       : `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + التكستر الجديد + الـymt المعدّل)، وبعدين restart ${info.resource}. التصميم الجديد رقمه ${'abcdefghijklmnopqrstuvwxyz'.indexOf(info.letter)} بالتكسترات.`;
   }
   $('warnings').replaceChildren(...(info.warnings || []).map(w => el('li', {}, w)));
@@ -877,7 +1010,8 @@ const seen = new IntersectionObserver(list => {
     if (v) fetchInfo('clothes', en.name, v).then(info => {
       en.info = info;
       const failed = info.status === 'failed';
-      en.badge.textContent = failed ? 'رُفض' : `${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')} · _${info.letter || '?'}`;
+      en.badge.textContent = failed ? 'رُفض' : info.mode === 'garment' ? `✂️ ${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')}`
+        : `${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')} · _${info.letter || '?'}`;
       en.badge.className = 'badge ' + (failed ? 'bad' : 'hi'); en.badge.hidden = false;
       en.tile.classList.toggle('failed', failed);
     }).catch(() => {});
@@ -1072,6 +1206,7 @@ async function show(p, reader) {
   for (const k of Object.keys(slots)) { if (slots[k].group) root.remove(slots[k].group); delete slots[k]; }
   const side = $('vSide'); side.replaceChildren();
   const d = parts.design || {};
+  const picks = Array.isArray(d.pieces) ? d.pieces : d.component ? [d] : [];
   const rows = [];
   const add = (group, names, isProp) => {
     const present = names.filter(c => (group[c] || []).length);
@@ -1081,9 +1216,11 @@ async function show(p, reader) {
     for (const c of present) {
       const list = group[c];
       let index = isProp ? -1 : 0, letter = (list[0].textures || [])[0];
-      if (d.component === c) {
-        const i = list.findIndex(e => e.drawable === +d.drawable);
-        if (i >= 0) { index = i; letter = d.letter || letter; }
+      // the design (or every piece of a new garment: the piece + the lowr that hides the legs) shown first
+      const pick = picks.find(x => x.component === c);
+      if (pick) {
+        const i = list.findIndex(e => e.drawable === +pick.drawable);
+        if (i >= 0) { index = i; letter = pick.letter || letter; }
       }
       const r = rowFor(c, list, { index, letter });
       side.append(r.row); rows.push(r);

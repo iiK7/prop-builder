@@ -46,7 +46,8 @@ PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 
 ## Clothes designer (new textures for existing clothes)
 
-The **code** is here (`clothes_variant.py`, `clothes_preview.py` + `clothes_preview_bpy.py`, `cwconv`) and the site page
+The **code** is here (`clothes_variant.py`, `garment_templates.py` + `garment_bpy.py`, `clothes_preview.py` +
+`clothes_preview_bpy.py`, `cwconv`) and the site page
 `docs/clothes/` ("مصمم الملابس"); the **workflow, the uploaded packs and the results live in the private repository
 `iiK7/claude-private`** (`.github/workflows/clothes-builder.yml` there checks this repository out for the tools). Nothing
 clothes-related is processed or stored in this public repository: clothing packs are often paid, so they must never be
@@ -78,5 +79,21 @@ Results (private `clothes-builds` branch): `clothes/<name>/` (zip, `preview_befo
 `info.json`, also for a refusal with its reason), `clothes_analysis/<name>/` for `"mode": "analyze"`,
 `clothes_preview/<name>/` for the 3D preview.
 
+**New piece ("قطعة جديدة", `"mode": "garment"`)**: `garment_templates.py` is the registry (15 templates: ثوب، كندورة،
+عباية، روب، تيشيرت، قميص بأكمام طويلة، هودي، جاكيت، صدرية، بنطلون، شورت، تنورة، شماغ وعقال، بشت، كاب; Arabic labels,
+allowed components, parameter schema, UV layout; `--json` prints it, `--sync-page docs/clothes/index.html` copies it into
+the page). `garment_bpy.py` (Blender bpy + Sollumz) fits the template to the ped's OWN body: landmarks from its skeleton,
+the outline from its base drawables (trunk rings from the torso / legs, sleeves along the arm bones, one tube per trouser
+leg, head shells by rays at the head + hair), inner lining, skin weights by transfer from the body (4 bones max,
+normalised; skirts smoothed around the ring), UV islands with the front of the body in the middle, a generated fabric
+texture (weave / knit / twill / denim / terry ..., seams, placket, buttons, zip, pockets, trims) + normal / spec maps, and
+exports CodeWalker XML. `clothes_variant.py` builds the `.ydd` / `.ytd` with cwconv, adds the drawable (+ compInfos) or
+the head prop (+ aAnchors) to the `.ymt` at the next free number, checks the round trips and zips the resource. Long
+garments also add a `lowr` that hides the trousers (empty, or the base trousers cut below the hem); shorts and skirts draw
+the legs below them in the ped's skin tone. The designer's colour / logo / pattern can go on top (never on skin, gold trim
+or the agal). It needs the ped's `.yft` and `uppr_000` / `lowr_000` (a freemode pack therefore needs the base body files
+uploaded with it); `p_head` needs the props `.ymt` (`auto` falls back to `berd`).
+
 cwconv commands used for it: `ytd-export <ytd> <dir>`, `ytd-build <dir|dds...> <out.ytd> [--rename a=b] [--strict]`,
-`ymt-to-xml <ymt> <xml>`, `xml-to-ymt <xml> <ymt> [--pso]`, `res-to-xml <yft|ydd|ydr> <dir>`.
+`ymt-to-xml <ymt> <xml>`, `xml-to-ymt <xml> <ymt> [--pso]`, `res-to-xml <yft|ydd|ydr> <dir>`, and `<x.ydd.xml> <out.ydd>`
+(drawable dictionary from CodeWalker XML, embedded textures from the folder next to it).
