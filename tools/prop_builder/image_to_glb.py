@@ -9,6 +9,12 @@ import sys
 
 from gradio_client import Client, handle_file
 
+try:
+    from hf_status import record  # last known quota for the site (no token, no error text)
+except Exception:
+    def record(*args, **kwargs):
+        pass
+
 image, out, engine = sys.argv[1:4]
 SPACES = {
     "trellis2": "microsoft/TRELLIS.2",
@@ -92,8 +98,10 @@ try:
     path = {"trellis2": trellis2, "hunyuan": hunyuan, "trellis": trellis}[engine](client)
     shutil.copy(path, out)
     print("glb:", out, os.path.getsize(out), "bytes")
+    record(engine, True)
 except Exception as e:
     print(f"{space} failed: {e}")
+    record(engine, False, e)
     if client:
         try:
             client.view_api(print_info=True)

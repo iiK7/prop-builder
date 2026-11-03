@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&family=JetBrains+Mono:wght@400;600&display=swap">
-<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js" integrity="sha384-Ftcjj/GNLxPvzNDftO/oryXB9aGxsGZY9JGqsXG0uUKgQDl9RfDgsx9NJ/4IVNPe" crossorigin="anonymous"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
 <style>
 /* Layout: single mobile column — header, upload card, live build log, result viewer, past builds. */
 :root{
@@ -31,7 +31,7 @@ h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
 .sub{color:var(--mute);font-size:13px;margin:0}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 label{font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:6px}
-input[type=text],input[type=password],input[type=number]{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%}
+input[type=text],input[type=password],input[type=number],input[type=search]{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%}
 input.mono{font-family:var(--f-mono);direction:ltr;text-align:left}
 input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -78,6 +78,22 @@ ol.how{margin:0;padding-inline-start:20px;font-size:13px;color:var(--mute)}
 .src button{font:600 13px var(--f-body);background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:9px 4px;cursor:pointer}
 .src button.on{background:var(--accent);border-color:var(--accent);color:#14100a}
 textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:10px 12px;font:15px var(--f-body);width:100%;min-height:84px;resize:vertical;box-sizing:border-box}
+label.chk{flex-direction:row;align-items:center;gap:8px;cursor:pointer;color:var(--fg)}
+label.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.grid2.act{align-items:end}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.filters select,.filters input{padding:8px 10px;font-size:14px}
+@media (max-width:420px){.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}}
+.g.failed{border-color:rgba(229,96,79,.5)}
+.g .ph{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;background:#12181d}
+.g a.gdl{position:absolute;top:6px;inset-inline-end:6px;background:rgba(15,20,24,.8);border-radius:6px;padding:2px 7px;color:var(--fg);text-decoration:none;font-size:14px}
+.badge.bad{color:var(--bad)}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.files-box{display:flex;flex-direction:column;gap:12px}
+.files{display:flex;flex-wrap:wrap;gap:6px}
+.files a{font-family:var(--f-mono);font-size:12px;direction:ltr;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 8px;text-decoration:none}
+.manage{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px}
+h3{font-size:15px;margin:0;font-weight:600}
 @media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
 </style>
 </head>
@@ -96,9 +112,11 @@ textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);borde
       <li><b>Permissions</b>: Contents = Read and write، و Actions = Read</li>
       <li>Generate token، وانسخه والصقه هنا</li>
     </ol>
-    <label>المفتاح (ينحفظ بجوالك بس)
+    <label>المفتاح (يبقى بهالجهاز، وما يروح لأحد غير GitHub)
       <input id="token" class="mono" type="password" autocomplete="off" placeholder="github_pat_...">
     </label>
+    <label class="chk"><input type="checkbox" id="remember"> تذكّر المفتاح على هالجهاز</label>
+    <p class="note">بدون تذكير: ينحفظ لهالجلسة بس، وينمسح لما تسكر المتصفح. لا تعلّم عليه بجهاز مو لك، ولا تلصق المفتاح بأي محادثة.</p>
     <div class="row"><button class="btn small" id="saveToken">حفظ</button><button class="btn small" id="clearToken">مسح</button><span id="tokenState" class="sub"></span></div>
   </details>
 
@@ -147,6 +165,7 @@ textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);borde
       </label>
     </div>
     <p class="note" id="engineNote"></p>
+    <p class="note" id="quotaNote" hidden></p>
     <button class="btn primary" id="build" disabled>ابنِ البروب</button>
     <div id="formErr" class="err" hidden></div>
   </section>
@@ -160,10 +179,34 @@ textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);borde
   <section class="card" id="result" hidden>
     <div class="row"><h2 id="resName"></h2><span class="sub" id="resInfo"></span></div>
     <span class="badge" id="resBadge" hidden></span>
+    <p class="err" id="resFail" hidden></p>
     <model-viewer id="viewer" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" alt="معاينة 3D"></model-viewer>
-    <a class="btn primary" id="download" download>تنزيل البروب (zip)</a>
-    <div class="sub">بالسيرفر: حط المجلد في resources وبعدين</div>
-    <div class="cmd" id="cmds"></div>
+    <div id="resFiles" class="files-box">
+      <a class="btn primary" id="download" download>تنزيل البروب (zip)</a>
+      <div class="sub" id="streamLabel" hidden>ملفات stream لحالها:</div>
+      <div class="files" id="streamFiles"></div>
+      <div class="sub">بالسيرفر: حط المجلد في resources وبعدين</div>
+      <div class="cmd" id="cmds"></div>
+    </div>
+    <div class="manage" id="manage">
+      <h3>إدارة البروب</h3>
+      <div class="grid2 act">
+        <label id="reEngineBox">محرك 3D
+          <select id="reEngine"></select>
+        </label>
+        <button class="btn small" id="rebuild">🔁 أعد البناء</button>
+      </div>
+      <p class="note" id="reQuota" hidden></p>
+      <div class="grid2 act" id="resizeBox">
+        <label>ارتفاع جديد (متر) بدون ما يتسوى من جديد
+          <input id="reHeight" class="mono" type="number" min="0.01" step="0.05">
+        </label>
+        <button class="btn small" id="resize">📏 غيّر الحجم</button>
+      </div>
+      <button class="btn small danger" id="del">🗑️ احذف البروب</button>
+      <p class="note">إعادة البناء وتغيير الحجم يسوون بروب جديد باسم ثاني (_2، _3…)، والقديم يبقى لين تحذفه.</p>
+      <div class="sub" id="manageState" aria-live="polite"></div>
+    </div>
   </section>
 
   <section class="card">
@@ -178,6 +221,12 @@ textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);borde
 
   <section class="card">
     <div class="row"><h2>البروبز السابقة</h2><button class="btn small" id="refresh">تحديث</button></div>
+    <div class="filters" role="search">
+      <input id="q" type="search" placeholder="دوّر بالاسم" aria-label="دوّر بالاسم" autocapitalize="off" spellcheck="false">
+      <select id="fStatus" aria-label="الحالة"><option value="">كل الحالات</option><option value="built">انبنى</option><option value="failed">فشل</option></select>
+      <select id="fEngine" aria-label="المحرك"></select>
+    </div>
+    <div class="sub" id="gCount" aria-live="polite"></div>
     <div class="gallery" id="gallery"><span class="sub">جاري التحميل…</span></div>
     <button class="btn" id="pack">📦 صدّر الكل كباك واحد</button>
     <p class="note">الباك: ريسورس واحد فيه كل البروبز المختارة. علّم على البروبز اللي تبيها، أو خلها فاضية عشان ياخذ الكل. لا تشغّله مع ريسورسات البروبز الفردية بنفس الوقت.</p>
@@ -187,12 +236,28 @@ textarea{background:var(--bg);border:1px solid var(--line);color:var(--fg);borde
 
 <script>
 const OWNER = 'iiK7', REPO = 'prop-builder', API = `https://api.github.com/repos/${OWNER}/${REPO}`;
-const RAW = (path, v) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/prop-builds/${path}${v ? '?v=' + v : ''}`;
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+// files on the prop-builds branch and requests at a commit come from raw.githubusercontent.com (no API rate limit)
+const RAW = (path, v) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/prop-builds/${encPath(path)}${v ? '?v=' + encodeURIComponent(v) : ''}`;
+const RAW_AT = (ref, path) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(ref)}/${encPath(path)}`;
 const $ = id => document.getElementById(id);
+// DOM node with attributes / properties and text or node children (names from the repo never go through innerHTML)
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k in n && typeof v !== 'string') n[k] = v;
+    else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+}
 const store = {
   get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
   set(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} },
 };
+const b64text = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, '')), c => c.charCodeAt(0)));
 
 // Arabic labels for the workflow steps worth showing
 const STEP_LABELS = [
@@ -210,17 +275,7 @@ const STEP_LABELS = [
 
 let file = null;
 
-// what made a build (info.json, written by the workflow; older builds have none)
-async function fetchInfo(name, viaApi) {
-  if (viaApi) {
-    const r = await gh(`/contents/builds/${name}/info.json?ref=prop-builds`);
-    return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(r.content.replace(/\n/g, '')), c => c.charCodeAt(0))));
-  }
-  const r = await fetch(RAW(`builds/${name}/info.json`));
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
-}
-const ENGINE = { trellis2: ['TRELLIS.2', 'hi'], hunyuan: ['Hunyuan', 'hi'], trellis: ['TRELLIS', 'hi'], triposr: ['TripoSR', 'mid'], box: ['صندوق', 'lo'] };
+const ENGINE = { trellis2: ['TRELLIS.2', 'hi'], hunyuan: ['Hunyuan', 'hi'], trellis: ['TRELLIS', 'hi'], triposr: ['TripoSR', 'mid'], box: ['صندوق', 'lo'], flux: ['FLUX', 'hi'] };
 // everything is picked by you: nothing switches engine on its own
 const ENGINES = [
   ['trellis2', 'TRELLIS.2 (الأفضل)', 'TRELLIS.2: أفضل جودة. ياكل من حد GPU اليومي المجاني.'],
@@ -232,7 +287,11 @@ const IMGS = [
   ['pollinations', 'Pollinations · بلا حد'],
   ['flux', 'FLUX · أحسن، حد GPU'],
 ];
-const fill = (el, list, v) => { el.innerHTML = list.map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${l}</option>`).join(''); };
+const ENGINE_FILTER = [
+  ['', 'كل المحركات'], ['trellis2', 'TRELLIS.2'], ['hunyuan', 'Hunyuan'], ['trellis', 'TRELLIS'], ['triposr', 'TripoSR'],
+  ['flat', 'صورة ملصوقة'], ['upload', 'موديل مرفوع'], ['box', 'صندوق (غرفة)'], ['none', 'بدون معلومات'],
+];
+const fill = (sel, list, v) => sel.replaceChildren(...list.map(([k, l]) => el('option', { value: k, selected: k === v }, l)));
 function badge(info) {
   if (!info) return null;
   const e = info.engines || {};
@@ -247,16 +306,29 @@ function badge(info) {
   if (e.upload) return { text: 'موديل مرفوع', cls: 'hi' };
   return null;
 }
+const failBadge = f => ({ text: f.reason === 'quota' ? `فشل · خلص حد GPU${f.engine ? ' · ' + ((ENGINE[f.engine] || [f.engine])[0]) : ''}` : 'فشل البناء', cls: 'bad' });
 
-function token() { return store.get('pb_token'); }
-function headers(json) {
+// the key: this session only (sessionStorage), or this device when "remember" is ticked (localStorage)
+const TOKEN_KEY = 'pb_token';
+function token() {
+  try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
+}
+function remembered() { try { return !!localStorage.getItem(TOKEN_KEY); } catch { return false; } }
+function saveToken(t, remember) {
+  try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+  try { localStorage.removeItem(TOKEN_KEY); } catch {}
+  if (!t) return;
+  try { (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, t); } catch {}
+}
+function headers(json, anon) {
   const h = { Accept: 'application/vnd.github+json' };
-  if (token()) h.Authorization = 'Bearer ' + token();
+  if (token() && !anon) h.Authorization = 'Bearer ' + token();
   if (json) h['Content-Type'] = 'application/json';
   return h;
 }
 async function gh(path, opts = {}) {
-  const r = await fetch(path.startsWith('http') ? path : API + path, { ...opts, headers: headers(!!opts.body) });
+  const { anon, ...rest } = opts;
+  const r = await fetch(path.startsWith('http') ? path : API + path, { ...rest, headers: headers(!!rest.body, anon) });
   if (!r.ok) {
     let msg = r.status + '';
     try { msg = (await r.json()).message || msg; } catch {}
@@ -264,17 +336,24 @@ async function gh(path, opts = {}) {
   }
   return r.status === 204 ? null : r.json();
 }
+const keyError = e => e.status === 401 || e.status === 403
+  ? 'المفتاح غلط أو ناقص الصلاحيات (Contents: Read and write، Actions: Read).'
+  : 'خطأ: ' + e.message;
 
 function refreshTokenState() {
   const t = token();
-  $('tokenState').textContent = t ? 'محفوظ ✓' : 'ما فيه مفتاح';
+  $('remember').checked = remembered();
+  $('tokenState').textContent = !t ? 'ما فيه مفتاح' : remembered() ? 'محفوظ بهالجهاز ✓' : 'محفوظ لهالجلسة بس ✓';
   $('setupSummary').textContent = t ? 'الإعداد: المفتاح محفوظ ✓' : 'الإعداد: مفتاح GitHub (مطلوب مرة وحدة)';
   if (!t) $('setup').open = true;
   $('saveGame').disabled = !t;
   validate();
+  if (current) showManage(current);
 }
-$('saveToken').onclick = () => { store.set('pb_token', $('token').value.trim()); $('token').value = ''; refreshTokenState(); };
-$('clearToken').onclick = () => { store.set('pb_token', ''); refreshTokenState(); };
+$('saveToken').onclick = () => { saveToken($('token').value.trim(), $('remember').checked); $('token').value = ''; refreshTokenState(); };
+$('clearToken').onclick = () => { saveToken(''); refreshTokenState(); };
+// ticking / unticking moves a saved key between the two stores
+$('remember').addEventListener('change', () => { const t = token(); if (t) saveToken(t, $('remember').checked); refreshTokenState(); });
 
 const NAME_RE = /^[a-z0-9_]{3,40}$/;
 const TYPES = {
@@ -308,6 +387,47 @@ $('src').addEventListener('click', e => {
 });
 $('desc').addEventListener('input', validate);
 
+// last known Hugging Face state, written by the workflow (status.json on prop-builds); the site never sees HF_TOKEN
+let status = null;
+const HF = ['trellis2', 'hunyuan', 'trellis', 'flux'];
+function ago(t) {
+  const m = Math.round((Date.now() - Date.parse(t)) / 60000);
+  if (!isFinite(m)) return '';
+  if (m < 1) return 'قبل شوي';
+  if (m < 60) return `قبل ${m} دقيقة`;
+  const h = Math.round(m / 60);
+  return h < 48 ? `قبل ${h} ساعة` : `قبل ${Math.round(h / 24)} يوم`;
+}
+function within(t) {
+  const m = Math.ceil((Date.parse(t) - Date.now()) / 60000);
+  return m < 60 ? `بعد ${m} دقيقة` : `بعد ${Math.round(m / 60)} ساعة`;
+}
+function quotaText(engine) {
+  if (!HF.includes(engine)) return '';
+  const label = ENGINE[engine][0], hf = (status && status.hf) || {}, e = hf[engine];
+  const parts = [];
+  if (!e || !(e.last_ok || e.last_quota)) parts.push('ما فيه معلومة للحين (تنعرف بعد أول بناء)');
+  else if (e.last_quota && (!e.last_ok || e.last_quota > e.last_ok)) {
+    parts.push(`⚠️ آخر مرة خلص الحد ${ago(e.last_quota)}`);
+    if (e.retry_at) parts.push(Date.parse(e.retry_at) > Date.now() ? `يرجع تقريباً ${within(e.retry_at)}` : 'المفروض رجع الحين');
+  } else parts.push(`✓ آخر بناء نجح ${ago(e.last_ok)}`);
+  if (e && e.left_s != null && e.left_at) parts.push(`آخر رقم معروف: باقي ${Math.round(e.left_s)} ثانية GPU (${ago(e.left_at)})`);
+  // one daily quota for every Hugging Face engine: a newer "used up" on another one matters too
+  const mine = e ? (e.last_ok > (e.last_quota || '') ? e.last_ok : e.last_quota || '') : '';
+  const other = HF.filter(k => k !== engine && hf[k] && hf[k].last_quota > mine)
+    .sort((a, b) => (hf[b].last_quota > hf[a].last_quota ? 1 : -1))[0];
+  if (other) parts.push(`الحد مشترك: خلص على ${ENGINE[other][0]} ${ago(hf[other].last_quota)}`);
+  return `حد GPU لـ${label} (آخر حالة معروفة): ${parts.join(' · ')}`;
+}
+function setQuota(note, engines) {
+  const text = engines.map(quotaText).filter(Boolean).join('\n');
+  note.textContent = text; note.hidden = !text; note.style.whiteSpace = 'pre-line';
+}
+async function loadStatus(sha) {
+  if (!sha) { status = null; return; }
+  try { const r = await fetch(RAW('status.json', sha)); status = r.ok ? await r.json() : null; } catch { status = null; }
+}
+
 fill($('engine'), ENGINES, store.get('pb_engine') || 'trellis2');
 fill($('imgEngine'), IMGS, store.get('pb_img') || 'pollinations');
 // the 3D engine matters for a 3D object or a room made from a picture; a .glb upload or a flat product skips it
@@ -317,14 +437,15 @@ function showChoices() {
   $('imgBox').hidden = src !== 'desc';
   const e = ENGINES.find(x => x[0] === $('engine').value);
   $('engineNote').textContent = $('engineBox').hidden ? '' : e[2] + ' إذا خلص الحد، اختر محرك ثاني.';
+  setQuota($('quotaNote'), [$('engineBox').hidden ? '' : $('engine').value, $('imgBox').hidden ? '' : $('imgEngine').value]);
 }
 $('engine').addEventListener('change', () => { store.set('pb_engine', $('engine').value); showChoices(); });
-$('imgEngine').addEventListener('change', () => store.set('pb_img', $('imgEngine').value));
+$('imgEngine').addEventListener('change', () => { store.set('pb_img', $('imgEngine').value); showChoices(); });
 showChoices();
 
 function validate() {
   const ok = (src === 'desc' ? $('desc').value.trim().length >= 3 : file) && NAME_RE.test($('name').value) && token();
-  $('build').disabled = !ok;
+  $('build').disabled = !ok || busy;
 }
 $('name').addEventListener('input', e => {
   e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
@@ -336,10 +457,9 @@ $('file').addEventListener('change', e => {
   const hint = $('dropHint');
   if (!file) { validate(); return; }
   if (/\.glb$/i.test(file.name)) {
-    hint.innerHTML = `موديل: <span class="mono">${file.name}</span>`;
+    hint.replaceChildren('موديل: ', el('span', { class: 'mono' }, file.name));
   } else {
-    const url = URL.createObjectURL(file);
-    hint.innerHTML = `<img src="${url}" alt="الصورة المختارة">`;
+    hint.replaceChildren(el('img', { src: URL.createObjectURL(file), alt: 'الصورة المختارة' }));
   }
   showChoices();
   if (!$('name').value) {
@@ -388,9 +508,9 @@ function renderSteps(steps) {
     else if (st.conclusion === 'success') cls = 'done';
     else if (st.conclusion === 'failure') cls = 'fail';
     else if (st.conclusion === 'skipped') cls = 'skip';
-    rows.push(`<li class="${cls}"><span class="dot"></span>${label}</li>`);
+    rows.push(el('li', { class: cls }, el('span', { class: 'dot' }), label));
   }
-  $('steps').innerHTML = rows.join('') || '<li class="run"><span class="dot"></span>بانتظار سيرفر GitHub…</li>';
+  $('steps').replaceChildren(...(rows.length ? rows : [el('li', { class: 'run' }, el('span', { class: 'dot' }), 'بانتظار سيرفر GitHub…')]));
 }
 
 async function waitForRun(sha) {
@@ -412,51 +532,150 @@ async function waitForRun(sha) {
   }
 }
 
-function showResult(name, version, info) {
+// ---- the builds: ONE listing call (git tree of prop-builds); info.json, previews and files come from raw ----
+let listing = { builds: new Map(), status: null };
+async function loadListing() {
+  let r;
+  const get = anon => gh('/git/trees/prop-builds?recursive=1', { anon });
+  try { r = await get(false); } catch (e) {
+    if (e.status === 401 && token()) r = await get(true);       // a bad key must not hide the gallery
+    else if (e.status === 404 || e.status === 409) return { builds: new Map(), status: null };
+    else throw e;
+  }
+  const builds = new Map();
+  let statusSha = null;
+  for (const t of r.tree) {
+    if (t.path === 'status.json' && t.type === 'blob') statusSha = t.sha;
+    const m = t.path.match(/^builds\/([^/]+)(?:\/(.+))?$/);
+    if (!m) continue;
+    if (!m[2]) { if (t.type === 'tree' && !builds.has(m[1])) builds.set(m[1], new Map()); continue; }
+    if (t.type === 'blob' && builds.has(m[1])) builds.get(m[1]).set(m[2], t.sha);
+  }
+  return { builds, status: statusSha, truncated: r.truncated };
+}
+// what made a build (info.json, written by the workflow; older builds have none); v = its blob sha (fresh copy)
+async function fetchInfo(name, v) {
+  const r = await fetch(RAW(`builds/${name}/info.json`, v));
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+function showResult(en) {
+  current = en;
+  const { name, files, info } = en, failed = en.kind === 'failed';
   $('result').hidden = false;
   $('resName').textContent = name;
-  const b = badge(info);
+  const b = failed ? failBadge(en.fail) : badge(info);
   $('resBadge').hidden = !b;
   if (b) { $('resBadge').textContent = b.text; $('resBadge').className = 'badge ' + b.cls; }
-  $('resInfo').textContent = info && info.size ? info.size : '';
-  $('viewer').src = RAW(`builds/${name}/model.glb`, version);
-  $('viewer').poster = RAW(`builds/${name}/preview.png`, version);
-  $('download').href = RAW(`builds/${name}/${name}.zip`, version);
-  $('download').setAttribute('download', `${name}.zip`);
-  $('cmds').textContent = `ensure ${name}   ·   /${info && info.mode === 'room' ? 'spawnroom' : 'spawnprop'} ${name}`;
+  $('resInfo').textContent = failed ? ago(en.fail.time) : info && info.size ? info.size : '';
+  $('resFail').hidden = !failed;
+  if (failed) {
+    $('resFail').replaceChildren(en.fail.reason === 'quota'
+      ? 'خلص حد GPU اليومي لهالمحرك. اختر محرك ثاني تحت وأعد البناء.'
+      : 'البناء فشل. شوف السجل، أو أعد البناء بمحرك ثاني.');
+    if (en.fail.run) $('resFail').append(' ', el('a', { href: en.fail.run, target: '_blank', rel: 'noopener', style: 'color:var(--accent)' }, 'السجل'));
+  }
+  const glb = files && files.get('model.glb'), prev = files && files.get('preview.png');
+  $('viewer').hidden = failed;
+  $('viewer').src = glb ? RAW(`builds/${name}/model.glb`, glb) : '';
+  $('viewer').poster = prev ? RAW(`builds/${name}/preview.png`, prev) : '';
+  $('resFiles').hidden = failed;
+  if (!failed) {
+    const zip = files && files.get(`${name}.zip`);
+    $('download').href = RAW(`builds/${name}/${name}.zip`, zip);
+    $('download').setAttribute('download', `${name}.zip`);
+    const stream = files ? [...files.keys()].filter(k => k.startsWith('stream/')).sort() : [];
+    $('streamLabel').hidden = !stream.length;
+    $('streamFiles').replaceChildren(...stream.map(k => el('a', { href: RAW(`builds/${name}/${k}`, files.get(k)), download: k.slice(7) }, k.slice(7))));
+    $('cmds').textContent = `ensure ${name}   ·   /${info && info.mode === 'room' ? 'spawnroom' : 'spawnprop'} ${name}`;
+  }
+  const h = info && info.size && info.size.match(/([\d.]+) m$/);
+  $('reHeight').value = h ? h[1] : '';
+  $('manageState').textContent = '';
+  showManage(en);
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function showManage(en) {
+  const info = en.info, f = en.fail || {}, t = !!token();
+  const m = (info && info.mode) || f.mode || 'ai';
+  const glbIn = info && info.engines && info.engines.upload;
+  $('reEngineBox').hidden = !(m === 'ai' || m === 'room') || !!glbIn;
+  if (!$('reEngine').options.length) fill($('reEngine'), ENGINES, 'triposr');
+  $('resizeBox').hidden = en.kind === 'failed' || m === 'room' || !(en.files && en.files.has('model.glb'));
+  for (const b of ['rebuild', 'resize', 'del']) $(b).disabled = !t || busy;
+  $('del').textContent = en.kind === 'failed' ? '🗑️ شيله من القائمة' : '🗑️ احذف البروب';
+  setQuota($('reQuota'), [$('reEngineBox').hidden ? '' : $('reEngine').value]);
+  if (!t) $('manageState').textContent = 'تحتاج المفتاح (فوق) عشان تعيد البناء أو تغيّر الحجم أو تحذف.';
+}
+$('reEngine').addEventListener('change', () => current && showManage(current));
 
 // never overwrite someone's prop: a taken name gets _2, _3, ...
 async function freeName(name) {
-  let taken = new Set();
-  try { taken = new Set((await gh('/contents/builds?ref=prop-builds')).map(i => i.name)); } catch (e) { if (e.status !== 404) throw e; }
+  const taken = (await loadListing()).builds;
   let out = name, n = 1;
   while (taken.has(out)) { n += 1; out = `${name.slice(0, 37)}_${n}`; }
   return out;
 }
 // the workflow also renames on a clash (two people, same name, same minute): find the build of this request
 async function findBuild(name, sha) {
+  const l = await loadListing();
   for (const n of [name, ...Array.from({ length: 8 }, (_, i) => `${name.slice(0, 37)}_${i + 2}`)]) {
-    try { const info = await fetchInfo(n, true); if (info.request === sha) return { name: n, info }; } catch {}
+    const files = l.builds.get(n);
+    if (!files || !files.has('info.json')) continue;
+    try { const info = await fetchInfo(n, files.get('info.json')); if (info.request === sha) return { kind: 'built', name: n, info, files }; } catch {}
   }
-  return { name, info: null };
+  return { kind: 'built', name, info: null, files: l.builds.get(name) || new Map() };
+}
+
+// upload one request file to prop_requests/ and follow its run (the new form, rebuild and resize all use it)
+let busy = false;
+async function runRequest({ name, pathFor, blob, errEl }) {
+  busy = true; validate();
+  const say = t => { errEl.textContent = t; errEl.hidden = !t; };
+  say('');
+  $('progress').hidden = false; $('runLink').hidden = true;
+  $('progTitle').textContent = 'جاري الرفع'; $('steps').replaceChildren(); startTimer();
+  try {
+    const free = await freeName(name);
+    if (free !== name) say(`الاسم ${name} مستخدم، بيتسمى ${free}`);
+    const path = pathFor(free);
+    const api = `/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`;
+    let sha;
+    try { sha = (await gh(api)).sha; } catch (e) { if (e.status !== 404) throw e; }
+    const put = await gh(api, {
+      method: 'PUT',
+      body: JSON.stringify({ message: `Request prop ${free}`, content: await toBase64(blob), ...(sha ? { sha } : {}) }),
+    });
+    $('progTitle').textContent = 'جاري البناء';
+    $('progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const run = await waitForRun(put.commit.sha);
+    clearInterval(timerId);
+    if (run.conclusion === 'success') {
+      $('progTitle').replaceChildren(el('span', { class: 'ok' }, 'خلص ✓'));
+      showResult(await findBuild(free, put.commit.sha));
+    } else {
+      $('progTitle').replaceChildren(el('span', { class: 'err' }, 'فشل البناء'));
+    }
+    loadGallery();
+    return free;
+  } catch (e) {
+    clearInterval(timerId);
+    $('progTitle').replaceChildren(el('span', { class: 'err' }, 'صار خطأ'));
+    say(keyError(e));
+    throw e;
+  } finally {
+    busy = false; validate();
+    if (current) showManage(current);
+  }
 }
 
 $('build').onclick = async () => {
-  let name = $('name').value;
+  const name = $('name').value;
   const height = Math.max(0, parseFloat($('height').value) || 0);
-  $('formErr').hidden = true; $('build').disabled = true;
-  $('progress').hidden = false; $('result').hidden = true; $('runLink').hidden = true;
-  $('progTitle').textContent = 'جاري الرفع'; $('steps').innerHTML = ''; startTimer();
+  $('result').hidden = true; current = null;
+  const desc = src === 'desc';
   try {
-    const free = await freeName(name);
-    if (free !== name) {
-      $('formErr').hidden = false;
-      $('formErr').textContent = `الاسم ${name} مستخدم، بيتسمى ${free}`;
-      $('name').value = name = free;
-    }
-    const desc = src === 'desc';
     const { blob, ext } = desc
       ? { blob: new Blob([$('desc').value.trim()], { type: 'text/plain' }), ext: 'txt' }
       : await prepareImage(file);
@@ -464,72 +683,224 @@ $('build').onclick = async () => {
     const size = mode === 'room' ? $('roomSize').value : height;
     const engine = $('engineBox').hidden ? '' : '@' + $('engine').value;
     const img = desc ? '@' + $('imgEngine').value : '';
-    const path = `prop_requests/${name}@${size}${flat ? '@' + mode : ''}${engine}${img}.${ext}`;
-    let sha;
-    try { sha = (await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`)).sha; } catch (e) { if (e.status !== 404) throw e; }
-    const put = await gh(`/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`, {
-      method: 'PUT',
-      body: JSON.stringify({ message: `Request prop ${name}`, content: await toBase64(blob), ...(sha ? { sha } : {}) }),
-    });
-    $('progTitle').textContent = 'جاري البناء';
-    const run = await waitForRun(put.commit.sha);
-    clearInterval(timerId);
-    if (run.conclusion === 'success') {
-      $('progTitle').innerHTML = '<span class="ok">خلص ✓</span>';
-      const got = await findBuild(name, put.commit.sha);
-      showResult(got.name, put.commit.sha.slice(0, 7), got.info);
-      loadGallery();
-    } else {
-      $('progTitle').innerHTML = '<span class="err">فشل البناء</span>';
-    }
+    const got = await runRequest({ name, blob, errEl: $('formErr'),
+      pathFor: n => `prop_requests/${n}@${size}${flat ? '@' + mode : ''}${engine}${img}.${ext}` });
+    $('name').value = got;
   } catch (e) {
-    clearInterval(timerId);
-    $('progTitle').innerHTML = '<span class="err">صار خطأ</span>';
+    if (!$('formErr').textContent) $('formErr').textContent = keyError(e);
     $('formErr').hidden = false;
-    $('formErr').textContent = e.status === 401 || e.status === 403
-      ? 'المفتاح غلط أو ناقص الصلاحيات (Contents: Read and write، Actions: Read).'
-      : 'خطأ: ' + e.message;
-  } finally {
-    validate();
   }
 };
 
-const picked = new Set();
-const infos = {};
-async function loadGallery() {
-  const g = $('gallery');
+// ---- rebuild / resize / delete ----
+let current = null;
+const reqName = s => s.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+// request file name: <name>[@<height>][@<mode>][@<engine>][@<image>].<ext> (same reading as the workflow)
+function parseReq(path) {
+  const base = path.split('/').pop(), dot = base.lastIndexOf('.');
+  const parts = base.slice(0, dot).split('@');
+  const r = { name: reqName(parts[0]), ext: base.slice(dot + 1).toLowerCase(), height: '0', mode: 'ai', engine: '', image: '' };
+  for (const p of parts.slice(1)) {
+    if (['trellis2', 'hunyuan', 'trellis', 'triposr'].includes(p)) r.engine = p;
+    else if (['pollinations', 'flux'].includes(p)) r.image = p;
+    else if (['ai', 'bag', 'box', 'board', 'can', 'room'].includes(p)) r.mode = p;
+    else r.height = p;
+  }
+  return r;
+}
+function reqPath(name, r, engine) {
+  const eng = r.ext !== 'glb' && (r.mode === 'ai' || r.mode === 'room') && engine ? '@' + engine : '';
+  const img = r.ext === 'txt' ? '@' + (r.image || 'pollinations') : '';
+  return `prop_requests/${name}@${r.height}${r.mode !== 'ai' ? '@' + r.mode : ''}${eng}${img}.${r.ext}`;
+}
+const REQ_FILE = /^prop_requests\/[^/]+\.(png|jpe?g|webp|glb|txt)$/i;
+// the original request: info.json.source, else the file the request commit added, else a request named after the prop,
+// else the description text
+async function findSource(en) {
+  const f = en.fail, info = en.info;
+  if (f) {
+    if (f.source && f.request) return { path: f.source, ref: f.request };
+    if (f.prompt) return { text: f.prompt, mode: f.mode, height: f.height, image: f.image };
+    return null;
+  }
+  if (info && info.source && info.request) return { path: info.source, ref: info.request };
+  if (info && info.request) {
+    try {
+      const c = await gh(`/commits/${info.request}`);
+      const hit = (c.files || []).find(x => x.status !== 'removed' && REQ_FILE.test(x.filename));
+      if (hit) return { path: hit.filename, ref: info.request };
+    } catch {}
+  }
   try {
-    const items = await gh('/contents/builds?ref=prop-builds');
-    const dirs = items.filter(i => i.type === 'dir').reverse();
-    for (const n of [...picked]) if (!dirs.some(d => d.name === n)) picked.delete(n);
-    g.innerHTML = dirs.length ? dirs.map(d => `
-      <div class="g${picked.has(d.name) ? ' picked' : ''}" data-name="${d.name}">
-        <button type="button">
-          <img loading="lazy" src="${RAW(`builds/${d.name}/preview.png`)}" alt="${d.name}">
-          <span class="gname">${d.name}</span>
-          <span class="badge" hidden></span>
-        </button>
-        <label><input type="checkbox" aria-label="اختر ${d.name} للباك"${picked.has(d.name) ? ' checked' : ''}></label>
-      </div>`).join('') : '<span class="sub">ما فيه بروبز للحين.</span>';
+    const list = await gh('/contents/prop_requests?ref=main');
+    const hit = list.find(x => x.type === 'file' && REQ_FILE.test(x.path) && parseReq(x.path).name === en.name);
+    if (hit) return { path: hit.path, ref: 'main' };
+  } catch {}
+  const d = info && info.description;
+  if (d && d.prompt) return { text: d.prompt, mode: info.mode, height: '0', image: d.engine };
+  return null;
+}
+async function manage(label, job) {
+  const st = $('manageState');
+  busy = true; showManage(current); st.textContent = label;
+  try { await job(st); } catch (e) { st.textContent = keyError(e); }
+  finally { busy = false; validate(); if (current) showManage(current); }
+}
+$('rebuild').onclick = () => manage('جاري البحث عن الطلب الأصلي…', async st => {
+  const en = current, s = await findSource(en);
+  if (!s) throw new Error('ما لقيت الطلب الأصلي لهالبروب (يمكن انبنى من Issue أو رابط).');
+  let r, blob;
+  if (s.path) {
+    r = parseReq(s.path);
+    const resp = await fetch(RAW_AT(s.ref, s.path));
+    if (!resp.ok) throw new Error(`ما قدرت أجيب ${s.path} (${resp.status})`);
+    blob = await resp.blob();
+  } else {
+    r = { ext: 'txt', height: s.height || '0', mode: s.mode || 'ai', image: s.image || 'pollinations' };
+    blob = new Blob([s.text], { type: 'text/plain' });
+  }
+  const engine = $('reEngineBox').hidden ? r.engine : $('reEngine').value;
+  st.textContent = '';
+  await runRequest({ name: reqName(en.name).slice(0, 40), blob, errEl: st, pathFor: n => reqPath(n, r, engine) });
+});
+$('resize').onclick = () => manage('جاري تجهيز الموديل…', async st => {
+  const en = current, h = parseFloat($('reHeight').value);
+  if (!(h > 0 && h <= 200)) throw new Error('اكتب ارتفاع بالمتر أكبر من 0');
+  const resp = await fetch(RAW(`builds/${en.name}/model.glb`, en.files.get('model.glb')));
+  if (!resp.ok) throw new Error(`ما قدرت أجيب model.glb (${resp.status})`);
+  const blob = await resp.blob();
+  st.textContent = '';
+  // a .glb request skips image to 3D: only the scale changes
+  await runRequest({ name: reqName(en.name).slice(0, 40), blob, errEl: st, pathFor: n => `prop_requests/${n}@${+h.toFixed(3)}.glb` });
+});
+
+// one commit on prop-builds through the git data API: ref -> commit -> tree without the change -> new commit -> ref
+async function commitPropBuilds(message, changesFor) {
+  for (let attempt = 0; ; attempt++) {
+    const head = (await gh('/git/ref/heads/prop-builds')).object.sha;
+    const commit = await gh(`/git/commits/${head}`);
+    const root = await gh(`/git/trees/${commit.tree.sha}`);
+    const changes = await changesFor(root.tree);
+    const tree = await gh('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: changes }) });
+    const made = await gh('/git/commits', { method: 'POST', body: JSON.stringify({ message, tree: tree.sha, parents: [head] }) });
+    try {
+      return await gh('/git/refs/heads/prop-builds', { method: 'PATCH', body: JSON.stringify({ sha: made.sha, force: false }) });
+    } catch (e) {
+      if (e.status !== 422 || attempt >= 2) throw e;   // a build pushed meanwhile: redo on top of it
+    }
+  }
+}
+const deleteBuild = name => commitPropBuilds(`Delete prop ${name}`, async rootTree => {
+  const b = rootTree.find(e => e.path === 'builds' && e.type === 'tree');
+  const sub = b ? await gh(`/git/trees/${b.sha}`) : { tree: [] };
+  const keep = sub.tree.filter(e => e.path !== name);
+  if (keep.length === sub.tree.length) throw new Error(`${name} مو موجود (يمكن انحذف)`);
+  if (!keep.length) return [{ path: 'builds', mode: '040000', type: 'tree', sha: null }];
+  const builds = await gh('/git/trees', { method: 'POST', body: JSON.stringify({ tree: keep.map(({ path, mode, type, sha }) => ({ path, mode, type, sha })) }) });
+  return [{ path: 'builds', mode: '040000', type: 'tree', sha: builds.sha }];
+});
+const dismissFailed = f => commitPropBuilds(`Remove failed ${f.name} from the status`, async rootTree => {
+  const s = rootTree.find(e => e.path === 'status.json');
+  if (!s) throw new Error('status.json مو موجود');
+  const data = JSON.parse(b64text((await gh(`/git/blobs/${s.sha}`)).content));
+  data.failed = (data.failed || []).filter(x => !(x.name === f.name && x.time === f.time));
+  return [{ path: 'status.json', mode: '100644', type: 'blob', content: JSON.stringify(data, null, 1) + '\n' }];
+});
+$('del').onclick = () => {
+  const en = current;
+  const q = en.kind === 'failed'
+    ? `تشيل ${en.name} (الفاشل) من القائمة؟`
+    : `متأكد تبي تحذف ${en.name}؟\nينحذف من الفرع prop-builds (zip والموديل وملفات stream) وما يرجع إلا بإعادة البناء.`;
+  if (!confirm(q)) return;
+  manage('جاري الحذف…', async st => {
+    await (en.kind === 'failed' ? dismissFailed(en.fail) : deleteBuild(en.name));
+    picked.delete(en.name);
+    $('result').hidden = true; current = null;
+    st.textContent = `انحذف ${en.name} ✓`;
+    await loadGallery();
+  });
+};
+
+// ---- gallery ----
+const picked = new Set();
+let entries = [];
+const engineKeys = en => en.kind === 'failed'
+  ? [en.fail.mode && !['ai', 'room'].includes(en.fail.mode) ? 'flat' : en.fail.engine || 'none']
+  : en.info ? Object.keys(en.info.engines || {}) : en.infoTried ? ['none'] : [];
+function applyFilter() {
+  const q = $('q').value.trim().toLowerCase(), st = $('fStatus').value, eng = $('fEngine').value;
+  let shown = 0;
+  for (const en of entries) {
+    const ok = (!q || en.name.toLowerCase().includes(q)) && (!st || en.kind === st)
+      && (!eng || engineKeys(en).includes(eng));
+    en.tile.hidden = !ok;
+    if (ok) shown++;
+  }
+  const built = entries.filter(e => e.kind === 'built').length;
+  $('gCount').textContent = entries.length ? `${shown} من ${entries.length} (${built} انبنى، ${entries.length - built} فشل)` : '';
+}
+['q', 'fStatus', 'fEngine'].forEach(id => $(id).addEventListener('input', applyFilter));
+fill($('fEngine'), ENGINE_FILTER, '');
+
+function setBadge(node, b) {
+  if (!b) return;
+  node.textContent = b.text; node.className = 'badge ' + b.cls; node.hidden = false;
+}
+function tile(en) {
+  const { name } = en, failed = en.kind === 'failed';
+  const prev = en.files && en.files.get('preview.png');
+  const srcImg = failed && en.fail.source && /\.(png|jpe?g|webp)$/i.test(en.fail.source) && en.fail.request;
+  const pic = prev ? el('img', { loading: 'lazy', src: RAW(`builds/${name}/preview.png`, prev), alt: name })
+    : srcImg ? el('img', { loading: 'lazy', src: RAW_AT(en.fail.request, en.fail.source), alt: name })
+    : el('div', { class: 'ph', 'aria-hidden': 'true' }, failed ? '❌' : '📦');
+  const bdg = el('span', { class: 'badge', hidden: true });
+  if (failed) setBadge(bdg, failBadge(en.fail));
+  const node = el('div', { class: 'g' + (failed ? ' failed' : '') + (picked.has(name) ? ' picked' : '') },
+    el('button', { type: 'button', class: 'open' }, pic, el('span', { class: 'gname' }, name), bdg));
+  if (!failed) {
+    node.append(el('label', {}, el('input', { type: 'checkbox', 'aria-label': `اختر ${name} للباك`, checked: picked.has(name) })));
+    if (en.files.has(`${name}.zip`)) node.append(el('a', { class: 'gdl', href: RAW(`builds/${name}/${name}.zip`, en.files.get(`${name}.zip`)), download: `${name}.zip`, title: `تنزيل ${name}.zip`, 'aria-label': `تنزيل ${name}.zip` }, '⬇'));
+  }
+  en.tile = node; en.badge = bdg;
+  return node;
+}
+let galleryLoad = 0;
+async function loadGallery() {
+  const g = $('gallery'), my = ++galleryLoad;
+  try {
+    listing = await loadListing();
+    await loadStatus(listing.status);
+    if (my !== galleryLoad) return;
+    showChoices();
+    const built = [...listing.builds.keys()].reverse().map(name => ({ kind: 'built', name, files: listing.builds.get(name), info: null }));
+    const failed = ((status && status.failed) || []).filter(f => f && typeof f.name === 'string' && !listing.builds.has(f.name))
+      .map(f => ({ kind: 'failed', name: f.name, fail: f, info: null }));
+    entries = [...failed, ...built];
+    for (const n of [...picked]) if (!listing.builds.has(n)) picked.delete(n);
+    g.replaceChildren(...(entries.length ? entries.map(tile) : [el('span', { class: 'sub' }, 'ما فيه بروبز للحين.')]));
     updatePack();
-    dirs.forEach(async d => {
-      try { infos[d.name] = await fetchInfo(d.name); } catch { return; }
-      const b = badge(infos[d.name]), el = g.querySelector(`.g[data-name="${d.name}"] .badge`);
-      if (b && el) { el.textContent = b.text; el.className = 'badge ' + b.cls; el.hidden = false; }
+    applyFilter();
+    built.forEach(async en => {
+      const v = en.files.get('info.json');
+      if (v) { try { en.info = await fetchInfo(en.name, v); } catch {} }
+      en.infoTried = true;
+      if (my !== galleryLoad) return;
+      setBadge(en.badge, badge(en.info));
+      applyFilter();
     });
   } catch (e) {
-    g.innerHTML = `<span class="sub">ما قدرت أجيب القائمة (${e.message}).</span>`;
+    g.replaceChildren(el('span', { class: 'sub' }, `ما قدرت أجيب القائمة (${e.message}).`));
   }
 }
 $('gallery').addEventListener('click', e => {
-  const tile = e.target.closest('.g'); if (!tile) return;
-  const name = tile.dataset.name;
+  const node = e.target.closest('.g'); if (!node) return;
+  const en = entries.find(x => x.tile === node); if (!en) return;
   if (e.target.matches('input[type=checkbox]')) {
-    e.target.checked ? picked.add(name) : picked.delete(name);
-    tile.classList.toggle('picked', e.target.checked);
+    e.target.checked ? picked.add(en.name) : picked.delete(en.name);
+    node.classList.toggle('picked', e.target.checked);
     updatePack();
-  } else if (e.target.closest('button')) {
-    showResult(name, null, infos[name]);
+  } else if (e.target.closest('button.open')) {
+    showResult(en);
   }
 });
 $('refresh').onclick = loadGallery;
@@ -541,7 +912,7 @@ async function loadGame() {
   try {
     const r = await gh('/contents/settings.json?ref=main');
     gameSha = r.sha;
-    game = { ...game, ...JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(r.content.replace(/\n/g, '')), c => c.charCodeAt(0)))).game };
+    game = { ...game, ...JSON.parse(b64text(r.content)).game };
   } catch (e) { if (e.status !== 404) { $('gameState').textContent = 'ما قدرت أقرا الإعداد (' + e.message + ')'; } }
   fill($('gameEngine'), ENGINES, game.engine);
   fill($('gameImg'), IMGS, game.image);
@@ -577,7 +948,7 @@ function luaRoom(name, lua) {
 }
 $('pack').onclick = async () => {
   const btn = $('pack'), state = $('packState');
-  const names = picked.size ? [...picked] : [...$('gallery').querySelectorAll('.g')].map(t => t.dataset.name);
+  const names = picked.size ? [...picked] : entries.filter(e => e.kind === 'built').map(e => e.name);
   if (!names.length) return;
   if (!window.JSZip) { state.textContent = 'أداة الضغط ما تحملت، حدّث الصفحة.'; return; }
   btn.disabled = true;
@@ -586,7 +957,8 @@ $('pack').onclick = async () => {
     const props = [], rooms = [], ytyps = [];
     for (const [i, n] of names.entries()) {
       state.textContent = `(${i + 1}/${names.length}) ${n}`;
-      const r = await fetch(RAW(`builds/${n}/${n}.zip`));
+      const files = listing.builds.get(n);
+      const r = await fetch(RAW(`builds/${n}/${n}.zip`, files && files.get(`${n}.zip`)));
       if (!r.ok) throw new Error(`${n}: ${r.status}`);
       const zip = await JSZip.loadAsync(await r.arrayBuffer());
       for (const [path, f] of Object.entries(zip.files)) {

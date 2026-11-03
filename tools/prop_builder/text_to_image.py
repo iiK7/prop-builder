@@ -19,6 +19,12 @@ import urllib.request
 
 from PIL import Image
 
+try:
+    from hf_status import record  # last known quota for the site (no token, no error text)
+except Exception:
+    def record(*args, **kwargs):
+        pass
+
 text, out, info_path = sys.argv[1].strip(), sys.argv[2], sys.argv[3]
 engine = sys.argv[4] if len(sys.argv) > 4 else "pollinations"
 if not text:
@@ -107,6 +113,8 @@ for attempt in range(tries):
         print(f"{engine} failed: {e}")
         time.sleep(5)
 
+if engine == "flux":
+    record("flux", done, last_error)
 if not done:
     if "quota" in str(last_error).lower():
         print("::error title=Daily GPU limit reached (flux)::The free Hugging Face GPU quota is used up for today. "

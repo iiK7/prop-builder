@@ -59,6 +59,8 @@ jobs:
       TOOL: ${{ github.workspace }}/tools/prop_builder
       OUT: ${{ github.workspace }}/out
       GH_TOKEN: ${{ github.token }}
+      # one line per Hugging Face call (hf_status.py), saved for the site by the last step
+      HF_STATUS: ${{ github.workspace }}/out/hf_status.jsonl
     steps:
       - uses: actions/checkout@v4
         with:
@@ -149,7 +151,7 @@ jobs:
                   *) height=$part ;;
                 esac
               done
-              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; } >> "$GITHUB_ENV"
+              { echo "NAME=$name"; echo "HEIGHT=$height"; echo "MODE=$mode"; echo "REQUEST_FILE=$f"; } >> "$GITHUB_ENV"
               if [[ "$base" =~ \.[Tt][Xx][Tt]$ ]]; then
                 prompt=$(tr '\r\n\t' '   ' < "$f" | cut -c1-200)
                 [ -n "${prompt// /}" ] || { echo "::error::The description file is empty"; exit 1; }
@@ -314,6 +316,8 @@ jobs:
           info = {"name": os.environ["NAME"], "mode": os.environ["MODE"], "engines": dict(collections.Counter(engines)),
                   "size": os.environ["HEIGHT"] if os.environ["MODE"] == "room" else size,
                   "request": os.environ["GITHUB_SHA"], "built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
+          if os.environ.get("REQUEST_FILE"):
+              info["source"] = os.environ["REQUEST_FILE"]
           if os.path.exists(f"{os.environ['OUT']}/prompt.json"):
               info["description"] = json.load(open(f"{os.environ['OUT']}/prompt.json"))
           json.dump(info, open(sys.argv[1], "w"), ensure_ascii=False)
@@ -353,3 +357,26 @@ jobs:
         if: failure() && github.event_name == 'issues'
         run: |
           gh issue comment "${{ github.event.issue.number }}" --body "❌ ما قدرت أبني البروب. السجل: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Save the run status for the site
+        # status.json on prop-builds: last known Hugging Face quota per engine and recent failed builds (never the token)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          repo="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          dir="$RUNNER_TEMP/status"
+          # only the files at the top of the branch, not the builds
+          git clone -q --depth 1 --filter=blob:none --sparse --branch prop-builds "$repo" "$dir" || exit 0
+          [ "$(python "$TOOL/run_status.py" "$dir/status.json")" = changed ] || exit 0
+          cd "$dir"
+          git config user.name "prop-builder"
+          git config user.email "prop-builder@users.noreply.github.com"
+          git add status.json && git commit -qm "Run status ($JOB_STATUS ${NAME:-})"
+          for try in 1 2 3 4 5; do
+            git push -q origin prop-builds && exit 0
+            sleep $((try * 3))
+            git pull -q --rebase origin prop-builds || { git rebase --abort; exit 0; }
+          done

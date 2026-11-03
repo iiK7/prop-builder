@@ -30,6 +30,10 @@ Runs on GitHub Actions (`.github/workflows/prop-builder.yml`), so nothing needs 
 
 Results are uploaded as a run artifact and copied to the `prop-builds` branch under `builds/<name>/`
 (zip, `preview.png`, `info.json` and the game files in `stream/`).
+After every run the workflow also updates `status.json` at the top of `prop-builds`: the last known Hugging Face
+state per engine (last success, last "quota used up", and the seconds left / retry time when the quota message
+gives them) and the last 30 failed builds with their request, so the site can show them and rebuild them.
+It never holds the token or error text.
 
 ## Local run
 
