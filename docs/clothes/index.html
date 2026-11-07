@@ -258,9 +258,26 @@ header{order:0} #setup{order:1} #pieceCard{order:2} #viewCard{order:3} #previewC
 
   <div class="col colR">
   <section class="card" id="designCard">
-    <div class="tabs two" id="whats" role="group" aria-label="وش تبي تسوي">
+    <div class="tabs" id="whats" role="group" aria-label="وش تبي تسوي">
       <button data-what="variant" class="on" type="button"><span>🎨</span>تصميم لقطعة موجودة</button>
       <button data-what="garment" type="button"><span>✂️</span>قطعة جديدة</button>
+      <button data-what="transfer" type="button"><span>🔁</span>نقل قطعة</button>
+    </div>
+    <div id="transferBox" hidden>
+      <h2>نقل قطعة لبيد ثاني</h2>
+      <p class="note">القطعة المختارة فوق (من الباك الأول) تنتقل للبيد الثاني: تمشي مع عظام هيكله وتنضبط على مقاس جسمه (ما تدخل فيه)، وتنضاف عنده برقم بعد آخر رقم مع كل تكستراتها والـymt. أي قطعة: قناع، قميص، بنطلون، جزمة، أو إكسسوار (قبعة، نظارة، ساعة).</p>
+      <p class="note">لازم الباكين فيهم هيكل البيد (yft) وجسمه (head و uppr و lowr _000). بيد الـfreemode: ارفع معه ملفات الجسم من اللعبة.</p>
+      <div class="tabs two" id="tSrcs" role="group" aria-label="طريقة رفع البيد الثاني">
+        <button data-src="zip" class="on" type="button">📦 ملف zip</button>
+        <button data-src="dir" type="button">📁 مجلد</button>
+      </div>
+      <input id="tZip" type="file" accept=".zip,application/zip" aria-label="باك البيد الثاني (zip)">
+      <input id="tDir" type="file" webkitdirectory multiple hidden aria-label="مجلد البيد الثاني">
+      <p class="sub" id="tInfo">ارفع باك البيد الثاني (اللي تنتقل له القطعة).</p>
+      <label>الـymt حق البيد الثاني
+        <select id="tTarget" class="mono"></select>
+      </label>
+      <div id="tErr" class="err" hidden></div>
     </div>
     <div id="garmentBox" hidden>
       <h2>قطعة جديدة</h2>
@@ -551,6 +568,41 @@ $('dirFiles').addEventListener('change', async e => {
   await loadPack(entries, 0);
 });
 
+// ---- transfer: ped B's pack (where the piece goes); the piece itself is picked in the pack above (ped A)
+let tpack = null, tSrc = 'zip';
+const tErr = t => { $('tErr').textContent = t || ''; $('tErr').hidden = !t; };
+$('tSrcs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-src]'); if (!b) return;
+  tSrc = b.dataset.src; [...$('tSrcs').children].forEach(x => x.classList.toggle('on', x === b));
+  $('tZip').hidden = tSrc !== 'zip'; $('tDir').hidden = tSrc !== 'dir';
+});
+function loadTarget(entries, file) {
+  tpack = { entries, file }; tErr('');
+  const names = entries.map(e => e.path);
+  const stems = names.filter(n => /\.ymt$/i.test(n)).map(n => base(n).slice(0, -4));
+  if (names.some(n => /\.fxap$/i.test(n))) tErr('باك البيد الثاني مشفّر (escrow / .fxap): ما ينفتح ولا ينعدل.');
+  else if (!stems.length) tErr('باك البيد الثاني ما فيه ملف .ymt.');
+  else if (!names.some(n => /\.yft$/i.test(n))) tErr('باك البيد الثاني ما فيه هيكل البيد (.yft): القطعة تنقاس على هيكله وجسمه.');
+  $('tTarget').replaceChildren(...stems.map(s => el('option', { value: s }, s + '.ymt')));
+  const total = file ? file.size : entries.reduce((s, e) => s + e.size, 0);
+  $('tInfo').textContent = `${entries.length} ملف · ${stems.length} ymt${total ? ' · ' + (total / 1048576).toFixed(1) + ' MB' : ''}`;
+  validate();
+}
+$('tZip').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (!window.JSZip) { tErr('أداة الضغط ما تحملت، حدّث الصفحة.'); return; }
+  try {
+    const z = await JSZip.loadAsync(f);
+    loadTarget(Object.values(z.files).filter(x => !x.dir)
+      .map(x => ({ path: x.name, size: x._data ? x._data.uncompressedSize : 0, get: () => x.async('uint8array') })), f);
+  } catch { tpack = null; tErr('ملف البيد الثاني مو zip سليم.'); validate(); }
+});
+$('tDir').addEventListener('change', e => {
+  const fs = [...e.target.files]; if (!fs.length) return;
+  loadTarget(fs.map(f => ({ path: f.webkitRelativePath || f.name, size: f.size, get: async () => new Uint8Array(await f.arrayBuffer()) })), null);
+});
+$('tTarget').addEventListener('change', validate);
+
 // what goes up: the whole pack (zip as chosen, or a folder zipped here) when small, else only this piece's files
 const MAX_UPLOAD = 40 * 1048576;
 function pieceFilter(comp, d) {
@@ -569,7 +621,36 @@ function garmentFilter() {
     return /\.(ymt|meta|yft|xml)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || body.test(b) || tex.test(b);
   };
 }
+// a transfer: ped A goes up only with what the move reads (skeleton, body _000, the piece), under __source__/;
+// ped B whole when small (the result is the whole resource), else its skeleton, body _000 and the slot's _000
+const BODY_000 = /^(uppr|lowr|hand|head|feet)_000_[a-z]+\.ydd$/i;
+function transferSourceFilter(comp, d) {
+  const dd = String(d).padStart(3, '0'), piece = new RegExp(`^${comp}_(diff_)?${dd}(_|\\.)`, 'i');
+  return e => {
+    const lb = base(e.path).toLowerCase(), b = base(e.path).replace(/^.*\^/, '');
+    return /\.(ymt|meta|yft|xml)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || BODY_000.test(b) || piece.test(b);
+  };
+}
+function transferTargetFilter(slot) {
+  const own = new RegExp(`^${slot}_000_[a-z]+\\.ydd$`, 'i');
+  return e => {
+    const lb = base(e.path).toLowerCase(), b = base(e.path).replace(/^.*\^/, '');
+    return /\.(ymt|meta|yft|xml)$/i.test(lb) || /^(fxmanifest|__resource)\.lua$/i.test(lb) || BODY_000.test(b) || own.test(b);
+  };
+}
+async function transferZip() {
+  const total = tpack.file ? tpack.file.size : tpack.entries.reduce((s, e) => s + e.size, 0);
+  const trim = total > MAX_UPLOAD;
+  const keepB = trim ? transferTargetFilter($('comp').value) : () => true, keepA = transferSourceFilter($('comp').value, +$('drawable').value);
+  const z = new JSZip();
+  for (const e of tpack.entries) if (!e.path.startsWith('__source__/') && keepB(e)) z.file(e.path, await e.get());
+  for (const e of pack.entries) if (keepA(e)) z.file('__source__/' + e.path, await e.get());
+  const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  if (blob.size > 95 * 1048576) throw new Error('ملفات البيدين أكبر من 95MB، GitHub ما يقبلها.');
+  return { blob, trimmed: trim };
+}
 async function requestZip(garment) {
+  if (garment === 'transfer') return transferZip();
   const total = pack.file ? pack.file.size : pack.entries.reduce((s, e) => s + e.size, 0);
   const trim = total > MAX_UPLOAD;
   if (pack.file && !trim) return { blob: pack.file, trimmed: false };
@@ -635,16 +716,17 @@ $('tpls').addEventListener('click', e => { const b = e.target.closest('button[da
 function setWhat(w) {
   what = w;
   [...$('whats').children].forEach(x => x.classList.toggle('on', x.dataset.what === w));
-  const g = w === 'garment';
+  const g = w === 'garment', tr = w === 'transfer';
   $('garmentBox').hidden = !g;
-  const designOn = !g || $('gDesign').checked;
-  $('designTitle').hidden = g;
+  $('transferBox').hidden = !tr;
+  const designOn = !tr && (!g || $('gDesign').checked);
+  $('designTitle').hidden = g || tr;
   $('modes').hidden = !designOn;
   $('tintBox').hidden = !designOn || mode !== 'tint'; $('logoBox').hidden = !designOn || mode !== 'logo'; $('promptBox').hidden = !designOn || mode !== 'prompt';
   $('logoCtl').hidden = !designOn || mode !== 'logo';
   $('strengthBox').hidden = !designOn || mode === 'logo';
-  $('skinBox').hidden = $('skinNote').hidden = g || mode === 'logo';
-  $('build').textContent = g ? 'فصّل القطعة' : 'سوِّ التصميم';
+  $('skinBox').hidden = $('skinNote').hidden = g || tr || mode === 'logo';
+  $('build').textContent = g ? 'فصّل القطعة' : tr ? 'انقل القطعة' : 'سوِّ التصميم';
   $('uvNote').textContent = g ? 'مخطط تكستر القطعة الجديدة (UV): قدام الجسم بالنص. الشعار ينحط عليه.' : 'هذي صورة التكستر مفرودة (UV). تطلع الصورة الحقيقية بعد التحليل، وقبلها شبكة بس.';
   $('uvNote').hidden = !g && !!diffuse;
   if (g && !tpl) pickTemplate(GARMENTS.templates[0].id);
@@ -742,8 +824,9 @@ function pieceReady() { return pack && !$('pieceErr').textContent && $('target')
 function packReady() { return pack && !$('pieceErr').textContent && $('target').value; }
 function validate() {
   let design = mode === 'tint' || (mode === 'logo' && logo) || (mode === 'prompt' && $('prompt').value.trim().length >= 3);
-  if (what === 'garment' && !$('gDesign').checked) design = true;
-  const ready = what === 'garment' ? packReady() && tpl : pieceReady();
+  if ((what === 'garment' && !$('gDesign').checked) || what === 'transfer') design = true;
+  const ready = what === 'garment' ? packReady() && tpl
+    : what === 'transfer' ? pieceReady() && tpack && !$('tErr').textContent && !!$('tTarget').value : pieceReady();
   $('build').disabled = busy || !token() || !ready || !design || !NAME_RE.test($('name').value);
   $('analyze').disabled = $('preview3d').disabled = busy || !token() || !pieceReady();
 }
@@ -757,6 +840,8 @@ function garmentSpec() {
 }
 function spec(what) {
   if (what === 'garment') return garmentSpec();
+  if (what === 'transfer') return { mode: 'transfer', target: $('tTarget').value, kind,
+    source: { target: $('target').value, component: $('comp').value, drawable: +$('drawable').value }, time: new Date().toISOString() };
   const analyze = what !== 'build';
   const s = { target: $('target').value, component: $('comp').value, drawable: +$('drawable').value,
     base: $('baseLetter').value || 'a', kind, mode: analyze ? what : mode,
@@ -896,12 +981,12 @@ async function runRequest(what) {
   $('progress').hidden = false; $('runLink').hidden = true; $('steps').replaceChildren(); startTimer();
   $('progTitle').textContent = 'جاري التجهيز';
   try {
-    let name = what === 'build' || what === 'garment' ? $('name').value : ($('name').value || 'piece').slice(0, 33) + (what === 'preview' ? '_view' : '_scan');
+    let name = what === 'build' || what === 'garment' || what === 'transfer' ? $('name').value : ($('name').value || 'piece').slice(0, 33) + (what === 'preview' ? '_view' : '_scan');
     name = name.replace(/[^a-z0-9_]/g, '_');
-    const { blob, trimmed } = await requestZip(what === 'garment');
+    const { blob, trimmed } = await requestZip(what === 'transfer' ? 'transfer' : what === 'garment');
     const json = { ...spec(what), name, ...(trimmed ? { trimmed: true } : {}) };
     const sha = await commitRequest(name, blob, json, t => { $('progTitle').textContent = t; });
-    $('progTitle').textContent = what === 'analyze' ? 'جاري التحليل' : what === 'preview' ? 'جاري تجهيز المعاينة' : what === 'garment' ? 'جاري تفصيل القطعة' : 'جاري البناء';
+    $('progTitle').textContent = what === 'analyze' ? 'جاري التحليل' : what === 'preview' ? 'جاري تجهيز المعاينة' : what === 'garment' ? 'جاري تفصيل القطعة' : what === 'transfer' ? 'جاري نقل القطعة' : 'جاري البناء';
     $('progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
     const run = await waitForRun(sha);
     clearInterval(timerId);
@@ -923,14 +1008,15 @@ async function runRequest(what) {
 }
 $('analyze').onclick = () => runRequest('analyze');
 $('preview3d').onclick = () => runRequest('preview');
-$('build').onclick = () => { $('result').hidden = true; runRequest(what === 'garment' ? 'garment' : 'build'); };
+$('build').onclick = () => { $('result').hidden = true; runRequest(what === 'garment' ? 'garment' : what === 'transfer' ? 'transfer' : 'build'); };
 
 function showResult(res) {
   const { name, info, files } = res, failed = info.status === 'failed', garment = info.mode === 'garment' || (info.spec || {}).mode === 'garment';
+  const moved = info.mode === 'transfer' || (info.spec || {}).mode === 'transfer';
   const pad = n => String(n).padStart(3, '0');
   $('result').hidden = false;
   $('resName').textContent = name;
-  $('resBadge').textContent = failed ? 'رُفض' : garment ? `قطعة جديدة ${info.component}_${pad(info.drawable)}` : `تكستر جديد _${info.letter}`;
+  $('resBadge').textContent = failed ? 'رُفض' : moved ? `🔁 ${info.component}_${pad(info.drawable)}` : garment ? `قطعة جديدة ${info.component}_${pad(info.drawable)}` : `تكستر جديد _${info.letter}`;
   $('resBadge').className = 'badge ' + (failed ? 'bad' : 'hi');
   $('resFail').hidden = !failed;
   $('resFail').replaceChildren(...(failed ? [(info.error && info.error.message) || 'البناء فشل.', ' ',
@@ -942,7 +1028,15 @@ function showResult(res) {
   pic('preview_before.png', $('imgBefore')); pic('preview_after.png', $('imgAfter'));
   $('resPair').hidden = !files.get('preview_before.png');
   const b = info.base || {};
-  if (garment) facts($('resFacts'), failed ? [['القالب', (info.spec || {}).template]] : [
+  if (moved) {
+    const sp = (info.spec || {}).source || {}, src = info.source || {}, fit = info.fit || {};
+    facts($('resFacts'), failed ? [['القطعة', sp.component != null ? `${sp.component}_${pad(sp.drawable)} من ${sp.target || ''}` : '']] : [
+      ['من', `${src.component}_${pad(src.drawable)} · ${src.ped}`], ['إلى', `${info.component}_${pad(info.drawable)} · ${info.target}`],
+      ['التكسترات', `${(info.textures || []).length} (${(info.textures || []).map(t => t.to.replace(/^.*\^/, '').replace(/\.ytd$/, '')).join('، ')})`],
+      ['النقاط', `${info.verts} · ${fit.lods || 1} LOD`],
+      ['التعديل', fit.points ? `أكبر حركة ${fit.max_move_cm} سم · فرق المقاس لين ${fit.girth_cm} سم · ${fit.pushed + (fit.skin_fixed || 0)} نقطة طلعت برا الجسم` : ''],
+      ['عظام ناقصة', Object.keys(info.bones_mapped || {}).length ? Object.entries(info.bones_mapped).map(([a, b]) => `${a} ← ${b}`).join('، ') : '']]);
+  } else if (garment) facts($('resFacts'), failed ? [['القالب', (info.spec || {}).template]] : [
     ['القالب', `${info.template_label || ''} (${info.template})`], ['البيد', info.target], ['المكان', info.slot],
     ...(info.pieces || []).map(p => [p.role === 'main' ? 'القطعة' : 'تحتها',
       `${p.component}_${pad(p.drawable)}${p.mode === 'empty' ? ' (فاضية تخفي البنطلون)' : p.mode === 'cut' ? ' (البنطلون تحت الطرف بس)' : ''} · ${p.verts} نقطة · ${p.bones} عظمة`]),
@@ -958,9 +1052,10 @@ function showResult(res) {
     $('download').dataset.sha = zip || ''; $('download').dataset.file = `${name}.zip`; $('download').href = '#';
     $('download').textContent = info.patch ? 'تنزيل الملفات الجديدة (zip)' : 'تنزيل الريسورس (zip)';
     $('changed').replaceChildren(...(info.files || []).map(f => el('span', {}, f)));
-    const where = garment ? (info.pieces || []).map(p => `${p.component} رقم ${p.drawable}`).join(' و ') : '';
+    const where = moved ? `${info.component} رقم ${info.drawable}` : garment ? (info.pieces || []).map(p => `${p.component} رقم ${p.drawable}`).join(' و ') : '';
     $('howTo').textContent = info.patch
-      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource}${info.ymt_changed === false ? '' : ' (الـymt يتبدّل)'}، وبعدين restart ${info.resource}.${garment ? ' القطعة الجديدة: ' + where + '.' : ''}`
+      ? `الـzip فيه الملفات الجديدة والمتغيرة بس: حطها بنفس أماكنها داخل ريسورس ${info.resource}${info.ymt_changed === false ? '' : ' (الـymt يتبدّل)'}، وبعدين restart ${info.resource}.${garment || moved ? ' القطعة الجديدة: ' + where + '.' : ''}`
+      : moved ? `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + القطعة المنقولة + الـymt المعدّل)، وبعدين restart ${info.resource}. البسها من ${where}، فيها ${(info.textures || []).length} تكستر.`
       : garment ? `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + القطعة الجديدة + الـymt المعدّل)، وبعدين restart ${info.resource}. البسها من ${where}، تكستر 0.`
       : `بدّل ريسورس ${info.resource} القديم بهذا (نفس الملفات + التكستر الجديد + الـymt المعدّل)، وبعدين restart ${info.resource}. التصميم الجديد رقمه ${'abcdefghijklmnopqrstuvwxyz'.indexOf(info.letter)} بالتكسترات.`;
   }
@@ -1010,7 +1105,7 @@ const seen = new IntersectionObserver(list => {
     if (v) fetchInfo('clothes', en.name, v).then(info => {
       en.info = info;
       const failed = info.status === 'failed';
-      en.badge.textContent = failed ? 'رُفض' : info.mode === 'garment' ? `✂️ ${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')}`
+      en.badge.textContent = failed ? 'رُفض' : info.mode === 'transfer' ? `🔁 ${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')}` : info.mode === 'garment' ? `✂️ ${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')}`
         : `${info.component || ''}_${String(info.drawable ?? '').padStart(3, '0')} · _${info.letter || '?'}`;
       en.badge.className = 'badge ' + (failed ? 'bad' : 'hi'); en.badge.hidden = false;
       en.tile.classList.toggle('failed', failed);

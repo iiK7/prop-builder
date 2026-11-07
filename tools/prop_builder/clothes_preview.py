@@ -83,6 +83,8 @@ def run(src, out_dir, overlay=None, target=None, bpy_python=None, sollumz=None, 
     work = tempfile.mkdtemp(prefix="clothes_preview_")
     pack = os.path.join(work, "pack")
     files = cv.unpack(src, pack)
+    # a transfer request also carries ped A (the piece's old owner) in __source__/: the preview is of ped B
+    files = [f for f in files if not f.startswith(cv.SOURCE_DIR)]
     if overlay:
         # the built design: copied over the pack by file name, so its new .ytd / changed .ymt are what the preview reads
         ov = os.path.join(work, "overlay")

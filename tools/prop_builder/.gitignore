@@ -1,3 +1,5 @@
 .deps/
 out/
 __pycache__/
+cwconv/bin/
+cwconv/obj/

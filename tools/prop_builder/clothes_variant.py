@@ -28,6 +28,12 @@ aAnchors). Needs the ped's skeleton (<ped>.yft) and base drawables (uppr_000, lo
   {"mode": "garment", "template": "thobe", "params": {...}, "slot": "uppr" (optional), "target": ...,
    "design": "none" | "tint" | "logo" | "prompt" (+ their fields as above: on the generated texture, never on skin)}
 
+MOVE A PIECE ("mode": "transfer"): an existing component or prop of ped A (its pack in __source__/ of the same zip)
+moved onto ped B by transfer_bpy.py (skeleton + girth + outside, every LOD) as B's next drawable, with every texture of
+it (renamed to the new number) and B's .ymt entry (A's own flags). Both peds need their .yft and body _000 drawables.
+  {"mode": "transfer", "target": "<B ymt>", "slot": optional,
+   "source": {"target": "<A ymt>", "component": "berd" | 1 | "p_head", "drawable": 1}}
+
 Out dir: <name>.zip, preview_before.png, preview_after.png, info.json; on a refusal error.json (exit code 3).
 Env: CWCONV (converter path), TEXT_TO_IMAGE (script for the prompt mode, default text_to_image.py next to this file).
 """
@@ -549,6 +555,8 @@ def run(src, spec, out_dir, name):
     mode = spec.get("mode", "tint")
     if mode == "garment":
         return run_garment(pack, files, work, spec, out_dir, name)
+    if mode == "transfer":
+        return run_transfer(pack, files, work, spec, out_dir, name)
     if mode not in ("tint", "logo", "prompt", "analyze"):
         raise Refuse("bad_spec", "نوع التصميم غلط.", f"unknown mode {mode}")
 
@@ -818,7 +826,8 @@ def run(src, spec, out_dir, name):
             shutil.copy(os.path.join(pack, f), dst)
         rel = lambda f: (f if f.lower().endswith(".meta") else "stream/" + f)
     else:
-        shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage)
+        # (a transfer's ped A lives in __source__/ of the same upload: never part of the result)
+        shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage, ignore=shutil.ignore_patterns("__source__"))
         rel = lambda f: os.path.relpath(f, root_rel).replace("\\", "/") if root_rel else f
     if ymt_changed:
         shutil.copy(new_ymt, os.path.join(stage, rel(ymt_rel)))
@@ -1040,6 +1049,53 @@ def ymt_add_prop(ymt, anchor, new_id):
 def ydd_vertex_count(xml_path):
     x = open(xml_path, encoding="utf-8", errors="ignore").read()
     return sum(len(b.strip().splitlines()) for b in re.findall(r"<Data>(.*?)</Data>", x, re.S))
+
+
+def write_resource(pack, files, work, new_files, spec, out_dir, name, warnings):
+    """the resource zip (as clothes designs): the whole pack + the new / changed files, or only those when the request
+    was trimmed or the whole is too big. Returns (resource name, changed files, patch)"""
+    root_rel = resource_root(files)
+    res_name = os.path.basename(root_rel) if root_rel else ""
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,64}", res_name or "") or res_name.lower() == "stream":
+        res_name = name
+    stage = os.path.join(work, "out", res_name)
+    if root_rel is None:
+        os.makedirs(os.path.join(stage, "stream"))
+        for f in files:
+            dst = os.path.join(stage, f if f.lower().endswith(".meta") else os.path.join("stream", f))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy(os.path.join(pack, f), dst)
+        rel = lambda f: (f if f.lower().endswith(".meta") else "stream/" + f)  # noqa: E731
+    else:
+        # (a transfer's ped A lives in __source__/ of the same upload: never part of the result)
+        shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage, ignore=shutil.ignore_patterns("__source__"))
+        rel = lambda f: os.path.relpath(f, root_rel).replace("\\", "/") if root_rel else f  # noqa: E731
+    changed = []
+    for f, local in new_files.items():
+        dst = os.path.join(stage, rel(f))
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy(local, dst)
+        changed.append(rel(f))
+    if not os.path.exists(os.path.join(stage, "fxmanifest.lua")) and not os.path.exists(os.path.join(stage, "__resource.lua")):
+        open(os.path.join(stage, "fxmanifest.lua"), "w").write(manifest_for(stage)[0])
+        changed.append("fxmanifest.lua")
+    zip_path = os.path.join(out_dir, f"{name}.zip")
+
+    def write_zip(only):
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+            for dp, _, names in os.walk(stage):
+                for nm in sorted(names):
+                    full = os.path.join(dp, nm)
+                    r_ = os.path.relpath(full, stage).replace("\\", "/")
+                    if only is None or r_ in only:
+                        z.write(full, f"{res_name}/{r_}")
+    patch = bool(spec.get("trimmed"))
+    write_zip(set(changed) if patch else None)
+    if not patch and os.path.getsize(zip_path) > MAX_ZIP_OUT:
+        patch = True
+        write_zip(set(changed))
+        warnings.append("the whole resource is over 90 MB: the zip has only the new and changed files")
+    return res_name, changed, patch
 
 
 def run_garment(pack, files, work, spec, out_dir, name):
@@ -1280,47 +1336,7 @@ def run_garment(pack, files, work, spec, out_dir, name):
         changed_ymts[rel] = outp
     new_files.update(changed_ymts)
 
-    # ---- the resource (as clothes designs: the whole pack + new files, or only the new ones when big / trimmed)
-    root_rel = resource_root(files)
-    res_name = os.path.basename(root_rel) if root_rel else ""
-    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,64}", res_name or "") or res_name.lower() == "stream":
-        res_name = name
-    stage = os.path.join(work, "out", res_name)
-    if root_rel is None:
-        os.makedirs(os.path.join(stage, "stream"))
-        for f in files:
-            dst = os.path.join(stage, f if f.lower().endswith(".meta") else os.path.join("stream", f))
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copy(os.path.join(pack, f), dst)
-        rel = lambda f: (f if f.lower().endswith(".meta") else "stream/" + f)  # noqa: E731
-    else:
-        shutil.copytree(os.path.join(pack, root_rel) if root_rel else pack, stage)
-        rel = lambda f: os.path.relpath(f, root_rel).replace("\\", "/") if root_rel else f  # noqa: E731
-    changed = []
-    for f, local in new_files.items():
-        dst = os.path.join(stage, rel(f))
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copy(local, dst)
-        changed.append(rel(f))
-    if not os.path.exists(os.path.join(stage, "fxmanifest.lua")) and not os.path.exists(os.path.join(stage, "__resource.lua")):
-        open(os.path.join(stage, "fxmanifest.lua"), "w").write(manifest_for(stage)[0])
-        changed.append("fxmanifest.lua")
-    zip_path = os.path.join(out_dir, f"{name}.zip")
-
-    def write_zip(only):
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-            for dp, _, names in os.walk(stage):
-                for nm in sorted(names):
-                    full = os.path.join(dp, nm)
-                    r_ = os.path.relpath(full, stage).replace("\\", "/")
-                    if only is None or r_ in only:
-                        z.write(full, f"{res_name}/{r_}")
-    patch = bool(spec.get("trimmed"))
-    write_zip(set(changed) if patch else None)
-    if not patch and os.path.getsize(zip_path) > MAX_ZIP_OUT:
-        patch = True
-        write_zip(set(changed))
-        warnings.append("the whole resource is over 90 MB: the zip has only the new and changed files")
+    res_name, changed, patch = write_resource(pack, files, work, new_files, spec, out_dir, name, warnings)
     warnings += [f"template: {w}" for w in res["report"].get("notes", [])]
     shutil.rmtree(work, ignore_errors=True)
     mp = piece_info[0]
@@ -1337,6 +1353,269 @@ def run_garment(pack, files, work, spec, out_dir, name):
         info["description"] = extra
     return info
 
+
+# ---------------- transfer mode: an EXISTING piece of ped A moved onto ped B (transfer_bpy.py) ----------------
+SOURCE_DIR = "__source__/"   # ped A's pack inside the request zip; everything else is ped B's
+
+
+def ped_body(pack, files, stem):
+    """(the ped .yft, {part: its _000 drawable}) of a ped: its own files first, then the base freemode ped's"""
+    base_ped = next((p for p in FREEMODE if stem.lower().startswith(p)), stem.lower())
+    pre = [stem.lower(), base_ped]
+    dfiles = drawable_files(files)
+    yft = next((f for f in files if f.lower().endswith(".yft") and not f.lower().endswith("_hi.yft")
+                and os.path.basename(f)[:-4].lower() in pre), None)
+    body = {}
+    for part in ("head", "uppr", "lowr", "hand", "feet"):
+        for p in pre:
+            if (p, part, 0) in dfiles:
+                body[part] = dfiles[(p, part, 0)]
+                break
+    return yft, body, base_ped, dfiles
+
+
+def comp_name(c):
+    c = str(c if c is not None else "").strip().lower()
+    if c.isdigit():
+        c = COMPONENTS[int(c)] if int(c) < len(COMPONENTS) else c
+    if c not in COMPONENTS and c not in PROPS:
+        raise Refuse("bad_spec", "نوع القطعة غلط.", f"unknown component {c}")
+    return c
+
+
+def run_transfer(pack, files, work, spec, out_dir, name):
+    """spec: {"mode": "transfer", "target": "<B ymt>", "slot": optional (default: the same component),
+              "source": {"target": "<A ymt>", "component": "berd" | 1 | "p_head", "drawable": 1}}"""
+    warnings = []
+    src_files = [f[len(SOURCE_DIR):] for f in files if f.startswith(SOURCE_DIR)]
+    dst_files = [f for f in files if not f.startswith(SOURCE_DIR)]
+    src_pack = os.path.join(pack, SOURCE_DIR.rstrip("/"))
+    if not src_files:
+        raise Refuse("no_source", "ما وصل باك البيد الأول (اللي فيه القطعة).", "no __source__/ in the request zip")
+    sp = spec.get("source") or {}
+    comp = comp_name(sp.get("component"))
+    try:
+        d = int(sp.get("drawable"))
+    except (TypeError, ValueError):
+        raise Refuse("bad_spec", "رقم القطعة غلط.", "bad source drawable")
+    slot = comp_name(spec.get("slot") or comp)
+    is_prop = comp in PROPS
+    if (slot in PROPS) != is_prop:
+        raise Refuse("bad_spec", "القطعة الملبوسة تنتقل لمكان ملبوس، والإكسسوار (prop) لإكسسوار.", "component <-> prop")
+
+    # ---- ped A (the piece) and ped B (where it goes)
+    s_ymt_rel, s_stem, s_ymts, s_stem_of = pick_ymt(src_pack, src_files, {"target": sp.get("target")})
+    t_ymt_rel, t_stem, t_ymts, t_stem_of = pick_ymt(pack, dst_files, spec)
+    s_yft, s_body, s_base, s_dfiles = ped_body(src_pack, src_files, s_stem)
+    t_yft, t_body, t_base, t_dfiles = ped_body(pack, dst_files, t_stem)
+    for who, yft, body, base in (("الأول", s_yft, s_body, s_base), ("الثاني", t_yft, t_body, t_base)):
+        if not yft or not body:
+            raise Refuse("no_body", f"البيد {who} ناقص: لازم ملف الهيكل ({base}.yft) وجسمه (head / uppr / lowr _000)." +
+                         (" لبيد الـfreemode ارفع معه ملفات الجسم من اللعبة." if base in FREEMODE else ""),
+                         f"ped body missing ({who}): yft={yft} body={sorted(body)}")
+    s_props = props_names(src_pack, src_files).get(s_stem.lower())
+    t_props = props_names(pack, dst_files).get(t_stem.lower())
+
+    # the piece of A: its .ydd, its textures (every letter) and its .ymt entry
+    if is_prop:
+        pre_ok = {s_stem.lower(), prop_prefix(s_stem.lower())} | ({s_props} if s_props else set())
+        s_pymt_rel = next((f for f in s_ymts if s_stem_of[f].lower() == s_props), None) if s_props and s_props != s_stem.lower() else s_ymt_rel
+    else:
+        pre_ok = {s_stem.lower(), s_base}
+        s_pymt_rel = s_ymt_rel
+    piece = next((f for (pre, c, n), f in s_dfiles.items() if c == comp and n == d and pre in pre_ok), None)
+    if not piece:
+        raise Refuse("no_piece", f"ما لقيت {comp}_{d:03d} بباك البيد الأول.", f"{comp}_{d:03d} not in the source pack")
+    _, by_letter = find_base_files(src_files, s_stem, comp, d, s_props)
+    if not by_letter:
+        raise Refuse("no_diffuse", f"ما لقيت تكسترات {comp}_{d:03d} (ملفات {comp}_diff_{d:03d}_a ...) بباك البيد الأول.",
+                     f"no textures of {comp}_{d:03d}")
+    letters = sorted(by_letter)
+    s_item = None
+    if s_pymt_rel:
+        sx = os.path.join(work, "src_ymt.xml")
+        if ymt_to_xml(os.path.join(src_pack, s_pymt_rel), sx) != "RBF":
+            sy = Ymt(sx)
+            if is_prop:
+                s_item = sy.prop(PROPS.index(comp), d)
+            else:
+                ds_ = sy.drawables(COMPONENTS.index(comp))
+                s_item = ds_[d] if d < len(ds_) else None
+
+    # ---- ped B's .ymt(s) and the new number
+    ymt_xml = os.path.join(work, "ymt.xml")
+    fmt = ymt_to_xml(os.path.join(pack, t_ymt_rel), ymt_xml)
+    if fmt == "RBF":
+        raise Refuse("unreadable", "الـymt بصيغة قديمة (RBF) ما تنعدل هنا.", "RBF ymt is not supported")
+    ymt = Ymt(ymt_xml)
+    pymt, pfmt, pymt_xml, prop_ymt_rel = ymt, fmt, ymt_xml, t_ymt_rel
+    if is_prop and t_props and t_props != t_stem.lower():
+        prop_ymt_rel = next((f for f in t_ymts if t_stem_of[f].lower() == t_props), None)
+        if not prop_ymt_rel:
+            raise Refuse("props_ymt", f"إكسسوارات البيد الثاني تابعة لـ {t_props} وملفه {t_props}.ymt مو بالباك.",
+                         f"props of {t_stem} belong to {t_props}; {t_props}.ymt is not in the pack")
+        pymt_xml = os.path.join(work, "pymt.xml")
+        pfmt = ymt_to_xml(os.path.join(pack, prop_ymt_rel), pymt_xml)
+        pymt = Ymt(pymt_xml)
+    if is_prop:
+        anchor = PROPS.index(slot)
+        n = ymt_next_prop(pymt, anchor)
+        prefix = t_props or prop_prefix(t_stem.lower())
+        dict_name, drw_name = f"{prefix}^{slot}_{n:03d}", f"{slot}_{n:03d}"
+        tex_names = [f"{slot}_diff_{n:03d}_{LETTERS[i]}" for i in range(len(letters))]
+    else:
+        ci = COMPONENTS.index(slot)
+        if ymt.component(ci) is None:
+            raise Refuse("no_component", f"الـymt حق البيد الثاني ما فيه {slot} أصلاً.", f"{slot} is not in {t_stem}.ymt",
+                         summary=ymt.summary())
+        n = len(ymt.drawables(ci))
+        prefix = t_stem.lower()
+        dict_name, drw_name = f"{prefix}^{slot}_{n:03d}_u", f"{slot}_{n:03d}_u"
+        tex_names = [f"{slot}_diff_{n:03d}_{LETTERS[i]}_uni" for i in range(len(letters))]
+    if len(letters) > 26:
+        raise Refuse("too_many", "القطعة فيها أكثر من 26 تكستر.", "more than 26 textures")
+
+    # where B's files go: next to one of B's own drawables (same folder, same "prefix^" or folder style)
+    ref = next((f for (pre, c, k), f in sorted(t_dfiles.items()) if pre == t_stem.lower()), None) or t_body.get("uppr") or t_yft
+    ref_dir = os.path.dirname(ref)
+    caret = "^" in os.path.basename(ref) or ref.lower().endswith(".yft")
+
+    def rel_for(pfx, filename):
+        if caret:
+            return (ref_dir + "/" if ref_dir else "") + f"{pfx}^{filename}"
+        return (os.path.dirname(ref_dir) + "/" if os.path.dirname(ref_dir) else "") + f"{pfx}/{filename}"
+
+    # ---- CodeWalker XML for Blender
+    xml_dir = os.path.join(work, "xml")
+
+    def to_xml(root, f, sub):
+        dest = os.path.join(xml_dir, sub)
+        os.makedirs(dest, exist_ok=True)
+        try:
+            cw("res-to-xml", os.path.join(root, f), dest)
+        except RuntimeError as e:
+            raise Refuse("unreadable", f"ما قدرت أقرا {os.path.basename(f)} (مشفّر أو خربان).", f"{f}: {e}")
+        return os.path.join(dest, os.path.basename(f) + ".xml")
+    job = {"sollumz": SOLLUMZ_DIR or os.path.join(HERE, ".deps"),
+           "src": {"skeleton": to_xml(src_pack, s_yft, "a"), "body": {k: to_xml(src_pack, v, "a") for k, v in s_body.items()},
+                   "piece": to_xml(src_pack, piece, "piece"), "prop": is_prop,
+                   "bone": ANCHOR_BONES_T.get(comp) if is_prop else None},
+           "dst": {"skeleton": to_xml(pack, t_yft, "b"), "body": {k: to_xml(pack, v, "b") for k, v in t_body.items()}},
+           "names": {"dict": dict_name, "drawable": drw_name}, "out": os.path.join(work, "transfer")}
+    if not is_prop:
+        own = next((f for (pre, c, k), f in sorted(t_dfiles.items()) if c == slot and pre in (t_stem.lower(), t_base)), None)
+        job["dst"]["scaffold"] = to_xml(pack, own, "b") if own else job["dst"]["body"].get("uppr") or next(iter(job["dst"]["body"].values()))
+    job_path, res_path = os.path.join(work, "transfer_job.json"), os.path.join(work, "transfer_result.json")
+    json.dump(job, open(job_path, "w"))
+    log(f"transfer {comp}_{d:03d} of {s_stem} -> {slot}_{n:03d} of {t_stem}, Blender ...")
+    r = subprocess.run([BPY_PYTHON or sys.executable, os.path.join(HERE, "transfer_bpy.py"), job_path, res_path],
+                       capture_output=True, text=True, timeout=1800)
+    if not os.path.exists(res_path):
+        raise RuntimeError(f"the Blender step stopped ({r.returncode}): {((r.stdout or '') + (r.stderr or ''))[-1500:]}")
+    res = json.load(open(res_path))
+    if "error" in res:
+        log(res.get("trace", ""))
+        raise Refuse("transfer_failed", "ما قدرت أنقل القطعة على جسم البيد الثاني.", f"transfer failed: {res['error']}")
+
+    # ---- binaries: the .ydd (checked by reading it back), the .ytd of every letter (A's file, renamed)
+    new_files = {}
+    ydd_rel = rel_for(prefix, dict_name.split("^")[-1] + ".ydd")
+    ydd_out = os.path.join(work, os.path.basename(ydd_rel))
+    cw(res["xml"], ydd_out)
+    rt = os.path.join(work, "rt")
+    os.makedirs(rt, exist_ok=True)
+    _, o = cw("res-to-xml", ydd_out, rt)
+    nv_in, nv_back = ydd_vertex_count(res["xml"]), ydd_vertex_count(os.path.join(rt, os.path.basename(ydd_out) + ".xml"))
+    if "DRAWABLES 1" not in o or nv_in != nv_back or nv_back == 0:
+        raise RuntimeError(f"{os.path.basename(ydd_out)} did not survive the round trip ({nv_in} -> {nv_back} vertices)")
+    if ydd_rel in dst_files:
+        warnings.append(f"{os.path.basename(ydd_rel)} was in the pack but not in the .ymt: replaced")
+    new_files[ydd_rel] = ydd_out
+    tex_info = []
+    for i, letter in enumerate(letters):
+        src_ytd, race = by_letter[letter]
+        ytd_rel = rel_for(prefix, tex_names[i] + ".ytd")
+        ytd_out = os.path.join(work, os.path.basename(ytd_rel))
+        exp = os.path.join(work, f"tex_{letter}")
+        tex = ytd_export(os.path.join(src_pack, src_ytd), exp)
+        old = next((t["tex"]["name"] for t in tex if TEX_RE.match(t["tex"]["name"] or "")), tex[0]["tex"]["name"] if tex else None)
+        # the game takes the dictionary of that file name: the texture inside is renamed to match, the rest kept
+        cw("ytd-build", exp, ytd_out, *(["--rename", f"{old}={tex_names[i]}"] if old and old != tex_names[i] else []))
+        new_files[ytd_rel] = ytd_out
+        tex_info.append({"from": os.path.basename(src_ytd), "to": os.path.basename(ytd_rel), "race": race})
+    try:
+        a_tex = ytd_export(os.path.join(src_pack, by_letter[letters[0]][0]), os.path.join(work, "prev"))
+        t0 = next((t for t in a_tex if TEX_RE.match(t["tex"]["name"] or "")), a_tex[0])
+        im = to_image(to_float(load_dds(os.path.join(work, "prev", t0["tex"]["dds"]))))
+        preview(im, os.path.join(out_dir, "preview_before.png"))
+        preview(im, os.path.join(out_dir, "preview_after.png"))
+    except Exception:  # the previews are only pictures for the page
+        warnings.append("no texture preview")
+
+    # ---- the .ymt entry: A's own entry for this piece (its flags), with as many textures as moved, all texId 0
+    if is_prop:
+        note = ymt_add_prop(pymt, anchor, n)
+        if note:
+            warnings.append(note)
+        new = pymt.prop(anchor, n)
+        if s_item is not None:
+            for tag in ("propFlags", "flags", "stickyness", "audioId", "expressionMods", "renderFlags"):
+                src_el, dst_el = s_item.find(tag), new.find(tag)
+                if src_el is not None and dst_el is not None:
+                    new.replace(dst_el, ET.fromstring(ET.tostring(src_el)))
+        td = new.find("texData")
+        while len(items(td)) < len(letters):
+            it = ET.fromstring(ET.tostring(items(td)[0]))
+            set_val(it, "texId", len(items(td)))
+            td.append(it)
+        targets = [(pymt, prop_ymt_rel, pymt_xml, pfmt)]
+    else:
+        ymt_add_drawable(ymt, ci, n)
+        nd = ymt.drawables(ci)[n]
+        if s_item is not None:
+            for tag in ("propMask", "numAlternatives"):
+                if s_item.find(tag) is not None and nd.find(tag) is not None:
+                    set_val(nd, tag, ival(s_item, tag))
+        td = nd.find("aTexData")
+        while len(items(td)) < len(letters):
+            td.append(ET.fromstring(ET.tostring(items(td)[0])))
+        set_val(ymt.component(ci), "numAvailTex", ival(ymt.component(ci), "numAvailTex") + len(letters) - 1)
+        targets = [(ymt, t_ymt_rel, ymt_xml, fmt)]
+    for y, rel, xp, f_ in targets:
+        y.save(xp)
+        outp = os.path.join(work, "new_" + os.path.basename(rel))
+        cw("xml-to-ymt", xp, outp, *(["--pso"] if f_ == "PSO" else []))
+        bx = os.path.join(work, "back_" + os.path.basename(rel) + ".xml")
+        ymt_to_xml(outp, bx)
+        back = Ymt(bx)
+        if is_prop:
+            got = back.prop(anchor, n)
+            if got is None or len(items(got.find("texData"))) != len(letters):
+                raise RuntimeError("the .ymt does not list the new prop")
+        else:
+            ds = back.drawables(ci)
+            if len(ds) != n + 1 or len(items(ds[n].find("aTexData"))) != len(letters):
+                raise RuntimeError(f"the .ymt does not list {slot} {n}")
+        new_files[rel] = outp
+
+    res_name, changed, patch = write_resource(pack, dst_files, work, new_files, spec, out_dir, name, warnings)
+    shutil.rmtree(work, ignore_errors=True)
+    info = {"name": name, "mode": "transfer", "status": "built", "kind": "mp" if t_stem.lower().startswith(FREEMODE) else "ped",
+            "target": t_stem, "ymt": t_ymt_rel, "source": {"ped": s_stem, "component": comp, "drawable": d,
+                                                           "letters": len(letters)},
+            "component": slot, "drawable": n, "letter": "a", "texture": tex_names[0], "textures": tex_info,
+            "ydd": ydd_rel, "verts": res.get("verts"), "fit": res["report"].get("fit"),
+            "bones_mapped": res["report"].get("bones_mapped"), "resource": res_name, "files": changed, "patch": patch,
+            "ymt_changed": True, "zip": f"{name}.zip", "warnings": warnings, "summary": ymt.summary(),
+            "built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
+    return info
+
+
+# the bone a prop sits on (as clothes_preview.ANCHOR_BONES: the first of these the skeleton has)
+ANCHOR_BONES_T = {"p_head": "SKEL_Head", "p_eyes": "SKEL_Head", "p_ears": "SKEL_Head", "p_mouth": "SKEL_Head",
+                  "p_lhand": "PH_L_Hand,SKEL_L_Hand", "p_rhand": "PH_R_Hand,SKEL_R_Hand",
+                  "p_lwrist": "RB_L_ForeArmRoll,SKEL_L_Hand", "p_rwrist": "RB_R_ForeArmRoll,SKEL_R_Hand",
+                  "p_hip": "SKEL_Pelvis", "p_lfoot": "SKEL_L_Foot", "p_rfoot": "SKEL_R_Foot"}
 
 CW_PATH = os.path.join(HERE, ".deps", "cwconv", "cwconv")
 

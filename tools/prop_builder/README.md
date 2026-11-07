@@ -44,7 +44,7 @@ PY=python3 DEPS=/path/to/deps ./build_prop.sh model.glb my_prop out 1.0
 
 ## Clothes designer (new textures for existing clothes)
 
-The **code** is here (`clothes_variant.py`, `clothes_preview.py` + `clothes_preview_bpy.py`, `cwconv`) and the site page
+The **code** is here (`clothes_variant.py`, `transfer_bpy.py`, `clothes_preview.py` + `clothes_preview_bpy.py`, `cwconv`) and the site page
 `docs/clothes/` ("مصمم الملابس"); the **workflow, the uploaded packs and the results live in the private repository
 `iiK7/claude-private`** (`.github/workflows/clothes-builder.yml` there checks this repository out for the tools). Nothing
 clothes-related is processed or stored in this public repository: clothing packs are often paid, so they must never be
@@ -54,6 +54,15 @@ The page uploads `clothes_requests/<name>.zip` (the pack, or only this piece's f
 over 40 MB) and `clothes_requests/<name>.json` (the design) to `claude-private` in one commit, and reads the results from
 its `clothes-builds` branch through the API with the owner's key (a fine-grained token with access to **both**
 prop-builder and claude-private: Contents read/write, Actions read).
+
+**Moving a piece to another ped** (`"mode": "transfer"`, the page's "🔁 نقل قطعة"): an existing component or prop of
+ped A goes to ped B as B's next drawable, with all its textures and B's `.ymt` entry (A's own flags). The request zip is
+ped B's pack with ped A's under `__source__/` (A only with its skeleton, body `_000` and the piece). `transfer_bpy.py`
+(Blender + Sollumz) moves every LOD: each point follows its own bones from A's rest pose to B's (a bone B lacks: its
+nearest shared ancestor), then B's girth (A's skin looked up on B's along its normals, a smooth gaussian average
+around the point); what ends up inside B's skin, or lets B's skin through between its points (a nose tip), goes out as
+smooth bumps, only where it is deeper than it was on A. Props move from A's anchor bone space to B's. Both peds need
+their `.yft` and body `_000` drawables (freemode: the game's body files).
 
 `clothes_variant.py`: a new colour (`tint`), logo (`logo`) or pattern from a description (`prompt`, via `text_to_image.py
 ... pattern`) for one drawable of a freemode MP pack or an addon ped.
